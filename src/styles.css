@@ -325,3 +325,10 @@ html { scroll-behavior: smooth; }
 @utility animate-shake { animation: shake .45s ease-in-out; }
 @keyframes confetti-fall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(105vh) rotate(720deg); opacity: 0; } }
 .confetti-piece { position: absolute; top: 0; width: 8px; height: 14px; border-radius: 2px; animation: confetti-fall linear forwards; }
+
+/* Custom dropdown panels: brand-tinted scrollbar + readable dark surface */
+.dropdown-list { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--cobalt) 50%, transparent) transparent; }
+.dropdown-list::-webkit-scrollbar { width: 8px; }
+.dropdown-list::-webkit-scrollbar-track { background: transparent; }
+.dropdown-list::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in oklab, var(--cobalt) 45%, transparent); }
+.theme-flame .dropdown-list { background: oklch(0.19 0.05 268 / 97%); }

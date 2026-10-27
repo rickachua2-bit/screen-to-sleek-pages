@@ -294,25 +294,24 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
 const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education", "Hospitality & Travel", "Agriculture", "Manufacturing", "Real Estate", "Professional Services", "Media & Entertainment", "Transportation", "Non-Profit / NGO"];
 const COUNTRIES = [
-  { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234" },
-  { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254" },
-  { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233" },
-  { code: "ZA", flag: "🇿🇦", name: "South Africa", dial: "+27" },
-  { code: "RW", flag: "🇷🇼", name: "Rwanda", dial: "+250" },
-  { code: "EG", flag: "🇪🇬", name: "Egypt", dial: "+20" },
-  { code: "GB", flag: "🇬🇧", name: "United Kingdom", dial: "+44" },
-  { code: "EU", flag: "🇪🇺", name: "Eurozone", dial: "+33" },
+  { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234", group: "West Africa" },
+  { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233", group: "West Africa" },
+  { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254", group: "East & Southern Africa" },
+  { code: "RW", flag: "🇷🇼", name: "Rwanda", dial: "+250", group: "East & Southern Africa" },
+  { code: "ZA", flag: "🇿🇦", name: "South Africa", dial: "+27", group: "East & Southern Africa" },
+  { code: "EG", flag: "🇪🇬", name: "Egypt", dial: "+20", group: "East & Southern Africa" },
+  { code: "GB", flag: "🇬🇧", name: "United Kingdom", dial: "+44", group: "Global" },
+  { code: "EU", flag: "🇪🇺", name: "Eurozone", dial: "+33", group: "Global" },
+  { code: "US", flag: "🇺🇸", name: "United States", dial: "+1", group: "Global" },
 ];
 
+const COUNTRY_OPTS: Opt[] = COUNTRIES.map((c) => ({ value: c.code, label: c.name, flag: c.flag, hint: c.dial, group: c.group }));
+const COMPANY_OPTS: Opt[] = COMPANY_TYPES.map((c) => ({ value: c, label: c }));
+const INDUSTRY_OPTS: Opt[] = INDUSTRIES.map((c) => ({ value: c, label: c }));
+const BANK_OPTS: Opt[] = NG_BANKS.map((b) => ({ value: b.name, label: b.name, hint: b.code }));
+
 function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <>
-      <select id={id} className={`${inputCls(false)} appearance-none pr-9`} value={value} onChange={(e) => onChange(e.target.value)}>
-        {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-    </>
-  );
+  return <SelectMenu id={id} value={value} options={COUNTRY_OPTS} onChange={onChange} searchable placeholder="Select your country" />;
 }
 
 const dialOf = (code: string) => COUNTRIES.find((c) => c.code === code) ?? COUNTRIES[0]!;
