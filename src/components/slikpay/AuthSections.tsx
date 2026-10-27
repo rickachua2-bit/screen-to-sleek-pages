@@ -65,11 +65,23 @@ export function HeroIntro() {
       </div>
       <h1 className="mt-5 text-4xl font-black leading-[1.05] tracking-tight text-foreground md:text-5xl xl:text-[56px]">
         Complete digital banking &{" "}
-        <span className="bg-gradient-tri bg-clip-text text-transparent">payment infrastructure</span>
+        <span className="text-gradient-animated">payment infrastructure</span>
       </h1>
       <p className="mt-5 max-w-xl text-base font-medium leading-relaxed text-body">
         Accept contactless payments on mobile, issue dedicated corporate accounts, disburse instant payroll, and manage multi-currency FX across Africa and global markets.
       </p>
+      <div className="mt-7 flex flex-wrap gap-3">
+        <a href="#signin" className="inline-flex items-center gap-2 rounded-xl bg-cobalt px-5 py-3 text-sm font-bold text-primary-foreground shadow-cobalt transition-all hover:-translate-y-0.5 hover:bg-cobalt-deep">Open free account →</a>
+        <a href="#how" className="inline-flex items-center gap-2 rounded-xl border-2 border-border bg-background px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-cobalt">See how it works</a>
+      </div>
+      <dl className="mt-8 grid grid-cols-3 divide-x-[1.5px] divide-border rounded-2xl border-[1.5px] border-border bg-background/70 backdrop-blur">
+        {[["₦48B+", "Processed yearly"], ["45+", "Banks connected"], ["0.8s", "Avg. settlement"]].map(([v, l]) => (
+          <div key={l} className="px-4 py-3">
+            <dt className="text-2xl font-black tracking-tight text-foreground md:text-3xl">{v}</dt>
+            <dd className="text-[11px] font-semibold text-muted-foreground">{l}</dd>
+          </div>
+        ))}
+      </dl>
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         {PILLARS.map(({ tag, title, icon: Icon, tone, items }) => (
           <div key={title} className="panel group p-4 transition-all hover:-translate-y-0.5 hover:border-cobalt/40 hover:shadow-lg">
@@ -111,6 +123,34 @@ const FEATURES: { icon: LucideIcon; tone: string; title: string; desc: string; f
   { icon: Users, tone: "text-magenta bg-magenta/10", title: "Multi-Cashier & Loss Prevention", desc: "Dedicated 4-digit PINs per cashier, shift reports and flagged discrepancies in real time.", foot: "Audit trail with PDF & WhatsApp export" },
   { icon: Code2, tone: "text-cobalt bg-cyan/20", title: "Developer APIs & Treasury Sweeps", desc: "Plug Slikpay rails into your app. Accept payments via hosted checkout and automate midnight sweeps.", foot: "REST APIs, signed webhooks, idempotency" },
 ];
+
+export function PartnerStrip() {
+  return (
+    <div className="border-y-[1.5px] border-border bg-background">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 py-6">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Trusted rails & partners</span>
+        {["Sterling Bank", "Mastercard", "NIBSS", "Visa", "Verve", "Interswitch"].map((n) => (
+          <span key={n} className="text-lg font-black tracking-tight text-muted-foreground/70 transition-colors hover:text-foreground">{n}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FloatingChips() {
+  return (
+    <>
+      <div className="panel animate-float absolute -left-16 top-24 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-success-soft text-success"><Check className="h-4 w-4" strokeWidth={3} /></span>
+        <div><div className="text-xs font-extrabold text-foreground">+₦250,000.00</div><div className="text-[10px] font-semibold text-muted-foreground">NIP · Chukwuemeka A.</div></div>
+      </div>
+      <div className="panel animate-float-slow absolute -right-10 bottom-24 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-tri text-primary-foreground"><CreditCard className="h-4 w-4" /></span>
+        <div><div className="text-xs font-extrabold text-foreground">USD card issued</div><div className="text-[10px] font-semibold text-muted-foreground">•••• 1234 · in 3s</div></div>
+      </div>
+    </>
+  );
+}
 
 export function FeatureGrid() {
   return (
