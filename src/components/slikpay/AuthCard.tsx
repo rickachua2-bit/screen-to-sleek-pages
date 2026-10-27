@@ -718,7 +718,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
             <p className="mt-0.5 text-xs font-semibold text-body">14 Marina Road, Lagos Island · <span className="text-success">ACTIVE</span> · Form CAC 1.1 Verified</p>
           </div>
         )}
-        <CategoryPicker value={f.industry} onChange={(v) => setF((p) => ({ ...p, industry: v }))} error={err["industry"]} shake />
+        <CategoryPicker value={f.industry} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
           <div className="flex flex-wrap gap-2">
