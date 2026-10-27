@@ -676,8 +676,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           </div>
         )}
         <CategoryPicker value={f.industry} onChange={(v) => setF((p) => ({ ...p, industry: v }))} error={err["industry"]} shake />
-
-        </Field>
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
           <div className="flex flex-wrap gap-2">
