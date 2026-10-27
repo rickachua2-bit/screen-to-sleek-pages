@@ -107,11 +107,11 @@ const json = (b: unknown) => ({ method: "POST", body: JSON.stringify(b) });
 const ok = (msg: string) => () => ({ success: true, message: msg, ref: `SLK-${Date.now().toString().slice(-8)}` });
 
 export const api = {
-  login: (email: string, password: string) =>
-    request<{ token: string; user: User; role: Role; requires2fa?: boolean }>("/auth/login", json({ email, password }), () => ({
+  login: (email: string, password: string, portal?: Role) =>
+    request<{ token: string; user: User; role: Role; requires2fa?: boolean }>("/auth/login", json({ email, password, portal }), () => ({
       token: `mock_${Date.now()}`,
       user: mockUser(undefined, email),
-      role: email.toLowerCase().includes("personal") ? "personal" : "merchant",
+      role: portal ?? (email.toLowerCase().includes("personal") ? "personal" : "merchant"),
       requires2fa: true,
     })),
   register: (b: { name: string; email: string; password: string; phone: string; accountType: "BUSINESS" | "PERSONAL" }) =>
