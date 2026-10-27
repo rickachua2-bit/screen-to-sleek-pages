@@ -486,7 +486,7 @@ function CategoryPicker({ value, onChange, error, shake }: { value: string; onCh
   const [q, setQ] = useState("");
   const term = q.trim().toLowerCase();
   const groups = CATEGORY_GROUPS
-    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
+    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
     .filter((g) => g.items.length > 0);
   const picked = ALL_CATS.find((c) => c.value === value);
 
