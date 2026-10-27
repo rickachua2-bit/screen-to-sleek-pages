@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   AtSign, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Info, Landmark, Loader2, Lock, Mail, Search, ShieldCheck, Smartphone, User as UserIcon, X, type LucideIcon,
 } from "lucide-react";
