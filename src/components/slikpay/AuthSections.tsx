@@ -144,7 +144,7 @@ export function FloatingChips() {
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-success-soft text-success"><Check className="h-4 w-4" strokeWidth={3} /></span>
         <div><div className="text-xs font-extrabold text-foreground">+₦250,000.00</div><div className="text-[10px] font-semibold text-muted-foreground">NIP · Chukwuemeka A.</div></div>
       </div>
-      <div className="panel animate-float-slow absolute -right-10 bottom-24 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
+      <div className="panel animate-float-slow absolute -top-7 -right-8 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-tri text-primary-foreground"><CreditCard className="h-4 w-4" /></span>
         <div><div className="text-xs font-extrabold text-foreground">USD card issued</div><div className="text-[10px] font-semibold text-muted-foreground">•••• 1234 · in 3s</div></div>
       </div>
