@@ -558,7 +558,7 @@ function CategoryPicker({ value, onChange, error, shake }: { value: string; onCh
           <input id="b-cat-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search categories — e.g. agro, logistics, fintech" aria-label="Search business categories"
             className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
         </div>
-        <div className="dropdown-list max-h-52 space-y-3 overflow-auto px-0.5 pb-1">
+        <div className="dropdown-list max-h-56 space-y-3 overflow-auto px-0.5 pb-2 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-26px),transparent)]">
           {groups.length === 0 && <p className="px-2 py-5 text-center text-xs font-bold text-muted-foreground">No category matches "{q}"</p>}
           {groups.map((g) => (
             <div key={g.group}>
