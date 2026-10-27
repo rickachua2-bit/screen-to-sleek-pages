@@ -292,12 +292,35 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 /* ---------- business sign-up ---------- */
 
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
-const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education"];
+const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education", "Hospitality & Travel", "Agriculture", "Manufacturing", "Real Estate", "Professional Services", "Media & Entertainment", "Transportation", "Non-Profit / NGO"];
+const COUNTRIES = [
+  { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234" },
+  { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254" },
+  { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233" },
+  { code: "ZA", flag: "🇿🇦", name: "South Africa", dial: "+27" },
+  { code: "RW", flag: "🇷🇼", name: "Rwanda", dial: "+250" },
+  { code: "EG", flag: "🇪🇬", name: "Egypt", dial: "+20" },
+  { code: "GB", flag: "🇬🇧", name: "United Kingdom", dial: "+44" },
+  { code: "EU", flag: "🇪🇺", name: "Eurozone", dial: "+33" },
+];
+
+function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <>
+      <select id={id} className={`${inputCls(false)} appearance-none pr-9`} value={value} onChange={(e) => onChange(e.target.value)}>
+        {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    </>
+  );
+}
+
+const dialOf = (code: string) => COUNTRIES.find((c) => c.code === code) ?? COUNTRIES[0]!;
 const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
-function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
+function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
