@@ -258,3 +258,35 @@ html { scroll-behavior: smooth; }
   border: 1.5px solid color-mix(in oklab, white 25%, transparent);
   backdrop-filter: blur(14px);
 }
+
+/* Flame theme: deep midnight-cobalt canvas so the logo's tri-colour glows. Scoped to the auth page. */
+.theme-flame {
+  --background: oklch(0.16 0.045 268);
+  --foreground: oklch(0.97 0.01 250);
+  --card: oklch(0.2 0.05 268 / 70%);
+  --card-foreground: oklch(0.97 0.01 250);
+  --muted: oklch(0.25 0.05 268);
+  --muted-foreground: oklch(0.72 0.04 255);
+  --body: oklch(0.82 0.03 255);
+  --border: oklch(0.55 0.08 265 / 28%);
+  --input: oklch(0.55 0.08 265 / 35%);
+  --success-soft: oklch(0.55 0.15 155 / 18%);
+  --success: oklch(0.78 0.17 155);
+  --navy: oklch(0.97 0.01 250);
+  --obsidian: oklch(0.9 0.02 250);
+  --primary-foreground: oklch(1 0 0);
+  --gradient-mesh: radial-gradient(55% 60% at 0% 0%, color-mix(in oklab, var(--cobalt) 45%, transparent), transparent 70%),
+    radial-gradient(45% 55% at 100% 0%, color-mix(in oklab, var(--magenta) 32%, transparent), transparent 70%),
+    radial-gradient(55% 55% at 55% 100%, color-mix(in oklab, var(--cyan) 22%, transparent), transparent 70%),
+    oklch(0.15 0.05 268);
+  --gradient-tint-cyan: radial-gradient(70% 60% at 50% 0%, color-mix(in oklab, var(--cyan) 12%, transparent), transparent 70%), oklch(0.17 0.045 262);
+  --gradient-tint-magenta: radial-gradient(70% 60% at 50% 0%, color-mix(in oklab, var(--magenta) 14%, transparent), transparent 70%), oklch(0.16 0.05 275);
+  color-scheme: dark;
+  background: var(--background);
+  color: var(--foreground);
+}
+.theme-flame .bg-grid {
+  background-image: linear-gradient(oklch(1 0 0 / 6%) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 6%) 1px, transparent 1px);
+}
+.theme-flame .panel { backdrop-filter: blur(14px); }
+.theme-flame .field { background: oklch(0.13 0.04 268 / 70%); }
