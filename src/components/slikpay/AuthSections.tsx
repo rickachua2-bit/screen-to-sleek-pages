@@ -24,7 +24,7 @@ export function TopNav() {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> All systems live
           </span>
           <a href="#how" className="hidden rounded-full border-2 border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:border-cobalt sm:inline-flex">Developer Docs</a>
-          <a href="#signin" className="rounded-full bg-navy px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-obsidian">Get Mobile App</a>
+          <a href="#signin" className="rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90">Get Mobile App</a>
         </div>
       </div>
     </header>
@@ -104,7 +104,7 @@ export function HeroIntro() {
         ))}
       </div>
       <div className="panel mt-3 flex items-center gap-3 p-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy text-xs font-black text-primary-foreground">TG</span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-tri text-xs font-black text-primary-foreground">TG</span>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-extrabold text-foreground">Travsify Global Inclusive Ltd</div>
           <div className="truncate font-mono text-[10px] font-bold text-success">● KYB verified · Corporate entity · Sterling settlement rails</div>
