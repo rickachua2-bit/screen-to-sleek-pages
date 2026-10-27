@@ -511,9 +511,9 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 
 /* ---------- personal sign-up ---------- */
 
-function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
+function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ name: "", email: "", phone: "", pw: "", tag: "", bvn: "" });
+  const [f, setF] = useState({ country: "NG", name: "", email: "", phone: "", pw: "", tag: "", bvn: "" });
   const [pin, setPin] = useState("");
   const [err, setErr] = useState<Record<string, string | undefined>>({});
   const [shake, setShake] = useState(0);
@@ -555,6 +555,9 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
       <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`p1-${shake}`}>
         <StepBar n={1} labels={["Personal Basics", "Wallet Identity & Security"]} />
         <h2 className="text-xl font-black text-foreground">Personal Basics</h2>
+        <Field label="Country of Residence" id="p-country">
+          <CountrySelect id="p-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
+        </Field>
         <Field label="Full Name" id="p-name" icon={UserIcon} error={err["name"]} shake>
           <input id="p-name" className={inputCls()} value={f.name} onChange={set("name")} placeholder="e.g. Adaora Nwosu" />
         </Field>
@@ -563,7 +566,7 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <Field label="Phone Number" id="p-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">🇳🇬 +234</span>
+            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
             <input id="p-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
@@ -572,6 +575,7 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <StrengthMeter pw={f.pw} />
         <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue →</Button>
+        <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
   }
