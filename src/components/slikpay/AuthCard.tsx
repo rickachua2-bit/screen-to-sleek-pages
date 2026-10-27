@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  AtSign, Bitcoin, Briefcase, Building, Building2, Camera, Check, ChevronDown, Cloud, Copy, Cross, Cpu, Dumbbell, Eye, EyeOff, Factory, Film, Fingerprint, Fuel, Gamepad2, GraduationCap, Hammer, HeartHandshake, Info, Landmark, Laptop, Loader2, Lock, Mail, Megaphone, Package, Pickaxe, Plane, Scale, Scissors, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Sun, Tractor, Truck, User as UserIcon, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
+  AtSign, Bitcoin, Briefcase, Building, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Fuel, Info, Landmark, Laptop, Loader2, Lock, Mail, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Tractor, Truck, User as UserIcon, UtensilsCrossed, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, NG_BANKS, type Role, type User } from "@/lib/api";
@@ -443,53 +443,23 @@ const CATEGORY_GROUPS: { group: string; items: Cat[] }[] = [
     { value: "eCommerce", label: "eCommerce", icon: ShoppingCart },
     { value: "Retail & Wholesale", label: "Retail & Wholesale", icon: Store },
     { value: "Import & Export", label: "Import & Export", icon: Ship },
-    { value: "FMCG Distribution", label: "FMCG Distribution", icon: Package },
-    { value: "Social Commerce & Resellers", label: "Social Commerce & Resellers", icon: Users },
   ] },
   { group: "Money & Technology", items: [
     { value: "FinTech & Payments", label: "FinTech & Payments", icon: Bitcoin },
-    { value: "Banking & Lending", label: "Banking & Lending", icon: Landmark },
-    { value: "Insurance", label: "Insurance", icon: HeartHandshake },
-    { value: "Crypto & Digital Assets", label: "Crypto & Digital Assets", icon: Wallet },
     { value: "SaaS & Software", label: "SaaS & Software", icon: Laptop },
-    { value: "Cloud, Data & AI", label: "Cloud, Data & AI", icon: Cpu },
-    { value: "Telecoms & Connectivity", label: "Telecoms & Connectivity", icon: Cloud },
   ] },
-  { group: "Professional Services", items: [
+  { group: "Services & Property", items: [
     { value: "Consulting & Advisory", label: "Consulting & Advisory", icon: Briefcase },
-    { value: "Legal & Compliance", label: "Legal & Compliance", icon: Scale },
-    { value: "Marketing & Creative Agency", label: "Marketing & Creative", icon: Megaphone },
-    { value: "Recruiting & Staffing", label: "Recruiting & Staffing", icon: Users },
     { value: "Real Estate & Property", label: "Real Estate & Property", icon: Building },
   ] },
-  { group: "Logistics & Energy", items: [
-    { value: "Logistics & Freight", label: "Logistics & Freight", icon: Truck },
-    { value: "Aviation & Travel", label: "Aviation & Travel", icon: Plane },
-    { value: "Marine & Shipping", label: "Marine & Shipping", icon: Ship },
-    { value: "Oil, Gas & Energy", label: "Oil, Gas & Energy", icon: Fuel },
-    { value: "Renewable Energy", label: "Renewable Energy", icon: Sun },
-  ] },
-  { group: "Health, Learning & Life", items: [
+  { group: "Health & Food", items: [
     { value: "Healthcare & Clinics", label: "Healthcare & Clinics", icon: Stethoscope },
-    { value: "Education & Training", label: "Education & Training", icon: GraduationCap },
-    { value: "Food, Restaurants & Catering", label: "Food & Restaurants", icon: UtensilsCrossed },
-    { value: "Fashion & Beauty", label: "Fashion & Beauty", icon: Scissors },
-    { value: "Fitness & Wellness", label: "Fitness & Wellness", icon: Dumbbell },
-    { value: "Media & Entertainment", label: "Media & Entertainment", icon: Film },
-    { value: "Gaming & Esports", label: "Gaming & Esports", icon: Gamepad2 },
-    { value: "Photography & Studios", label: "Photography & Studios", icon: Camera },
+    { value: "Food & Restaurants", label: "Food & Restaurants", icon: UtensilsCrossed },
   ] },
-  { group: "Industry & Primary", items: [
+  { group: "Logistics, Energy & Industry", items: [
+    { value: "Logistics & Freight", label: "Logistics & Freight", icon: Truck },
     { value: "Agriculture & Agribusiness", label: "Agriculture & Agribusiness", icon: Tractor },
-    { value: "Manufacturing & Production", label: "Manufacturing & Production", icon: Factory },
-    { value: "Mining & Extraction", label: "Mining & Extraction", icon: Pickaxe },
-    { value: "Construction & Infrastructure", label: "Construction & Infra", icon: Hammer },
-  ] },
-  { group: "Non-Profit & Public", items: [
-    { value: "Non-Profit / NGO", label: "Non-Profit / NGO", icon: HeartHandshake },
-    { value: "Cooperative & Thrift", label: "Cooperative & Thrift", icon: Users },
-    { value: "Government & Public Sector", label: "Government & Public", icon: Landmark },
-    { value: "Faith-Based Organisation", label: "Faith-Based Org", icon: Cross },
+    { value: "Oil, Gas & Energy", label: "Oil, Gas & Energy", icon: Fuel },
   ] },
 ];
 
@@ -500,41 +470,15 @@ const CAT_KEYWORDS: Record<string, string> = {
   "eCommerce": "online store shop marketplace web",
   "Retail & Wholesale": "shop supermarket wholesale trade vendor",
   "Import & Export": "trade customs cross-border foreign",
-  "FMCG Distribution": "fast moving consumer goods supply distributor",
-  "Social Commerce & Resellers": "instagram whatsapp vendor reseller agent",
   "FinTech & Payments": "fintech payment collection billing",
-  "Banking & Lending": "bank microfinance loan credit",
-  "Insurance": "underwriting cover assurance",
-  "Crypto & Digital Assets": "crypto blockchain wallet tokens web3",
   "SaaS & Software": "software app startup developer tech",
-  "Cloud, Data & AI": "cloud data ai machine learning hosting",
-  "Telecoms & Connectivity": "telecom network sim internet mtn",
   "Consulting & Advisory": "consultancy advisory services",
-  "Legal & Compliance": "law lawyers compliance regulatory",
-  "Marketing & Creative Agency": "marketing ads brand creative agency",
-  "Recruiting & Staffing": "hr hiring staffing recruitment",
   "Real Estate & Property": "property land rent housing estate",
-  "Logistics & Freight": "logistics delivery haulage courier transport",
-  "Aviation & Travel": "airline travel flights tourism hospitality",
-  "Marine & Shipping": "shipping port vessel marine",
-  "Oil, Gas & Energy": "oil gas petroleum downstream energy",
-  "Renewable Energy": "solar power clean energy inverter",
   "Healthcare & Clinics": "health hospital clinic pharma medical",
-  "Education & Training": "school training learning students edtech",
-  "Food, Restaurants & Catering": "food restaurant catering kitchen",
-  "Fashion & Beauty": "fashion clothing beauty salon apparel",
-  "Fitness & Wellness": "gym fitness wellness sports",
-  "Media & Entertainment": "media music film entertainment content creator",
-  "Gaming & Esports": "gaming esports games betting",
-  "Photography & Studios": "photo studio videography events",
+  "Food & Restaurants": "food restaurant catering kitchen",
+  "Logistics & Freight": "logistics delivery haulage courier transport",
   "Agriculture & Agribusiness": "agro farming crops livestock agribusiness",
-  "Manufacturing & Production": "factory manufacturing production industrial",
-  "Mining & Extraction": "mining solid minerals extraction",
-  "Construction & Infrastructure": "construction building infrastructure engineering",
-  "Non-Profit / NGO": "ngo charity foundation non profit",
-  "Cooperative & Thrift": "cooperative thrift microfinance union",
-  "Government & Public Sector": "government public agency parastatal",
-  "Faith-Based Organisation": "church mosque faith religious",
+  "Oil, Gas & Energy": "oil gas petroleum downstream energy",
 };
 
 
@@ -542,7 +486,7 @@ function CategoryPicker({ value, onChange, error, shake }: { value: string; onCh
   const [q, setQ] = useState("");
   const term = q.trim().toLowerCase();
   const groups = CATEGORY_GROUPS
-    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
+    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
     .filter((g) => g.items.length > 0);
   const picked = ALL_CATS.find((c) => c.value === value);
 
