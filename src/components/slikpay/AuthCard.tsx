@@ -361,7 +361,7 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
           <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="director@company.com" />
         ) : (
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">🇳🇬 +234</span>
+            <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">🇳🇬</span><span className="font-mono">+234</span></span>
             <input id="login-id" autoComplete="username" className={`${inputCls(false)} flex-1`} value={id} onChange={(e) => setId(e.target.value)} placeholder="0803 000 0000 or @babatunde" />
           </div>
         )}
