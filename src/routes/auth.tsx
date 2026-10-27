@@ -109,7 +109,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [remember, setRemember] = useState(true);
-  const [err, setErr] = useState<{ email?: string; pw?: string; otp?: string }>({});
+  const [err, setErr] = useState<Record<"email" | "pw" | "otp", string | undefined> | Partial<Record<"email" | "pw" | "otp", string>>>({});
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [otp, setOtp] = useState("");
@@ -153,7 +153,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
       <div className="animate-in fade-in slide-in-from-right-4 space-y-4">
         <h2 className="text-xl font-black text-foreground">Reset your password</h2>
         <p className="text-sm font-medium text-body">We'll email you a secure link to set a new password.</p>
-        <Field label="Email address" id="reset" icon={Mail} error={err.email}>
+        <Field label="Email address" id="reset" icon={Mail} error={err["email" as keyof typeof err]}>
           <input id="reset" type="email" className={inputCls()} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
         </Field>
         <Button variant="brand" className="h-12 w-full" onClick={async () => {
@@ -195,7 +195,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
 
   return (
     <form onSubmit={submit} noValidate className="animate-in fade-in space-y-4">
-      <Field label="Email address" id="email" icon={Mail} error={err.email}>
+      <Field label="Email address" id="email" icon={Mail} error={err["email" as keyof typeof err]}>
         <input id="email" type="email" autoComplete="email" className={inputCls()} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
       </Field>
       <Field label="Password" id="password" icon={Lock} error={err.pw}>
