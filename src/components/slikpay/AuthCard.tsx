@@ -439,7 +439,7 @@ const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
@@ -476,6 +476,8 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   function next2(e: React.FormEvent) {
     e.preventDefault();
     if (!cacVerified) return fail({ cac: "Verify your CAC number to continue" });
+    if (!f.industry) return fail({ industry: "Select your business category" });
+
     setErr({});
     setStep(3);
   }
@@ -502,7 +504,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
     setBusy(true);
-    const r = await api.register({ name: f.director, email: f.email, phone: f.phone, password: f.pw, accountType: "BUSINESS" });
+    const r = await api.register({ name: f.director, email: f.email, phone: f.phone, password: f.pw, accountType: "BUSINESS", category: f.industry });
     setBusy(false);
     onDone(r, true);
   }
@@ -560,8 +562,8 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
             <p className="mt-0.5 text-xs font-semibold text-body">14 Marina Road, Lagos Island · <span className="text-success">ACTIVE</span> · Form CAC 1.1 Verified</p>
           </div>
         )}
-        <Field label="Industry / Business Category" id="b-industry">
-          <SelectMenu id="b-industry" value={f.industry} options={INDUSTRY_OPTS} onChange={(v) => setF((p) => ({ ...p, industry: v }))} searchable placeholder="Select your business category" />
+        <CategoryPicker value={f.industry} onChange={(v) => setF((p) => ({ ...p, industry: v }))} error={err["industry"]} shake />
+
         </Field>
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
