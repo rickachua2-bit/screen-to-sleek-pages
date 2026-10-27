@@ -49,6 +49,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
+  const [up, setUp] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const optsRef = useRef(options); optsRef.current = options;
@@ -74,6 +75,13 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
     if (!open) return;
     list.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
   }, [active, open, q]);
+
+  // open upward when the list would run past the bottom of the window
+  useEffect(() => {
+    if (!open || !wrap.current) return;
+    const r = wrap.current.getBoundingClientRect();
+    setUp(window.innerHeight - r.bottom < 320 && r.top > window.innerHeight - r.bottom);
+  }, [open]);
 
   const pick = (o: Opt | undefined) => { if (!o) return; onChange(o.value); setOpen(false); };
 
@@ -107,7 +115,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
       </button>
 
       {open && (
-        <div className="animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 absolute left-0 right-0 top-[calc(100%+6px)] z-40 origin-top">
+        <div className={`animate-in fade-in-0 zoom-in-95 absolute left-0 right-0 z-40 origin-top ${up ? "bottom-[calc(100%+6px)] slide-in-from-bottom-1" : "top-[calc(100%+6px)] slide-in-from-top-1"}`}>
           <div className="panel dropdown-list max-h-64 overflow-auto p-1.5 backdrop-blur-xl shadow-[0_28px_70px_-24px_color-mix(in_oklab,var(--cobalt)_60%,transparent)]">
             {searchable && (
               <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1.5 bg-card/95 px-1.5 pb-1.5 pt-0.5 backdrop-blur-xl">
