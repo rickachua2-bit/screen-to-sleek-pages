@@ -46,7 +46,7 @@ export function AppShell({ mode, nav, children, greeting }: { mode: Role; nav: N
         ))}
       </nav>
       <div className="relative mt-4 overflow-hidden rounded-2xl border-[1.5px] border-border p-4">
-        <svg className="absolute -bottom-2 -right-2 h-20 w-32" viewBox="0 0 120 60" aria-hidden>
+        <svg className="absolute -bottom-4 -right-4 h-14 w-24 opacity-40" viewBox="0 0 120 60" aria-hidden>
           <path d="M0 60 C40 10 80 50 120 0" className="stroke-cobalt" strokeWidth="6" fill="none" />
           <path d="M10 60 C50 20 85 55 120 15" className="stroke-magenta" strokeWidth="4" fill="none" />
           <path d="M20 60 C55 30 90 60 120 30" className="stroke-cyan" strokeWidth="3" fill="none" />
