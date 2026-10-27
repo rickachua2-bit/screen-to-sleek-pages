@@ -67,7 +67,7 @@ export function AppShell({ mode, nav, children, greeting }: { mode: Role; nav: N
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="theme-flame relative flex min-h-screen bg-background bg-mesh">
       <div className="sticky top-0 hidden h-screen lg:block">{sidebar}</div>
       {open && (
         <div className="fixed inset-0 z-40 bg-obsidian/25 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)}>
