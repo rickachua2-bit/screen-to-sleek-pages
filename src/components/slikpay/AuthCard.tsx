@@ -292,12 +292,35 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 /* ---------- business sign-up ---------- */
 
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
-const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education"];
+const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education", "Hospitality & Travel", "Agriculture", "Manufacturing", "Real Estate", "Professional Services", "Media & Entertainment", "Transportation", "Non-Profit / NGO"];
+const COUNTRIES = [
+  { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234" },
+  { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254" },
+  { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233" },
+  { code: "ZA", flag: "🇿🇦", name: "South Africa", dial: "+27" },
+  { code: "RW", flag: "🇷🇼", name: "Rwanda", dial: "+250" },
+  { code: "EG", flag: "🇪🇬", name: "Egypt", dial: "+20" },
+  { code: "GB", flag: "🇬🇧", name: "United Kingdom", dial: "+44" },
+  { code: "EU", flag: "🇪🇺", name: "Eurozone", dial: "+33" },
+];
+
+function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <>
+      <select id={id} className={`${inputCls(false)} appearance-none pr-9`} value={value} onChange={(e) => onChange(e.target.value)}>
+        {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    </>
+  );
+}
+
+const dialOf = (code: string) => COUNTRIES.find((c) => c.code === code) ?? COUNTRIES[0]!;
 const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
-function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
+function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
@@ -371,6 +394,9 @@ function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         <StepBar n={1} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
+        <Field label="Country of Incorporation" id="b-country">
+          <CountrySelect id="b-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
+        </Field>
         <Field label="Full Name of Director / Owner" id="b-director" icon={UserIcon} error={err["director"]} shake>
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
@@ -379,7 +405,7 @@ function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <Field label="Phone Number" id="b-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">🇳🇬 +234</span>
+            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
             <input id="b-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
@@ -388,6 +414,7 @@ function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <StrengthMeter pw={f.pw} />
         <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue to Business Verification →</Button>
+        <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
   }
@@ -484,9 +511,9 @@ function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
 
 /* ---------- personal sign-up ---------- */
 
-function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
+function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ name: "", email: "", phone: "", pw: "", tag: "", bvn: "" });
+  const [f, setF] = useState({ country: "NG", name: "", email: "", phone: "", pw: "", tag: "", bvn: "" });
   const [pin, setPin] = useState("");
   const [err, setErr] = useState<Record<string, string | undefined>>({});
   const [shake, setShake] = useState(0);
@@ -528,6 +555,9 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
       <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`p1-${shake}`}>
         <StepBar n={1} labels={["Personal Basics", "Wallet Identity & Security"]} />
         <h2 className="text-xl font-black text-foreground">Personal Basics</h2>
+        <Field label="Country of Residence" id="p-country">
+          <CountrySelect id="p-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
+        </Field>
         <Field label="Full Name" id="p-name" icon={UserIcon} error={err["name"]} shake>
           <input id="p-name" className={inputCls()} value={f.name} onChange={set("name")} placeholder="e.g. Adaora Nwosu" />
         </Field>
@@ -536,7 +566,7 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <Field label="Phone Number" id="p-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">🇳🇬 +234</span>
+            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
             <input id="p-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
@@ -545,6 +575,7 @@ function PersonalSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
         </Field>
         <StrengthMeter pw={f.pw} />
         <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue →</Button>
+        <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
   }
@@ -618,11 +649,44 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
   );
 }
 
+/* ---------- account type selection (sign-up step 1) ---------- */
+
+function TypeSelect({ onPick }: { onPick: (r: Role) => void }) {
+  const [sel, setSel] = useState<Role | null>(null);
+  const opts = [
+    { v: "merchant" as const, icon: Building2, tone: "text-cobalt bg-cobalt/10", title: "Business / Merchant", points: ["SoftPOS & contactless acceptance", "Dedicated NUBANs & settlement sweeps", "Bulk payroll & developer APIs"] },
+    { v: "personal" as const, icon: UserIcon, tone: "text-magenta bg-magenta/10", title: "Personal User", points: ["Free P2P via @SlikTag", "Virtual USD cards & bill payments", "Instant account number on signup"] },
+  ];
+  return (
+    <div className="animate-in fade-in">
+      <h2 className="text-xl font-black text-foreground">Choose your account type</h2>
+      <p className="mt-1 text-sm font-medium text-body">This decides your dashboard, limits and verification steps.</p>
+      <div className="mt-4 space-y-3">
+        {opts.map(({ v, icon: Icon, tone, title, points }) => (
+          <button key={v} type="button" onClick={() => setSel(v)} aria-pressed={sel === v}
+            className={`flex w-full gap-4 rounded-2xl border-2 p-4 text-left transition-all ${sel === v ? "border-cobalt bg-cobalt/5 ring-4 ring-cobalt/10" : "border-border hover:border-cyan"}`}>
+            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            <div className="flex-1">
+              <div className="font-extrabold text-foreground">{title}</div>
+              <ul className="mt-1 space-y-0.5">
+                {points.map((pt) => <li key={pt} className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground"><Check className="h-3 w-3 shrink-0 text-success" strokeWidth={3} /> {pt}</li>)}
+              </ul>
+            </div>
+            {sel === v && <Check className="h-5 w-5 shrink-0 text-cobalt" />}
+          </button>
+        ))}
+      </div>
+      <Button variant="brand" className="shine mt-5 h-12 w-full bg-gradient-tri text-base" disabled={!sel} onClick={() => sel && onPick(sel)}>Continue →</Button>
+    </div>
+  );
+}
+
 /* ---------- card root ---------- */
 
 export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const [mode, setMode] = useState<Mode>("in");
   const [role, setRole] = useState<Role>("merchant");
+  const [picked, setPicked] = useState<Role | null>(null);
   const [success, setSuccess] = useState<Pending | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -636,18 +700,20 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
       {/* segmented primary switcher */}
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-full bg-muted p-1" role="tablist" aria-label="Sign in or create account">
         {([["in", "Sign In"], ["up", "Create Account"]] as const).map(([v, l]) => (
-          <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => setMode(v)}
+          <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => { setMode(v); if (v === "in") setPicked(null); }}
             className={`rounded-full py-2 text-sm font-black transition-all ${mode === v ? "bg-gradient-brand text-primary-foreground shadow-[0_0_18px_-2px_color-mix(in_oklab,var(--cyan)_70%,transparent)]" : "text-muted-foreground hover:text-foreground"}`}>
             {l}
           </button>
         ))}
       </div>
-      <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>
+      {mode === "in" && <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>}
       {mode === "in"
         ? <SignIn key={`in-${role}`} role={role} onDone={handleDone} />
-        : role === "merchant"
-          ? <BusinessSignUp key="up-biz" onDone={handleDone} />
-          : <PersonalSignUp key="up-per" onDone={handleDone} />}
+        : picked === null
+          ? <TypeSelect onPick={(r) => { setPicked(r); setRole(r); }} />
+          : picked === "merchant"
+            ? <BusinessSignUp key="up-biz" onDone={handleDone} onBack={() => setPicked(null)} />
+            : <PersonalSignUp key="up-per" onDone={handleDone} onBack={() => setPicked(null)} />}
       <div className="mt-5 flex items-center justify-between border-t-[1.5px] border-border pt-4 text-xs font-semibold">
         <span className="text-muted-foreground">{mode === "in" ? "New to Slikpay? " : "Already have an account? "}
           <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="font-bold text-cobalt hover:underline">{mode === "in" ? "Create free account" : "Sign in"}</button>
