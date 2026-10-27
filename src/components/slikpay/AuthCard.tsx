@@ -345,6 +345,7 @@ function BusinessSignUp({ onDone }: { onDone: (p: Pending, remember: boolean) =>
       return () => clearTimeout(t);
     }
     setResolved("");
+    return undefined;
   }, [f.nuban]);
 
   async function launch(e: React.FormEvent) {
