@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowLeftRight, Check, ChevronDown, CreditCard, Eye, EyeOff, Landmark, Loader2, Lock, Mail, ShieldCheck, Smartphone, User as UserIcon, Zap, type LucideIcon,
+  ArrowLeftRight, Check, Code2, ScanFace, ChevronDown, CreditCard, Eye, EyeOff, Landmark, Loader2, Lock, Mail, ShieldCheck, Smartphone, User as UserIcon, Zap, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, type Role, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { isEmail, isPin, passwordStrength } from "@/lib/password";
-import { Logo } from "@/components/slikpay/Logo";
+import { Disclaimer, FeatureGrid, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -23,29 +23,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const FEATURES: { icon: LucideIcon; tone: string; title: string; desc: string }[] = [
-  { icon: Zap, tone: "bg-cobalt", title: "Automated T+0 Settlement", desc: "Real-time central bank NIP inflows with automated midnight sweeps to your dedicated Sterling Bank NUBAN." },
-  { icon: Smartphone, tone: "bg-gradient-brand", title: "SoftPOS Contactless Terminal", desc: "Turn any NFC Android phone into an institutional contactless card terminal with 0.5s tap-to-pay clearing." },
-  { icon: CreditCard, tone: "bg-magenta", title: "Virtual Dollar Mastercards", desc: "High-limit virtual cards for global AWS, Google Cloud, Meta ads, and international shopping." },
-  { icon: ArrowLeftRight, tone: "bg-gradient-tri", title: "Instant Operational Payouts & Swaps", desc: "Sub-second NIP payouts to all 45+ Nigerian banks and zero-spread fiat-to-stablecoin treasury swaps." },
-];
-const TRUST = ["Powered by Sterling Bank Core Clearing Rails", "CBN & NDIC Regulated BaaS Partner", "Bank-Grade 256-Bit TLS & PCI-DSS Level 1 Encryption"];
-
-function FeatureList() {
-  return (
-    <div className="space-y-3">
-      {FEATURES.map(({ icon: Icon, tone, title, desc }) => (
-        <div key={title} className="panel flex gap-4 p-4 transition-colors hover:border-cyan">
-          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-primary-foreground ${tone}`}><Icon className="h-5 w-5" /></span>
-          <div>
-            <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
-            <p className="mt-0.5 text-[13px] font-medium leading-snug text-muted-foreground">{desc}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+const TRUST = ["Sterling Bank clearing rails", "CBN & NDIC regulated partner", "256-bit TLS · PCI-DSS Level 1"];
 
 function ErrorPill({ msg }: { msg?: string | undefined }) {
   if (!msg) return null;
@@ -115,6 +93,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(45);
   const [forgot, setForgot] = useState(false);
+  const [portal, setPortal] = useState<Role>("personal");
 
   useEffect(() => {
     if (step !== 2 || timer <= 0) return;
@@ -129,7 +108,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
     if (next.email || next.pw) return;
     setBusy(true);
     try {
-      const r = await api.login(email, pw);
+      const r = await api.login(email, pw, portal);
       setPending(r);
       setStep(2);
       setTimer(45);
@@ -195,6 +174,23 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
 
   return (
     <form onSubmit={submit} noValidate className="animate-in fade-in space-y-4">
+      <div>
+        <div className="mb-1.5 flex items-center justify-between font-mono text-[10px] font-bold uppercase tracking-widest">
+          <span className="text-muted-foreground">Select account portal</span>
+          <span className={portal === "personal" ? "text-magenta" : "text-cobalt"}>{portal === "personal" ? "Personal portal" : "Business portal"}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+          {([["personal", "Personal", UserIcon], ["merchant", "Business", Landmark]] as const).map(([v, l, Icon]) => (
+            <button key={v} type="button" onClick={() => setPortal(v)} aria-pressed={portal === v}
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold transition-all ${portal === v ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}>
+              <Icon className="h-4 w-4" /> {l}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 rounded-lg border border-cyan/40 bg-cyan/10 px-3 py-2 text-xs font-semibold text-body">
+          {portal === "personal" ? "Instant P2P transfers via @SlikTag, virtual USD Mastercards, airtime & bill payments." : "Dedicated NUBANs, SoftPOS acceptance, settlement sweeps, payroll and API keys."}
+        </p>
+      </div>
       <Field label="Email address" id="email" icon={Mail} error={err.email}>
         <input id="email" type="email" autoComplete="email" className={inputCls()} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
       </Field>
@@ -208,9 +204,11 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         <button type="button" onClick={() => setForgot(true)} className="font-bold text-cobalt hover:underline">Forgot Password?</button>
       </div>
       <Button variant="brand" type="submit" disabled={busy} className="h-12 w-full text-base">
-        {busy && <Loader2 className="animate-spin" />} Sign In to Console →
+        {busy && <Loader2 className="animate-spin" />} Sign in to {portal === "personal" ? "Personal Account" : "Business Console"} →
       </Button>
-      <p className="text-center text-xs font-semibold text-muted-foreground">Tip: an email containing “personal” opens the Personal wallet.</p>
+      <button type="button" onClick={() => toast.info("Passkey sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
+        <ScanFace className="h-4 w-4 text-magenta" /> Sign in with device biometrics / passkey
+      </button>
     </form>
   );
 }
@@ -359,7 +357,6 @@ function AuthPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"in" | "up">("in");
-  const [showFeatures, setShowFeatures] = useState(false);
 
   const finish = (p: Pending, remember: boolean) => {
     signIn(p.token, p.user, p.role, remember);
@@ -368,39 +365,57 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[45fr_55fr]">
-      <aside className="relative border-b-[1.5px] border-border lg:border-b-0 lg:border-r-[1.5px]">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-tri" />
-        <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8 lg:sticky lg:top-0 lg:min-h-screen lg:px-12 lg:py-12">
-          <Logo sub="by Sterling Bank" />
-          <div>
-            <h1 className="text-2xl font-black leading-tight tracking-tight text-foreground lg:text-[34px]">The Unified Pan-African & Global Financial Operating System</h1>
-            <p className="mt-3 text-sm font-medium leading-relaxed text-body lg:text-base">Institutional settlement rails, contactless SoftPOS tap-to-pay, and virtual treasury cards engineered for high-growth businesses and modern consumers.</p>
+    <div className="min-h-screen bg-background">
+      <TopNav />
+      <RailsTicker />
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-cobalt/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 top-20 h-[420px] w-[420px] rounded-full bg-magenta/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-1/2 h-[300px] w-[300px] rounded-full bg-cyan/15 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-12 lg:grid-cols-[1.25fr_1fr] lg:py-16">
+          <div className="order-2 lg:order-1"><HeroIntro /></div>
+          <div id="signin" className="order-1 lg:order-2">
+            <div className="lg:sticky lg:top-24">
+              <div className="panel relative bg-background/90 p-6 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--cobalt)_35%,transparent)] backdrop-blur-xl sm:p-7">
+                <div className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-gradient-tri" />
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-cobalt"><ShieldCheck className="h-3 w-3" /> Secure authentication</div>
+                    <h2 className="mt-1 text-xl font-black text-foreground">{tab === "in" ? "Sign in to Slikpay" : "Open your Slikpay account"}</h2>
+                  </div>
+                  <div className="flex rounded-full bg-muted p-1">
+                    {(["in", "up"] as const).map((t) => (
+                      <button key={t} onClick={() => setTab(t)} className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${tab === t ? "bg-cobalt text-primary-foreground shadow-cobalt" : "text-body hover:text-foreground"}`}>
+                        {t === "in" ? "Sign In" : "Sign Up"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {tab === "in" ? <SignIn key="in" onDone={finish} /> : <SignUp key="up" onDone={finish} />}
+                <div className="mt-5 flex items-center gap-3 rounded-xl border border-cobalt/20 bg-cobalt/5 p-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-background text-cobalt"><Code2 className="h-4 w-4" /></span>
+                  <p className="flex-1 text-xs font-bold text-foreground">Building an integration or e-commerce store?</p>
+                  <span className="font-mono text-[10px] font-bold text-cobalt">API keys + live sandbox</span>
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t-[1.5px] border-border pt-4 text-xs font-semibold">
+                  <span className="text-muted-foreground">{tab === "in" ? "New to Slikpay? " : "Already have an account? "}
+                    <button onClick={() => setTab(tab === "in" ? "up" : "in")} className="font-bold text-cobalt hover:underline">{tab === "in" ? "Create free account" : "Sign in"}</button>
+                  </span>
+                  <a href="#kyb" className="font-bold text-body hover:text-cobalt">KYC / KYB requirements →</a>
+                </div>
+              </div>
+              <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1">
+                {TRUST.map((t) => <li key={t} className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground"><Lock className="h-3 w-3" /> {t}</li>)}
+              </ul>
+            </div>
           </div>
-          <button className="flex items-center justify-between rounded-xl border-2 border-border px-4 py-3 text-sm font-bold text-foreground lg:hidden" onClick={() => setShowFeatures(!showFeatures)} aria-expanded={showFeatures}>
-            <span className="flex items-center gap-2"><span className="h-2 w-2 animate-pulse rounded-full bg-cyan" /> Why Slikpay? 4 core features</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${showFeatures ? "rotate-180" : ""}`} />
-          </button>
-          <div className={`${showFeatures ? "block" : "hidden"} lg:block`}><FeatureList /></div>
-          <ul className="mt-auto space-y-2 border-t-[1.5px] border-border pt-5">
-            {TRUST.map((t) => (
-              <li key={t} className="flex items-center gap-2 text-xs font-bold text-body"><ShieldCheck className="h-4 w-4 shrink-0 text-cobalt" /> {t}</li>
-            ))}
-          </ul>
         </div>
-      </aside>
-      <main className="flex items-center justify-center px-5 py-10 lg:py-12">
-        <div className="w-full max-w-md">
-          <div className="mb-7 grid grid-cols-2 rounded-2xl border-2 border-border p-1.5">
-            {(["in", "up"] as const).map((t) => (
-              <button key={t} onClick={() => setTab(t)} className={`rounded-xl py-2.5 text-sm font-bold transition-colors ${tab === t ? "bg-cobalt text-primary-foreground shadow-cobalt" : "text-body hover:text-foreground"}`}>
-                {t === "in" ? "Sign In" : "Create Account"}
-              </button>
-            ))}
-          </div>
-          {tab === "in" ? <SignIn key="in" onDone={finish} /> : <SignUp key="up" onDone={finish} />}
-        </div>
-      </main>
+      </section>
+      <FeatureGrid />
+      <KybSection />
+      <HowItWorks />
+      <Disclaimer />
+      <Footer />
     </div>
   );
 }
