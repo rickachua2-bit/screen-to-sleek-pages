@@ -516,7 +516,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         </Field>
         <Field label="Phone Number" id="b-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
+            <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">{dialOf(f.country).flag}</span><span className="font-mono">{dialOf(f.country).dial}</span></span>
             <input id="b-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
@@ -536,10 +536,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <StepBar n={2} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
         <h2 className="text-xl font-black text-foreground">Business &amp; CAC Regulatory Lookup</h2>
         <Field label="Company Type" id="b-ctype">
-          <select id="b-ctype" className={`${inputCls(false)} appearance-none pr-9`} value={f.companyType} onChange={set("companyType")}>
-            {COMPANY_TYPES.map((c) => <option key={c}>{c}</option>)}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SelectMenu id="b-ctype" value={f.companyType} options={COMPANY_OPTS} onChange={(v) => setF((p) => ({ ...p, companyType: v }))} placeholder="Select company type" />
         </Field>
         <Field label="CAC Registration Number" id="b-cac" icon={Landmark} error={err["cac"]} shake>
           <input id="b-cac" className={`${inputCls()} pr-28`} value={f.cac} onChange={(e) => { setF((p) => ({ ...p, cac: e.target.value })); setCacVerified(false); }} placeholder="e.g. RC 1892341" />
@@ -556,10 +553,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           </div>
         )}
         <Field label="Industry / Business Category" id="b-industry">
-          <select id="b-industry" className={`${inputCls(false)} appearance-none pr-9`} value={f.industry} onChange={set("industry")}>
-            {INDUSTRIES.map((c) => <option key={c}>{c}</option>)}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SelectMenu id="b-industry" value={f.industry} options={INDUSTRY_OPTS} onChange={(v) => setF((p) => ({ ...p, industry: v }))} searchable placeholder="Select your business category" />
         </Field>
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
@@ -585,11 +579,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
       <StepBar n={3} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
       <h2 className="text-xl font-black text-foreground">Settlement Bank &amp; Security PIN</h2>
       <Field label="Settlement Bank" id="b-bank" error={err["bank"]} shake>
-        <select id="b-bank" className={`${inputCls(false)} appearance-none pr-9`} value={f.bank} onChange={set("bank")}>
-          <option value="" disabled>Select a licensed Nigerian bank</option>
-          {NG_BANKS.map((b) => <option key={b.code} value={b.name}>{b.name}</option>)}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <SelectMenu id="b-bank" value={f.bank} options={BANK_OPTS} onChange={(v) => setF((p) => ({ ...p, bank: v }))} searchable placeholder="Select a licensed Nigerian bank" />
       </Field>
       <Field label="10-Digit Settlement NUBAN Account Number" id="b-nuban" error={err["nuban"]} shake>
         <input id="b-nuban" inputMode="numeric" maxLength={10} className={`${inputCls(false)} font-mono tracking-widest`} value={f.nuban} onChange={(e) => setF((p) => ({ ...p, nuban: e.target.value.replace(/\D/g, "") }))} placeholder="0123456789" />
@@ -677,7 +667,7 @@ function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         </Field>
         <Field label="Phone Number" id="p-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
+            <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">{dialOf(f.country).flag}</span><span className="font-mono">{dialOf(f.country).dial}</span></span>
             <input id="p-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
