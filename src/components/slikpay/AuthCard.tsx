@@ -706,12 +706,14 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
           </button>
         ))}
       </div>
-      <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>
+      {mode === "in" && <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>}
       {mode === "in"
         ? <SignIn key={`in-${role}`} role={role} onDone={handleDone} />
-        : role === "merchant"
-          ? <BusinessSignUp key="up-biz" onDone={handleDone} />
-          : <PersonalSignUp key="up-per" onDone={handleDone} />}
+        : picked === null
+          ? <TypeSelect onPick={(r) => { setPicked(r); setRole(r); }} />
+          : picked === "merchant"
+            ? <BusinessSignUp key="up-biz" onDone={handleDone} onBack={() => setPicked(null)} />
+            : <PersonalSignUp key="up-per" onDone={handleDone} onBack={() => setPicked(null)} />}
       <div className="mt-5 flex items-center justify-between border-t-[1.5px] border-border pt-4 text-xs font-semibold">
         <span className="text-muted-foreground">{mode === "in" ? "New to Slikpay? " : "Already have an account? "}
           <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="font-bold text-cobalt hover:underline">{mode === "in" ? "Create free account" : "Sign in"}</button>
