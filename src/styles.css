@@ -215,10 +215,11 @@ html { scroll-behavior: smooth; }
   animation: gradient-pan 6s linear infinite;
 }
 @utility bg-grid {
-  background-image: linear-gradient(color-mix(in oklab, var(--obsidian) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--obsidian) 5%, transparent) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%);
+  background-image:
+    radial-gradient(60% 50% at 15% 20%, color-mix(in oklab, var(--cobalt) 28%, transparent), transparent 70%),
+    radial-gradient(45% 40% at 85% 30%, color-mix(in oklab, var(--magenta) 20%, transparent), transparent 70%),
+    radial-gradient(50% 45% at 60% 90%, color-mix(in oklab, var(--cyan) 16%, transparent), transparent 70%);
+  filter: blur(20px);
 }
 @utility glow-border {
   position: relative;
@@ -285,9 +286,6 @@ html { scroll-behavior: smooth; }
   color-scheme: dark;
   background: var(--background);
   color: var(--foreground);
-}
-.theme-flame .bg-grid {
-  background-image: linear-gradient(oklch(1 0 0 / 6%) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 6%) 1px, transparent 1px);
 }
 .theme-flame .panel { backdrop-filter: blur(14px); }
 .theme-flame .field { background: oklch(0.13 0.04 268 / 70%); }
