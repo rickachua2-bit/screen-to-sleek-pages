@@ -262,6 +262,7 @@ html { scroll-behavior: smooth; }
 /* Flame theme: deep midnight-cobalt canvas so the logo's tri-colour glows. Scoped to the auth page. */
 .theme-flame {
   --background: oklch(0.16 0.045 268);
+  --cobalt: oklch(0.62 0.22 262);
   --foreground: oklch(0.97 0.01 250);
   --card: oklch(0.2 0.05 268 / 70%);
   --card-foreground: oklch(0.97 0.01 250);
