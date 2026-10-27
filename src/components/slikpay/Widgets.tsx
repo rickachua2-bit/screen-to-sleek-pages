@@ -76,7 +76,7 @@ export function UsdCardPanel({ balance = 0, label, onFund, note }: { balance?: n
           <div className="mt-4 text-3xl font-black text-foreground">${balance.toFixed(2)}</div>
           <p className="text-sm font-semibold text-muted-foreground">Available balance</p>
           {note && <p className="mt-2 max-w-[200px] text-xs font-semibold text-body">{note}</p>}
-          <Button variant="obsidian" className="mt-5" onClick={onFund}>Fund Card</Button>
+          <Button variant="brand" className="mt-5" onClick={onFund}>Fund Card</Button>
         </div>
         <CardGraphic label={label} />
       </div>

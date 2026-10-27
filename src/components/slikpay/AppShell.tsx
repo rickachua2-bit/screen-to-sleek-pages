@@ -39,7 +39,7 @@ export function AppShell({ mode, nav, children, greeting }: { mode: Role; nav: N
           <button
             key={label}
             onClick={() => { setActive(label); setOpen(false); }}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${active === label ? "bg-navy text-primary-foreground" : "text-body hover:bg-muted hover:text-foreground"}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${active === label ? "bg-gradient-tri text-primary-foreground shadow-lg" : "text-body hover:bg-muted hover:text-foreground"}`}
           >
             <Icon className="h-[18px] w-[18px]" /> {label}
           </button>
@@ -67,7 +67,7 @@ export function AppShell({ mode, nav, children, greeting }: { mode: Role; nav: N
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="theme-flame relative flex min-h-screen bg-background bg-mesh">
       <div className="sticky top-0 hidden h-screen lg:block">{sidebar}</div>
       {open && (
         <div className="fixed inset-0 z-40 bg-obsidian/25 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)}>
@@ -102,7 +102,7 @@ export function AppShell({ mode, nav, children, greeting }: { mode: Role; nav: N
               )}
             </div>
             <div className="hidden items-center gap-2 md:flex">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy text-xs font-black text-primary-foreground">{initials}</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-tri text-xs font-black text-primary-foreground">{initials}</span>
               <div className="leading-tight">
                 <div className="text-sm font-extrabold text-foreground">{name}</div>
                 <div className="text-[11px] font-semibold text-muted-foreground">{isBiz ? user?.title ?? "Executive Director" : "Personal account"}</div>
