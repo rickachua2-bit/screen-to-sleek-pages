@@ -24,7 +24,7 @@ export function TopNav() {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> All systems live
           </span>
           <a href="#how" className="hidden rounded-full border-2 border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:border-cobalt sm:inline-flex">Developer Docs</a>
-          <a href="#signin" className="rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90">Get Mobile App</a>
+          <a href="#signin" className="shine rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90">Get Mobile App</a>
         </div>
       </div>
     </header>
@@ -71,13 +71,13 @@ export function HeroIntro() {
         Accept contactless payments on mobile, issue dedicated corporate accounts, disburse instant payroll, and manage multi-currency FX across Africa and global markets.
       </p>
       <div className="mt-7 flex flex-wrap gap-3">
-        <a href="#signin" className="inline-flex items-center gap-2 rounded-xl bg-cobalt px-5 py-3 text-sm font-bold text-primary-foreground shadow-cobalt transition-all hover:-translate-y-0.5 hover:bg-cobalt-deep">Open free account →</a>
+        <a href="#signin" className="shine inline-flex items-center gap-2 rounded-xl bg-gradient-tri px-5 py-3 text-sm font-bold text-primary-foreground shadow-cobalt transition-all hover:-translate-y-0.5 hover:bg-cobalt-deep">Open free account →</a>
         <a href="#how" className="inline-flex items-center gap-2 rounded-xl border-2 border-border bg-background px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-cobalt">See how it works</a>
       </div>
       <dl className="mt-8 grid grid-cols-3 divide-x-[1.5px] divide-border rounded-2xl border-[1.5px] border-border bg-background/70 backdrop-blur">
         {[["₦48B+", "Processed yearly"], ["45+", "Banks connected"], ["0.8s", "Avg. settlement"]].map(([v, l]) => (
           <div key={l} className="px-4 py-3">
-            <dt className="text-2xl font-black tracking-tight text-foreground md:text-3xl">{v}</dt>
+            <dt className="text-gradient-flame text-2xl font-black tracking-tight md:text-3xl">{v}</dt>
             <dd className="text-[11px] font-semibold text-muted-foreground">{l}</dd>
           </div>
         ))}
@@ -86,7 +86,7 @@ export function HeroIntro() {
         {PILLARS.map(({ tag, title, icon: Icon, tone, items }) => (
           <div key={title} className="panel group p-4 transition-all hover:-translate-y-0.5 hover:border-cobalt/40 hover:shadow-lg">
             <div className="flex items-center gap-3">
-              <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-primary-foreground ${tone}`}><Icon className="h-4 w-4" /></span>
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-primary-foreground shadow-[0_0_24px_-4px] shadow-magenta/60 transition-transform group-hover:scale-110 ${tone}`}><Icon className="h-4 w-4" /></span>
               <div>
                 <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{tag}</div>
                 <div className="text-sm font-extrabold text-foreground">{title}</div>
@@ -157,14 +157,14 @@ export function FeatureGrid() {
     <section id="offer" className="bg-tint-cyan"><div className="mx-auto max-w-7xl px-5 py-24">
       <div className="text-center">
         <Eyebrow>The complete Slikpay suite</Eyebrow>
-        <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground md:text-4xl">Everything you can power with Slikpay</h2>
+        <h2 className="text-gradient-flame mt-4 text-3xl font-black tracking-tight md:text-5xl">Everything you can power with Slikpay</h2>
         <p className="mx-auto mt-3 max-w-2xl font-medium text-body">Built for individuals who want frictionless everyday banking and ambitious merchants who need enterprise-grade collections.</p>
       </div>
       <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(({ icon: Icon, tone, title, desc, foot }) => (
           <div key={title} className="panel group relative overflow-hidden p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
             <div className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-tri transition-transform duration-300 group-hover:scale-x-100" />
-            <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-current/20 shadow-[0_0_30px_-6px_currentColor] transition-transform group-hover:scale-110 group-hover:rotate-6 ${tone}`}><Icon className="h-5 w-5" /></span>
             <h3 className="mt-5 text-lg font-extrabold text-foreground">{title}</h3>
             <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground">{desc}</p>
             <p className="mt-5 flex items-center gap-1.5 font-mono text-[11px] font-bold text-cobalt"><Check className="h-3.5 w-3.5" /> {foot}</p>
@@ -209,7 +209,7 @@ export function KybSection() {
       <div className="mx-auto max-w-7xl px-5 py-24">
         <div className="text-center">
           <Eyebrow>Pan-African & global compliance</Eyebrow>
-          <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground md:text-4xl">What you need to sign up</h2>
+          <h2 className="text-gradient-flame mt-4 text-3xl font-black tracking-tight md:text-5xl">What you need to sign up</h2>
           <p className="mx-auto mt-3 max-w-2xl font-medium text-body">Pick your country to see exactly what's required for instant verification.</p>
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-2">
@@ -288,7 +288,7 @@ export function CtaBand() {
             <h2 className="text-3xl font-black tracking-tight md:text-4xl">Ready to move money at African speed?</h2>
             <p className="mt-2 max-w-xl font-semibold opacity-90">Open a free account in 60 seconds. No paperwork to start.</p>
           </div>
-          <a href="#signin" className="rounded-2xl bg-background px-7 py-4 text-sm font-black text-cobalt shadow-xl transition-transform hover:-translate-y-0.5">Get started free →</a>
+          <a href="#signin" className="shine rounded-2xl bg-background px-7 py-4 text-sm font-black text-cobalt shadow-xl transition-transform hover:-translate-y-0.5">Get started free →</a>
         </div>
       </div>
     </section>

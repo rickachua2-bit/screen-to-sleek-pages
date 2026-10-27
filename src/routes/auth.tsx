@@ -203,7 +203,7 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         </label>
         <button type="button" onClick={() => setForgot(true)} className="font-bold text-cobalt hover:underline">Forgot Password?</button>
       </div>
-      <Button variant="brand" type="submit" disabled={busy} className="h-12 w-full text-base">
+      <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri text-base">
         {busy && <Loader2 className="animate-spin" />} Sign in to {portal === "personal" ? "Personal Account" : "Business Console"} →
       </Button>
       <button type="button" onClick={() => toast.info("Passkey sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
@@ -369,6 +369,7 @@ function AuthPage() {
       <TopNav />
       <RailsTicker />
       <section className="bg-mesh relative overflow-hidden">
+        <div className="aurora" />
         <div className="pointer-events-none absolute inset-0 bg-grid" />
         <div className="animate-blob pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-cobalt/15 blur-3xl" />
         <div className="animate-blob pointer-events-none absolute -right-32 top-20 h-[460px] w-[460px] rounded-full bg-magenta/12 blur-3xl [animation-delay:-5s]" />
@@ -376,7 +377,8 @@ function AuthPage() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-12 lg:grid-cols-[1.25fr_1fr] lg:py-16">
           <div className="order-2 lg:order-1"><HeroIntro /></div>
           <div id="signin" className="order-1 lg:order-2">
-            <div className="relative lg:sticky lg:top-24">
+            <div className="relative isolate lg:sticky lg:top-24">
+              <div className="halo" />
               <FloatingChips />
               <div className="panel glow-border relative rounded-3xl border-transparent bg-background/90 p-6 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--cobalt)_35%,transparent)] backdrop-blur-xl sm:p-7">
                                 <div className="mb-5 flex items-start justify-between gap-3">

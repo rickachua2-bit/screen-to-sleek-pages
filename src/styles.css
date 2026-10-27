@@ -291,3 +291,33 @@ html { scroll-behavior: smooth; }
 }
 .theme-flame .panel { backdrop-filter: blur(14px); }
 .theme-flame .field { background: oklch(0.13 0.04 268 / 70%); }
+
+/* Flame theme flourishes */
+@keyframes aurora { 0%,100% { transform: translate3d(0,0,0) rotate(0deg); } 50% { transform: translate3d(-4%,3%,0) rotate(8deg); } }
+@keyframes shimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(220%); } }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes flame-glow { 0%,100% { filter: drop-shadow(0 0 6px color-mix(in oklab, var(--magenta) 60%, transparent)); } 50% { filter: drop-shadow(0 0 14px color-mix(in oklab, var(--cyan) 70%, transparent)); } }
+@utility text-gradient-flame {
+  background-image: linear-gradient(100deg, var(--foreground) 10%, var(--cyan) 45%, var(--magenta) 75%, var(--cobalt));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+@utility aurora {
+  position: absolute; inset: -20%; pointer-events: none;
+  background: conic-gradient(from 180deg at 50% 50%, color-mix(in oklab, var(--cobalt) 35%, transparent), color-mix(in oklab, var(--magenta) 25%, transparent), color-mix(in oklab, var(--cyan) 25%, transparent), color-mix(in oklab, var(--cobalt) 35%, transparent));
+  filter: blur(90px); opacity: .55; animation: aurora 18s ease-in-out infinite;
+}
+@utility shine {
+  position: relative; overflow: hidden;
+  &::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(100deg, transparent, oklch(1 0 0 / 35%), transparent); transform: translateX(-120%); animation: shimmer 3.2s ease-in-out infinite; }
+}
+@utility flame-glow { animation: flame-glow 3s ease-in-out infinite; }
+@utility halo {
+  position: absolute; inset: -40px; border-radius: 9999px; pointer-events: none; z-index: -1;
+  background: conic-gradient(var(--cobalt), var(--magenta), var(--cyan), var(--cobalt));
+  filter: blur(70px); opacity: .45; animation: spin-slow 14s linear infinite;
+}
+.theme-flame .panel { transition: border-color .3s, box-shadow .3s, transform .3s; }
+.theme-flame .panel:hover { border-color: color-mix(in oklab, var(--magenta) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--cyan) 15%, transparent), 0 20px 50px -20px color-mix(in oklab, var(--magenta) 45%, transparent); }
+.theme-flame h2 { text-wrap: balance; }
+.theme-flame ::selection { background: var(--magenta); color: white; }
+.theme-flame .font-mono.text-cobalt { color: var(--cyan); }
