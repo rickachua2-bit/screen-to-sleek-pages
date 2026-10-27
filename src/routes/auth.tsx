@@ -365,7 +365,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="theme-flame min-h-screen bg-background">
       <TopNav />
       <RailsTicker />
       <section className="bg-mesh relative overflow-hidden">
