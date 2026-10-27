@@ -27,17 +27,21 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () => void }) {
   const [banks, setBanks] = useState<Bank[]>(NG_BANKS);
-  const [f, setF] = useState<Record<string, string>>({ bank: "232", service: "power", from: "NGN", to: "USD" });
+  type Form = Partial<Record<"bank" | "acct" | "amount" | "narration" | "service" | "target" | "from" | "to", string>>;
+  const [f, setF] = useState<Form>({ bank: "232", service: "power", from: "NGN", to: "USD" });
   const [acctName, setAcctName] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
-  const set = (k: string) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const set = (k: keyof Form) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   useEffect(() => {
     if (kind === "send") api.banks().then(setBanks);
   }, [kind]);
   useEffect(() => {
-    if (kind !== "send" || (f.acct ?? "").length !== 10) return setAcctName("");
+    if (kind !== "send" || (f.acct ?? "").length !== 10) {
+      setAcctName("");
+      return;
+    }
     api.nameEnquiry(f.bank!, f.acct!).then((r) => setAcctName(r.accountName));
   }, [kind, f.bank, f.acct]);
 
@@ -45,7 +49,10 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (kind !== "softpos" && kind !== "add" && !(amount > 0)) return toast.error("Enter a valid amount");
+    if (kind !== "softpos" && kind !== "add" && !(amount > 0)) {
+      toast.error("Enter a valid amount");
+      return;
+    }
     setBusy(true);
     try {
       let r: { message: string; ref: string } | undefined;

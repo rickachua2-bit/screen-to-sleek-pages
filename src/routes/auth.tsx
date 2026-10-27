@@ -65,9 +65,18 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(f.email)) return toast.error("Enter a valid email address");
-    if (f.password.length < 8) return toast.error("Password must be at least 8 characters");
-    if (tab === "up" && f.name.trim().length < 2) return toast.error("Enter your full or business name");
+    if (!/^\S+@\S+\.\S+$/.test(f.email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    if (f.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (tab === "up" && f.name.trim().length < 2) {
+      toast.error("Enter your full or business name");
+      return;
+    }
     setBusy(true);
     try {
       if (tab === "in") {

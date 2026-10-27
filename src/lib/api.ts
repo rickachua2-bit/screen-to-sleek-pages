@@ -30,7 +30,7 @@ export interface Bank {
   name: string;
 }
 
-const BASE: string = import.meta.env.VITE_API_BASE || "https://business.slikpay.online/api";
+const BASE: string = import.meta.env["VITE_API_BASE"] || "https://business.slikpay.online/api";
 
 function readLS(key: string) {
   return typeof window === "undefined" ? null : window.localStorage.getItem(key);
