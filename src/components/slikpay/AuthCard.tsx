@@ -495,11 +495,54 @@ const CATEGORY_GROUPS: { group: string; items: Cat[] }[] = [
 
 const ALL_CATS = CATEGORY_GROUPS.flatMap((g) => g.items.map((i) => ({ ...i, group: g.group })));
 
+// extra words people type when looking for a category
+const CAT_KEYWORDS: Record<string, string> = {
+  "eCommerce": "online store shop marketplace web",
+  "Retail & Wholesale": "shop supermarket wholesale trade vendor",
+  "Import & Export": "trade customs cross-border foreign",
+  "FMCG Distribution": "fast moving consumer goods supply distributor",
+  "Social Commerce & Resellers": "instagram whatsapp vendor reseller agent",
+  "FinTech & Payments": "fintech payment collection billing",
+  "Banking & Lending": "bank microfinance loan credit",
+  "Insurance": "underwriting cover assurance",
+  "Crypto & Digital Assets": "crypto blockchain wallet tokens web3",
+  "SaaS & Software": "software app startup developer tech",
+  "Cloud, Data & AI": "cloud data ai machine learning hosting",
+  "Telecoms & Connectivity": "telecom network sim internet mtn",
+  "Consulting & Advisory": "consultancy advisory services",
+  "Legal & Compliance": "law lawyers compliance regulatory",
+  "Marketing & Creative Agency": "marketing ads brand creative agency",
+  "Recruiting & Staffing": "hr hiring staffing recruitment",
+  "Real Estate & Property": "property land rent housing estate",
+  "Logistics & Freight": "logistics delivery haulage courier transport",
+  "Aviation & Travel": "airline travel flights tourism hospitality",
+  "Marine & Shipping": "shipping port vessel marine",
+  "Oil, Gas & Energy": "oil gas petroleum downstream energy",
+  "Renewable Energy": "solar power clean energy inverter",
+  "Healthcare & Clinics": "health hospital clinic pharma medical",
+  "Education & Training": "school training learning students edtech",
+  "Food, Restaurants & Catering": "food restaurant catering kitchen",
+  "Fashion & Beauty": "fashion clothing beauty salon apparel",
+  "Fitness & Wellness": "gym fitness wellness sports",
+  "Media & Entertainment": "media music film entertainment content creator",
+  "Gaming & Esports": "gaming esports games betting",
+  "Photography & Studios": "photo studio videography events",
+  "Agriculture & Agribusiness": "agro farming crops livestock agribusiness",
+  "Manufacturing & Production": "factory manufacturing production industrial",
+  "Mining & Extraction": "mining solid minerals extraction",
+  "Construction & Infrastructure": "construction building infrastructure engineering",
+  "Non-Profit / NGO": "ngo charity foundation non profit",
+  "Cooperative & Thrift": "cooperative thrift microfinance union",
+  "Government & Public Sector": "government public agency parastatal",
+  "Faith-Based Organisation": "church mosque faith religious",
+};
+
+
 function CategoryPicker({ value, onChange, error, shake }: { value: string; onChange: (v: string) => void; error?: string | undefined; shake?: boolean }) {
   const [q, setQ] = useState("");
   const term = q.trim().toLowerCase();
   const groups = CATEGORY_GROUPS
-    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group}`.toLowerCase().includes(term)) : g.items }))
+    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
     .filter((g) => g.items.length > 0);
   const picked = ALL_CATS.find((c) => c.value === value);
 
