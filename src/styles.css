@@ -320,3 +320,4 @@ html { scroll-behavior: smooth; }
 .theme-flame .panel:hover { border-color: color-mix(in oklab, var(--magenta) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--cyan) 15%, transparent), 0 20px 50px -20px color-mix(in oklab, var(--magenta) 45%, transparent); }
 .theme-flame h2 { text-wrap: balance; }
 .theme-flame ::selection { background: var(--magenta); color: white; }
+.theme-flame .font-mono.text-cobalt { color: var(--cyan); }
