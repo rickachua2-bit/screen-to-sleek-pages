@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  AtSign, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Info, Landmark, Loader2, Lock, Mail, Search, ShieldCheck, Smartphone, User as UserIcon, X, type LucideIcon,
+  AtSign, Bitcoin, Briefcase, Building, Building2, Camera, Check, ChevronDown, Cloud, Copy, Cross, Cpu, Dumbbell, Eye, EyeOff, Factory, Film, Fingerprint, Fuel, Gamepad2, GraduationCap, Hammer, HeartHandshake, Info, Landmark, Laptop, Loader2, Lock, Mail, Megaphone, Package, Pickaxe, Plane, Scale, Scissors, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Sun, Tractor, Truck, User as UserIcon, Users, UtensilsCrossed, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, NG_BANKS, type Role, type User } from "@/lib/api";
@@ -412,8 +412,8 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 /* ---------- business sign-up ---------- */
 
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
-const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education", "Hospitality & Travel", "Agriculture", "Manufacturing", "Real Estate", "Professional Services", "Media & Entertainment", "Transportation", "Non-Profit / NGO"];
 const COUNTRIES = [
+
   { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234", group: "West Africa" },
   { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233", group: "West Africa" },
   { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254", group: "East & Southern Africa" },
@@ -427,7 +427,6 @@ const COUNTRIES = [
 
 const COUNTRY_OPTS: Opt[] = COUNTRIES.map((c) => ({ value: c.code, label: c.name, flag: c.flag, hint: c.dial, group: c.group }));
 const COMPANY_OPTS: Opt[] = COMPANY_TYPES.map((c) => ({ value: c, label: c }));
-const INDUSTRY_OPTS: Opt[] = INDUSTRIES.map((c) => ({ value: c, label: c }));
 const BANK_OPTS: Opt[] = NG_BANKS.map((b) => ({ value: b.name, label: b.name, hint: b.code }));
 
 function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
@@ -435,11 +434,168 @@ function CountrySelect({ id, value, onChange }: { id: string; value: string; onC
 }
 
 const dialOf = (code: string) => COUNTRIES.find((c) => c.code === code) ?? COUNTRIES[0]!;
+/* ---------- business category picker ---------- */
+
+type Cat = { value: string; label: string; icon: LucideIcon };
+
+const CATEGORY_GROUPS: { group: string; items: Cat[] }[] = [
+  { group: "Trade & Commerce", items: [
+    { value: "eCommerce", label: "eCommerce", icon: ShoppingCart },
+    { value: "Retail & Wholesale", label: "Retail & Wholesale", icon: Store },
+    { value: "Import & Export", label: "Import & Export", icon: Ship },
+    { value: "FMCG Distribution", label: "FMCG Distribution", icon: Package },
+    { value: "Social Commerce & Resellers", label: "Social Commerce & Resellers", icon: Users },
+  ] },
+  { group: "Money & Technology", items: [
+    { value: "FinTech & Payments", label: "FinTech & Payments", icon: Bitcoin },
+    { value: "Banking & Lending", label: "Banking & Lending", icon: Landmark },
+    { value: "Insurance", label: "Insurance", icon: HeartHandshake },
+    { value: "Crypto & Digital Assets", label: "Crypto & Digital Assets", icon: Wallet },
+    { value: "SaaS & Software", label: "SaaS & Software", icon: Laptop },
+    { value: "Cloud, Data & AI", label: "Cloud, Data & AI", icon: Cpu },
+    { value: "Telecoms & Connectivity", label: "Telecoms & Connectivity", icon: Cloud },
+  ] },
+  { group: "Professional Services", items: [
+    { value: "Consulting & Advisory", label: "Consulting & Advisory", icon: Briefcase },
+    { value: "Legal & Compliance", label: "Legal & Compliance", icon: Scale },
+    { value: "Marketing & Creative Agency", label: "Marketing & Creative", icon: Megaphone },
+    { value: "Recruiting & Staffing", label: "Recruiting & Staffing", icon: Users },
+    { value: "Real Estate & Property", label: "Real Estate & Property", icon: Building },
+  ] },
+  { group: "Logistics & Energy", items: [
+    { value: "Logistics & Freight", label: "Logistics & Freight", icon: Truck },
+    { value: "Aviation & Travel", label: "Aviation & Travel", icon: Plane },
+    { value: "Marine & Shipping", label: "Marine & Shipping", icon: Ship },
+    { value: "Oil, Gas & Energy", label: "Oil, Gas & Energy", icon: Fuel },
+    { value: "Renewable Energy", label: "Renewable Energy", icon: Sun },
+  ] },
+  { group: "Health, Learning & Life", items: [
+    { value: "Healthcare & Clinics", label: "Healthcare & Clinics", icon: Stethoscope },
+    { value: "Education & Training", label: "Education & Training", icon: GraduationCap },
+    { value: "Food, Restaurants & Catering", label: "Food & Restaurants", icon: UtensilsCrossed },
+    { value: "Fashion & Beauty", label: "Fashion & Beauty", icon: Scissors },
+    { value: "Fitness & Wellness", label: "Fitness & Wellness", icon: Dumbbell },
+    { value: "Media & Entertainment", label: "Media & Entertainment", icon: Film },
+    { value: "Gaming & Esports", label: "Gaming & Esports", icon: Gamepad2 },
+    { value: "Photography & Studios", label: "Photography & Studios", icon: Camera },
+  ] },
+  { group: "Industry & Primary", items: [
+    { value: "Agriculture & Agribusiness", label: "Agriculture & Agribusiness", icon: Tractor },
+    { value: "Manufacturing & Production", label: "Manufacturing & Production", icon: Factory },
+    { value: "Mining & Extraction", label: "Mining & Extraction", icon: Pickaxe },
+    { value: "Construction & Infrastructure", label: "Construction & Infra", icon: Hammer },
+  ] },
+  { group: "Non-Profit & Public", items: [
+    { value: "Non-Profit / NGO", label: "Non-Profit / NGO", icon: HeartHandshake },
+    { value: "Cooperative & Thrift", label: "Cooperative & Thrift", icon: Users },
+    { value: "Government & Public Sector", label: "Government & Public", icon: Landmark },
+    { value: "Faith-Based Organisation", label: "Faith-Based Org", icon: Cross },
+  ] },
+];
+
+const ALL_CATS = CATEGORY_GROUPS.flatMap((g) => g.items.map((i) => ({ ...i, group: g.group })));
+
+// extra words people type when looking for a category
+const CAT_KEYWORDS: Record<string, string> = {
+  "eCommerce": "online store shop marketplace web",
+  "Retail & Wholesale": "shop supermarket wholesale trade vendor",
+  "Import & Export": "trade customs cross-border foreign",
+  "FMCG Distribution": "fast moving consumer goods supply distributor",
+  "Social Commerce & Resellers": "instagram whatsapp vendor reseller agent",
+  "FinTech & Payments": "fintech payment collection billing",
+  "Banking & Lending": "bank microfinance loan credit",
+  "Insurance": "underwriting cover assurance",
+  "Crypto & Digital Assets": "crypto blockchain wallet tokens web3",
+  "SaaS & Software": "software app startup developer tech",
+  "Cloud, Data & AI": "cloud data ai machine learning hosting",
+  "Telecoms & Connectivity": "telecom network sim internet mtn",
+  "Consulting & Advisory": "consultancy advisory services",
+  "Legal & Compliance": "law lawyers compliance regulatory",
+  "Marketing & Creative Agency": "marketing ads brand creative agency",
+  "Recruiting & Staffing": "hr hiring staffing recruitment",
+  "Real Estate & Property": "property land rent housing estate",
+  "Logistics & Freight": "logistics delivery haulage courier transport",
+  "Aviation & Travel": "airline travel flights tourism hospitality",
+  "Marine & Shipping": "shipping port vessel marine",
+  "Oil, Gas & Energy": "oil gas petroleum downstream energy",
+  "Renewable Energy": "solar power clean energy inverter",
+  "Healthcare & Clinics": "health hospital clinic pharma medical",
+  "Education & Training": "school training learning students edtech",
+  "Food, Restaurants & Catering": "food restaurant catering kitchen",
+  "Fashion & Beauty": "fashion clothing beauty salon apparel",
+  "Fitness & Wellness": "gym fitness wellness sports",
+  "Media & Entertainment": "media music film entertainment content creator",
+  "Gaming & Esports": "gaming esports games betting",
+  "Photography & Studios": "photo studio videography events",
+  "Agriculture & Agribusiness": "agro farming crops livestock agribusiness",
+  "Manufacturing & Production": "factory manufacturing production industrial",
+  "Mining & Extraction": "mining solid minerals extraction",
+  "Construction & Infrastructure": "construction building infrastructure engineering",
+  "Non-Profit / NGO": "ngo charity foundation non profit",
+  "Cooperative & Thrift": "cooperative thrift microfinance union",
+  "Government & Public Sector": "government public agency parastatal",
+  "Faith-Based Organisation": "church mosque faith religious",
+};
+
+
+function CategoryPicker({ value, onChange, error, shake }: { value: string; onChange: (v: string) => void; error?: string | undefined; shake?: boolean }) {
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const groups = CATEGORY_GROUPS
+    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
+    .filter((g) => g.items.length > 0);
+  const picked = ALL_CATS.find((c) => c.value === value);
+
+  return (
+    <div className={shake && error ? "animate-shake" : undefined}>
+      <div className="mb-1.5 flex items-end justify-between gap-2">
+        <label htmlFor="b-cat-search" className="text-sm font-bold text-foreground">Business Category</label>
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{ALL_CATS.length} categories</span>
+      </div>
+      <div className="rounded-2xl border-2 border-border bg-card/60 p-2 transition-colors focus-within:border-cobalt">
+        <div className="relative px-0.5 pb-2">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input id="b-cat-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search categories — e.g. agro, logistics, fintech" aria-label="Search business categories"
+            className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
+        </div>
+        <div className="dropdown-list max-h-56 space-y-3 overflow-auto px-0.5 pb-2 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-26px),transparent)]">
+          {groups.length === 0 && <p className="px-2 py-5 text-center text-xs font-bold text-muted-foreground">No category matches "{q}"</p>}
+          {groups.map((g) => (
+            <div key={g.group}>
+              <p className="mb-1.5 px-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{g.group}</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                {g.items.map((c) => {
+                  const sel = c.value === value;
+                  const Icon = c.icon;
+                  return (
+                    <button key={c.value} type="button" onClick={() => onChange(c.value)} aria-pressed={sel}
+                      className={`flex items-center gap-1.5 rounded-xl border px-2 py-2 text-left text-[11px] font-bold leading-tight transition-all duration-200 ${sel ? "border-transparent bg-gradient-brand text-primary-foreground shadow-cobalt" : "border-border text-body hover:-translate-y-0.5 hover:border-cyan hover:text-foreground"}`}>
+                      <Icon className={`h-3.5 w-3.5 shrink-0 ${sel ? "text-primary-foreground" : "text-magenta"}`} />
+                      <span className="line-clamp-2">{c.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {picked ? (
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> {picked.label} selected</p>
+      ) : (
+        <p className="mt-1 text-xs font-semibold text-muted-foreground">Pick the category that best describes what your business sells or does.</p>
+      )}
+      <ErrorPill msg={error} />
+    </div>
+  );
+}
+
 const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
+
 
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: INDUSTRIES[0]!, bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
@@ -476,6 +632,8 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   function next2(e: React.FormEvent) {
     e.preventDefault();
     if (!cacVerified) return fail({ cac: "Verify your CAC number to continue" });
+    if (!f.industry) return fail({ industry: "Select your business category" });
+
     setErr({});
     setStep(3);
   }
@@ -502,7 +660,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
     setBusy(true);
-    const r = await api.register({ name: f.director, email: f.email, phone: f.phone, password: f.pw, accountType: "BUSINESS" });
+    const r = await api.register({ name: f.director, email: f.email, phone: f.phone, password: f.pw, accountType: "BUSINESS", category: f.industry });
     setBusy(false);
     onDone(r, true);
   }
@@ -560,9 +718,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
             <p className="mt-0.5 text-xs font-semibold text-body">14 Marina Road, Lagos Island · <span className="text-success">ACTIVE</span> · Form CAC 1.1 Verified</p>
           </div>
         )}
-        <Field label="Industry / Business Category" id="b-industry">
-          <SelectMenu id="b-industry" value={f.industry} options={INDUSTRY_OPTS} onChange={(v) => setF((p) => ({ ...p, industry: v }))} searchable placeholder="Select your business category" />
-        </Field>
+        <CategoryPicker value={f.industry} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
           <div className="flex flex-wrap gap-2">

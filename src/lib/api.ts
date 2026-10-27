@@ -114,7 +114,7 @@ export const api = {
       role: portal ?? (email.toLowerCase().includes("personal") ? "personal" : "merchant"),
       requires2fa: true,
     })),
-  register: (b: { name: string; email: string; password: string; phone: string; accountType: "BUSINESS" | "PERSONAL" }) =>
+  register: (b: { name: string; email: string; password: string; phone: string; accountType: "BUSINESS" | "PERSONAL"; category?: string }) =>
     request<{ token: string; user: User; role: Role }>("/auth/register", json(b), () => ({
       token: `mock_${Date.now()}`,
       user: mockUser(b.name, b.email),
