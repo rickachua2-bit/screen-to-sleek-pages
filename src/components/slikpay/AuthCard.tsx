@@ -649,11 +649,44 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
   );
 }
 
+/* ---------- account type selection (sign-up step 1) ---------- */
+
+function TypeSelect({ onPick }: { onPick: (r: Role) => void }) {
+  const [sel, setSel] = useState<Role | null>(null);
+  const opts = [
+    { v: "merchant" as const, icon: Building2, tone: "text-cobalt bg-cobalt/10", title: "Business / Merchant", points: ["SoftPOS & contactless acceptance", "Dedicated NUBANs & settlement sweeps", "Bulk payroll & developer APIs"] },
+    { v: "personal" as const, icon: UserIcon, tone: "text-magenta bg-magenta/10", title: "Personal User", points: ["Free P2P via @SlikTag", "Virtual USD cards & bill payments", "Instant account number on signup"] },
+  ];
+  return (
+    <div className="animate-in fade-in">
+      <h2 className="text-xl font-black text-foreground">Choose your account type</h2>
+      <p className="mt-1 text-sm font-medium text-body">This decides your dashboard, limits and verification steps.</p>
+      <div className="mt-4 space-y-3">
+        {opts.map(({ v, icon: Icon, tone, title, points }) => (
+          <button key={v} type="button" onClick={() => setSel(v)} aria-pressed={sel === v}
+            className={`flex w-full gap-4 rounded-2xl border-2 p-4 text-left transition-all ${sel === v ? "border-cobalt bg-cobalt/5 ring-4 ring-cobalt/10" : "border-border hover:border-cyan"}`}>
+            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            <div className="flex-1">
+              <div className="font-extrabold text-foreground">{title}</div>
+              <ul className="mt-1 space-y-0.5">
+                {points.map((pt) => <li key={pt} className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground"><Check className="h-3 w-3 shrink-0 text-success" strokeWidth={3} /> {pt}</li>)}
+              </ul>
+            </div>
+            {sel === v && <Check className="h-5 w-5 shrink-0 text-cobalt" />}
+          </button>
+        ))}
+      </div>
+      <Button variant="brand" className="shine mt-5 h-12 w-full bg-gradient-tri text-base" disabled={!sel} onClick={() => sel && onPick(sel)}>Continue →</Button>
+    </div>
+  );
+}
+
 /* ---------- card root ---------- */
 
 export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const [mode, setMode] = useState<Mode>("in");
   const [role, setRole] = useState<Role>("merchant");
+  const [picked, setPicked] = useState<Role | null>(null);
   const [success, setSuccess] = useState<Pending | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
