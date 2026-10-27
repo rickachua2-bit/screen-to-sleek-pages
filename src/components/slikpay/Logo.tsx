@@ -11,7 +11,7 @@ export function FlameMark({ className = "h-9 w-9" }: { className?: string }) {
 export function Logo({ sub }: { sub?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <FlameMark />
+      <FlameMark className="h-9 w-9 flame-glow" />
       <div className="leading-tight">
         <div className="text-lg font-black tracking-tight text-foreground">Slikpay</div>
         {sub && <div className="text-[11px] font-semibold text-muted-foreground">{sub}</div>}
