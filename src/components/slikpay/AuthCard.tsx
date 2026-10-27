@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  AtSign, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Info, Landmark, Loader2, Lock, Mail, Search, ShieldCheck, Smartphone, User as UserIcon, X, type LucideIcon,
+  AtSign, Bitcoin, Briefcase, Building, Building2, Camera, Check, ChevronDown, Cloud, Copy, Cross, Cpu, Dumbbell, Eye, EyeOff, Factory, Film, Fingerprint, Fuel, Gamepad2, GraduationCap, Hammer, HeartHandshake, Info, Landmark, Laptop, Loader2, Lock, Mail, Megaphone, Package, Pickaxe, Plane, Scale, Scissors, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Sun, Tractor, Truck, UtensilsCrossed, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, NG_BANKS, type Role, type User } from "@/lib/api";
@@ -412,6 +412,8 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 /* ---------- business sign-up ---------- */
 
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
+const COUNTRIES = [
+
   { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234", group: "West Africa" },
   { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233", group: "West Africa" },
   { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254", group: "East & Southern Africa" },
@@ -425,7 +427,6 @@ const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)
 
 const COUNTRY_OPTS: Opt[] = COUNTRIES.map((c) => ({ value: c.code, label: c.name, flag: c.flag, hint: c.dial, group: c.group }));
 const COMPANY_OPTS: Opt[] = COMPANY_TYPES.map((c) => ({ value: c, label: c }));
-const INDUSTRY_OPTS: Opt[] = INDUSTRIES.map((c) => ({ value: c, label: c }));
 const BANK_OPTS: Opt[] = NG_BANKS.map((b) => ({ value: b.name, label: b.name, hint: b.code }));
 
 function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
