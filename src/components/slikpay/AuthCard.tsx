@@ -394,6 +394,9 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <StepBar n={1} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
+        <Field label="Country of Incorporation" id="b-country">
+          <CountrySelect id="b-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
+        </Field>
         <Field label="Full Name of Director / Owner" id="b-director" icon={UserIcon} error={err["director"]} shake>
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
@@ -402,7 +405,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         </Field>
         <Field label="Phone Number" id="b-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">🇳🇬 +234</span>
+            <span className="flex h-12 shrink-0 items-center gap-1 rounded-xl border-2 border-border px-2.5 text-sm font-bold text-foreground">{dialOf(f.country).flag} {dialOf(f.country).dial}</span>
             <input id="b-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
@@ -411,6 +414,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         </Field>
         <StrengthMeter pw={f.pw} />
         <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue to Business Verification →</Button>
+        <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
   }
