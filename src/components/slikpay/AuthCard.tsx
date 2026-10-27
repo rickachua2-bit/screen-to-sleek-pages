@@ -412,8 +412,6 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 /* ---------- business sign-up ---------- */
 
 const COMPANY_TYPES = ["Private Limited Company (LTD / RC)", "Business Name (BN)", "Incorporated Trustee (IT / NGO)"];
-const INDUSTRIES = ["eCommerce", "FinTech", "Retail", "Logistics", "Healthcare", "Education", "Hospitality & Travel", "Agriculture", "Manufacturing", "Real Estate", "Professional Services", "Media & Entertainment", "Transportation", "Non-Profit / NGO"];
-const COUNTRIES = [
   { code: "NG", flag: "🇳🇬", name: "Nigeria", dial: "+234", group: "West Africa" },
   { code: "GH", flag: "🇬🇭", name: "Ghana", dial: "+233", group: "West Africa" },
   { code: "KE", flag: "🇰🇪", name: "Kenya", dial: "+254", group: "East & Southern Africa" },
