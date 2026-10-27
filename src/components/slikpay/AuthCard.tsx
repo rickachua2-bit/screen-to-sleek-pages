@@ -700,7 +700,7 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
       {/* segmented primary switcher */}
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-full bg-muted p-1" role="tablist" aria-label="Sign in or create account">
         {([["in", "Sign In"], ["up", "Create Account"]] as const).map(([v, l]) => (
-          <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => setMode(v)}
+          <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => { setMode(v); if (v === "in") setPicked(null); }}
             className={`rounded-full py-2 text-sm font-black transition-all ${mode === v ? "bg-gradient-brand text-primary-foreground shadow-[0_0_18px_-2px_color-mix(in_oklab,var(--cyan)_70%,transparent)]" : "text-muted-foreground hover:text-foreground"}`}>
             {l}
           </button>
