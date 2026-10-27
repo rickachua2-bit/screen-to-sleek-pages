@@ -34,6 +34,118 @@ function Field({ label, id, icon: Icon, error, shake, hint, children }: { label:
 
 const inputCls = (icon = true) => `field h-12 rounded-xl text-sm font-semibold focus:ring-4 focus:ring-cobalt/10 ${icon ? "pl-10" : ""}`;
 
+/* ---------- styled dropdown (custom listbox) ---------- */
+
+type Opt = { value: string; label: string; flag?: string; hint?: string; group?: string };
+
+function SelectMenu({ id, value, options, onChange, placeholder, searchable = false }: {
+  id: string;
+  value: string;
+  options: Opt[];
+  onChange: (v: string) => void;
+  placeholder?: string;
+  searchable?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [active, setActive] = useState(0);
+  const wrap = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const optsRef = useRef(options); optsRef.current = options;
+  const valRef = useRef(value); valRef.current = value;
+  const picked = options.find((o) => o.value === value);
+  const term = q.trim().toLowerCase();
+  const shown = term ? options.filter((o) => `${o.label} ${o.hint ?? ""} ${o.group ?? ""}`.toLowerCase().includes(term)) : options;
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setQ("");
+    setActive(Math.max(0, optsRef.current.findIndex((o) => o.value === valRef.current)));
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    list.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [active, open, q]);
+
+  const pick = (o: Opt | undefined) => { if (!o) return; onChange(o.value); setOpen(false); };
+
+  function onKey(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") { if (open) { e.stopPropagation(); setOpen(false); } return; }
+    if (!open) {
+      if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) { e.preventDefault(); setOpen(true); }
+      return;
+    }
+    if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, shown.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+    else if (e.key === "Home") { e.preventDefault(); setActive(0); }
+    else if (e.key === "End") { e.preventDefault(); setActive(shown.length - 1); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(shown[active]); }
+    else if (e.key === "Tab") setOpen(false);
+  }
+
+  return (
+    <div ref={wrap} className="relative" onKeyDown={onKey}>
+      <button id={id} type="button" role="combobox" aria-expanded={open} aria-haspopup="listbox" aria-controls={`${id}-list`}
+        onClick={() => setOpen((o) => !o)}
+        className={`${inputCls(false)} flex items-center justify-between gap-2 rounded-xl px-3.5 text-left transition-all duration-200 ${open ? "border-cobalt ring-4 ring-cobalt/10" : "hover:border-cyan"}`}>
+        <span className="flex min-w-0 items-center gap-2.5">
+          {picked?.flag && <span className="text-lg leading-none">{picked.flag}</span>}
+          <span className={`truncate ${picked ? "text-foreground" : "text-muted-foreground"}`}>{picked?.label ?? placeholder ?? "Select…"}</span>
+          {picked?.hint && <span className="shrink-0 font-mono text-xs font-bold text-cobalt">{picked.hint}</span>}
+        </span>
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${open ? "rotate-180 border-cobalt bg-cobalt/15 text-cobalt" : "border-border text-muted-foreground"}`}>
+          <ChevronDown className="h-3.5 w-3.5" />
+        </span>
+      </button>
+
+      {open && (
+        <div className="animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 absolute left-0 right-0 top-[calc(100%+6px)] z-40 origin-top">
+          <div className="panel dropdown-list max-h-64 overflow-auto p-1.5 backdrop-blur-xl shadow-[0_28px_70px_-24px_color-mix(in_oklab,var(--cobalt)_60%,transparent)]">
+            {searchable && (
+              <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1.5 bg-card/95 px-1.5 pb-1.5 pt-0.5 backdrop-blur-xl">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input autoFocus value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder="Search…" aria-label="Search options"
+                    className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
+                </div>
+              </div>
+            )}
+            <div ref={list} id={`${id}-list`} role="listbox" className="space-y-0.5">
+              {shown.length === 0 && <p className="px-3 py-6 text-center text-xs font-bold text-muted-foreground">No match for "{q}"</p>}
+              {shown.map((o, i) => {
+                const isSel = o.value === value;
+                const isActive = i === active;
+                const showGroup = o.group && (i === 0 || shown[i - 1]?.group !== o.group);
+                return (
+                  <div key={o.value}>
+                    {showGroup && <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{o.group}</p>}
+                    <button type="button" role="option" aria-selected={isSel} tabIndex={-1} data-active={isActive}
+                      onClick={() => pick(o)} onMouseEnter={() => setActive(i)}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isSel ? "bg-cobalt/12 text-foreground ring-1 ring-cobalt/40" : "text-body hover:bg-cobalt/10 hover:text-foreground"}`}>
+                      {o.flag && <span className="text-lg leading-none">{o.flag}</span>}
+                      <span className="flex-1 truncate">{o.label}</span>
+                      {o.hint && <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground">{o.hint}</span>}
+                      {isSel ? <Check className="h-4 w-4 shrink-0 text-magenta" strokeWidth={3} /> : <span className={`h-4 w-4 shrink-0 rounded-full border ${isActive ? "border-cobalt" : "border-transparent"}`} />}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PasswordInput({ id, value, onChange, autoComplete, placeholder }: { id: string; value: string; onChange: (v: string) => void; autoComplete: string; placeholder?: string }) {
   const [show, setShow] = useState(false);
   return (
