@@ -51,6 +51,17 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-cobalt: var(--cobalt);
+  --color-cobalt-deep: var(--cobalt-deep);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-obsidian: var(--obsidian);
+  --color-navy: var(--navy);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-body: var(--body);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -62,26 +73,40 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.875rem;
+  --cobalt: oklch(0.55 0.25 262);
+  --cobalt-deep: oklch(0.43 0.19 262);
+  --cyan: oklch(0.9 0.16 195);
+  --magenta: oklch(0.68 0.32 328);
+  --obsidian: oklch(0.21 0.04 265);
+  --navy: oklch(0.17 0.025 265);
+  --success: oklch(0.55 0.15 155);
+  --success-soft: oklch(0.95 0.05 155);
+  --body: oklch(0.37 0.03 257);
+  --gradient-brand: linear-gradient(135deg, var(--cobalt), var(--cyan));
+  --gradient-tri: linear-gradient(135deg, var(--cobalt), var(--magenta) 55%, var(--cyan));
+  --gradient-bar: linear-gradient(to top, var(--cobalt), var(--cyan));
+  --gradient-card: linear-gradient(140deg, oklch(0.24 0.02 265), oklch(0.13 0.015 265));
+  --shadow-cobalt: 0 6px 18px -6px color-mix(in oklab, var(--cobalt) 45%, transparent);
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.21 0.04 265);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.55 0.25 262);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted-foreground: oklch(0.45 0.035 257);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --ring: oklch(0.55 0.25 262);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -141,4 +166,33 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+@utility bg-gradient-brand { background-image: var(--gradient-brand); }
+@utility bg-gradient-tri { background-image: var(--gradient-tri); }
+@utility bg-gradient-bar { background-image: var(--gradient-bar); }
+@utility bg-gradient-card { background-image: var(--gradient-card); }
+@utility shadow-cobalt { box-shadow: var(--shadow-cobalt); }
+@utility panel {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+}
+@utility field {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--background);
+  padding: 0 0.875rem;
+  color: var(--foreground);
+  font-weight: 500;
+  outline: none;
+  &::placeholder { color: var(--muted-foreground); }
+  &:focus { border-color: var(--cobalt); }
+}
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0; }
 }
