@@ -237,3 +237,24 @@ html { scroll-behavior: smooth; }
     pointer-events: none;
   }
 }
+
+:root {
+  --gradient-mesh: radial-gradient(60% 60% at 0% 0%, color-mix(in oklab, var(--cobalt) 22%, transparent), transparent 70%),
+    radial-gradient(50% 50% at 100% 10%, color-mix(in oklab, var(--magenta) 18%, transparent), transparent 70%),
+    radial-gradient(60% 60% at 60% 100%, color-mix(in oklab, var(--cyan) 30%, transparent), transparent 70%),
+    oklch(0.985 0.012 250);
+  --gradient-tint-cyan: linear-gradient(180deg, oklch(0.975 0.025 210), oklch(0.99 0.01 230));
+  --gradient-tint-magenta: linear-gradient(180deg, oklch(0.975 0.025 320), oklch(0.985 0.015 280));
+  --gradient-band: radial-gradient(80% 120% at 0% 0%, color-mix(in oklab, var(--cyan) 45%, transparent), transparent 60%),
+    radial-gradient(70% 100% at 100% 100%, color-mix(in oklab, var(--magenta) 45%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--cobalt-deep), var(--cobalt));
+}
+@utility bg-mesh { background: var(--gradient-mesh); }
+@utility bg-tint-cyan { background: var(--gradient-tint-cyan); }
+@utility bg-tint-magenta { background: var(--gradient-tint-magenta); }
+@utility bg-band { background: var(--gradient-band); }
+@utility glass {
+  background: color-mix(in oklab, white 12%, transparent);
+  border: 1.5px solid color-mix(in oklab, white 25%, transparent);
+  backdrop-filter: blur(14px);
+}

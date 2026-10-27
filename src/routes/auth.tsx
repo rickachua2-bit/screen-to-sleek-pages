@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { api, type Role, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { isEmail, isPin, passwordStrength } from "@/lib/password";
-import { Disclaimer, FeatureGrid, FloatingChips, PartnerStrip, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
+import { CtaBand, Disclaimer, FeatureGrid, FloatingChips, PartnerStrip, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -368,7 +368,7 @@ function AuthPage() {
     <div className="min-h-screen bg-background">
       <TopNav />
       <RailsTicker />
-      <section className="relative overflow-hidden">
+      <section className="bg-mesh relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-grid" />
         <div className="animate-blob pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-cobalt/15 blur-3xl" />
         <div className="animate-blob pointer-events-none absolute -right-32 top-20 h-[460px] w-[460px] rounded-full bg-magenta/12 blur-3xl [animation-delay:-5s]" />
@@ -416,6 +416,7 @@ function AuthPage() {
       <FeatureGrid />
       <KybSection />
       <HowItWorks />
+      <CtaBand />
       <Disclaimer />
       <Footer />
     </div>
