@@ -435,7 +435,121 @@ function CountrySelect({ id, value, onChange }: { id: string; value: string; onC
 }
 
 const dialOf = (code: string) => COUNTRIES.find((c) => c.code === code) ?? COUNTRIES[0]!;
+/* ---------- business category picker ---------- */
+
+type Cat = { value: string; label: string; icon: LucideIcon };
+
+const CATEGORY_GROUPS: { group: string; items: Cat[] }[] = [
+  { group: "Trade & Commerce", items: [
+    { value: "eCommerce", label: "eCommerce", icon: ShoppingCart },
+    { value: "Retail & Wholesale", label: "Retail & Wholesale", icon: Store },
+    { value: "Import & Export", label: "Import & Export", icon: Ship },
+    { value: "FMCG Distribution", label: "FMCG Distribution", icon: Package },
+    { value: "Social Commerce & Resellers", label: "Social Commerce & Resellers", icon: Users },
+  ] },
+  { group: "Money & Technology", items: [
+    { value: "FinTech & Payments", label: "FinTech & Payments", icon: Bitcoin },
+    { value: "Banking & Lending", label: "Banking & Lending", icon: Landmark },
+    { value: "Insurance", label: "Insurance", icon: HeartHandshake },
+    { value: "Crypto & Digital Assets", label: "Crypto & Digital Assets", icon: Wallet },
+    { value: "SaaS & Software", label: "SaaS & Software", icon: Laptop },
+    { value: "Cloud, Data & AI", label: "Cloud, Data & AI", icon: Cpu },
+    { value: "Telecoms & Connectivity", label: "Telecoms & Connectivity", icon: Cloud },
+  ] },
+  { group: "Professional Services", items: [
+    { value: "Consulting & Advisory", label: "Consulting & Advisory", icon: Briefcase },
+    { value: "Legal & Compliance", label: "Legal & Compliance", icon: Scale },
+    { value: "Marketing & Creative Agency", label: "Marketing & Creative", icon: Megaphone },
+    { value: "Recruiting & Staffing", label: "Recruiting & Staffing", icon: Users },
+    { value: "Real Estate & Property", label: "Real Estate & Property", icon: Building },
+  ] },
+  { group: "Logistics & Energy", items: [
+    { value: "Logistics & Freight", label: "Logistics & Freight", icon: Truck },
+    { value: "Aviation & Travel", label: "Aviation & Travel", icon: Plane },
+    { value: "Marine & Shipping", label: "Marine & Shipping", icon: Ship },
+    { value: "Oil, Gas & Energy", label: "Oil, Gas & Energy", icon: Fuel },
+    { value: "Renewable Energy", label: "Renewable Energy", icon: Sun },
+  ] },
+  { group: "Health, Learning & Life", items: [
+    { value: "Healthcare & Clinics", label: "Healthcare & Clinics", icon: Stethoscope },
+    { value: "Education & Training", label: "Education & Training", icon: GraduationCap },
+    { value: "Food, Restaurants & Catering", label: "Food & Restaurants", icon: UtensilsCrossed },
+    { value: "Fashion & Beauty", label: "Fashion & Beauty", icon: Scissors },
+    { value: "Fitness & Wellness", label: "Fitness & Wellness", icon: Dumbbell },
+    { value: "Media & Entertainment", label: "Media & Entertainment", icon: Film },
+    { value: "Gaming & Esports", label: "Gaming & Esports", icon: Gamepad2 },
+    { value: "Photography & Studios", label: "Photography & Studios", icon: Camera },
+  ] },
+  { group: "Industry & Primary", items: [
+    { value: "Agriculture & Agribusiness", label: "Agriculture & Agribusiness", icon: Tractor },
+    { value: "Manufacturing & Production", label: "Manufacturing & Production", icon: Factory },
+    { value: "Mining & Extraction", label: "Mining & Extraction", icon: Pickaxe },
+    { value: "Construction & Infrastructure", label: "Construction & Infra", icon: Hammer },
+  ] },
+  { group: "Non-Profit & Public", items: [
+    { value: "Non-Profit / NGO", label: "Non-Profit / NGO", icon: HeartHandshake },
+    { value: "Cooperative & Thrift", label: "Cooperative & Thrift", icon: Users },
+    { value: "Government & Public Sector", label: "Government & Public", icon: Landmark },
+    { value: "Faith-Based Organisation", label: "Faith-Based Org", icon: Cross },
+  ] },
+];
+
+const ALL_CATS = CATEGORY_GROUPS.flatMap((g) => g.items.map((i) => ({ ...i, group: g.group })));
+
+function CategoryPicker({ value, onChange, error, shake }: { value: string; onChange: (v: string) => void; error?: string | undefined; shake?: boolean }) {
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const groups = CATEGORY_GROUPS
+    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${g.group}`.toLowerCase().includes(term)) : g.items }))
+    .filter((g) => g.items.length > 0);
+  const picked = ALL_CATS.find((c) => c.value === value);
+
+  return (
+    <div className={shake && error ? "animate-shake" : undefined}>
+      <div className="mb-1.5 flex items-end justify-between gap-2">
+        <label htmlFor="b-cat-search" className="text-sm font-bold text-foreground">Business Category</label>
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{ALL_CATS.length} categories</span>
+      </div>
+      <div className="rounded-2xl border-2 border-border bg-card/60 p-2 transition-colors focus-within:border-cobalt">
+        <div className="relative px-0.5 pb-2">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input id="b-cat-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search categories — e.g. agro, logistics, fintech" aria-label="Search business categories"
+            className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
+        </div>
+        <div className="dropdown-list max-h-52 space-y-3 overflow-auto px-0.5 pb-1">
+          {groups.length === 0 && <p className="px-2 py-5 text-center text-xs font-bold text-muted-foreground">No category matches "{q}"</p>}
+          {groups.map((g) => (
+            <div key={g.group}>
+              <p className="mb-1.5 px-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{g.group}</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                {g.items.map((c) => {
+                  const sel = c.value === value;
+                  const Icon = c.icon;
+                  return (
+                    <button key={c.value} type="button" onClick={() => onChange(c.value)} aria-pressed={sel}
+                      className={`flex items-center gap-1.5 rounded-xl border px-2 py-2 text-left text-[11px] font-bold leading-tight transition-all duration-200 ${sel ? "border-transparent bg-gradient-brand text-primary-foreground shadow-cobalt" : "border-border text-body hover:-translate-y-0.5 hover:border-cyan hover:text-foreground"}`}>
+                      <Icon className={`h-3.5 w-3.5 shrink-0 ${sel ? "text-primary-foreground" : "text-magenta"}`} />
+                      <span className="line-clamp-2">{c.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {picked ? (
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> {picked.label} selected</p>
+      ) : (
+        <p className="mt-1 text-xs font-semibold text-muted-foreground">Pick the category that best describes what your business sells or does.</p>
+      )}
+      <ErrorPill msg={error} />
+    </div>
+  );
+}
+
 const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
+
 
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const [step, setStep] = useState(1);
