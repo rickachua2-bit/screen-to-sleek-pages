@@ -154,7 +154,7 @@ export function FloatingChips() {
 
 export function FeatureGrid() {
   return (
-    <section id="offer" className="mx-auto max-w-7xl px-5 py-24">
+    <section id="offer" className="bg-tint-cyan"><div className="mx-auto max-w-7xl px-5 py-24">
       <div className="text-center">
         <Eyebrow>The complete Slikpay suite</Eyebrow>
         <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground md:text-4xl">Everything you can power with Slikpay</h2>
@@ -171,7 +171,7 @@ export function FeatureGrid() {
           </div>
         ))}
       </div>
-    </section>
+    </div></section>
   );
 }
 
@@ -205,7 +205,7 @@ export function KybSection() {
   const [c, setC] = useState(COUNTRIES[0]!);
   const r = REG[c]!;
   return (
-    <section id="kyb" className="border-y-[1.5px] border-border bg-muted/30">
+    <section id="kyb" className="border-y-[1.5px] border-border bg-tint-magenta">
       <div className="mx-auto max-w-7xl px-5 py-24">
         <div className="text-center">
           <Eyebrow>Pan-African & global compliance</Eyebrow>
@@ -254,22 +254,42 @@ const STEPS: { icon: LucideIcon; title: string; desc: string; foot: string }[] =
 
 export function HowItWorks() {
   return (
-    <section id="how" className="mx-auto max-w-7xl px-5 py-24">
-      <div className="text-center">
-        <Eyebrow>Frictionless onboarding</Eyebrow>
-        <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground md:text-4xl">Go live in under 2 minutes</h2>
-        <p className="mx-auto mt-3 max-w-2xl font-medium text-body">Engineered to match the best fintech onboarding in the world.</p>
+    <section id="how" className="bg-band relative overflow-hidden text-primary-foreground">
+      <div className="pointer-events-none absolute inset-0 opacity-30 bg-grid" />
+      <div className="relative mx-auto max-w-7xl px-5 py-24">
+        <div className="text-center">
+          <span className="glass inline-flex rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em]">Frictionless onboarding</span>
+          <h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">Go live in under 2 minutes</h2>
+          <p className="mx-auto mt-3 max-w-2xl font-medium opacity-85">Engineered to match the best fintech onboarding in the world.</p>
+        </div>
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
+          {STEPS.map(({ icon: Icon, title, desc, foot }, i) => (
+            <div key={title} className="glass relative rounded-3xl p-6 transition-transform hover:-translate-y-1">
+              <span className="font-mono text-5xl font-black opacity-40">0{i + 1}</span>
+              <span className="absolute right-6 top-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-background text-cobalt shadow-lg"><Icon className="h-5 w-5" /></span>
+              <h3 className="mt-3 text-lg font-extrabold">{title}</h3>
+              <p className="mt-2 text-sm font-medium leading-relaxed opacity-85">{desc}</p>
+              <p className="mt-5 flex items-center gap-1.5 font-mono text-[11px] font-bold text-cyan"><Check className="h-3.5 w-3.5" /> {foot}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="mt-12 grid gap-4 md:grid-cols-3">
-        {STEPS.map(({ icon: Icon, title, desc, foot }, i) => (
-          <div key={title} className="panel relative p-6">
-            <span className="bg-gradient-tri bg-clip-text font-mono text-5xl font-black text-transparent opacity-40">0{i + 1}</span>
-            <span className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt"><Icon className="h-5 w-5" /></span>
-            <h3 className="mt-3 text-lg font-extrabold text-foreground">{title}</h3>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground">{desc}</p>
-            <p className="mt-5 flex items-center gap-1.5 font-mono text-[11px] font-bold text-success"><Check className="h-3.5 w-3.5" /> {foot}</p>
+    </section>
+  );
+}
+
+export function CtaBand() {
+  return (
+    <section className="mx-auto max-w-7xl px-5 py-20">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-tri p-10 text-primary-foreground shadow-2xl md:p-14">
+        <div className="animate-blob pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan/50 blur-3xl" />
+        <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-3xl font-black tracking-tight md:text-4xl">Ready to move money at African speed?</h2>
+            <p className="mt-2 max-w-xl font-semibold opacity-90">Open a free account in 60 seconds. No paperwork to start.</p>
           </div>
-        ))}
+          <a href="#signin" className="rounded-2xl bg-background px-7 py-4 text-sm font-black text-cobalt shadow-xl transition-transform hover:-translate-y-0.5">Get started free →</a>
+        </div>
       </div>
     </section>
   );
@@ -277,7 +297,7 @@ export function HowItWorks() {
 
 export function Disclaimer() {
   return (
-    <section id="legal" className="mx-auto max-w-5xl px-5 pb-20">
+    <section id="legal" className="mx-auto max-w-5xl px-5 pb-20 pt-4">
       <div className="panel flex gap-4 p-6">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-chart-4/20 text-foreground"><AlertTriangle className="h-5 w-5" /></span>
         <div className="space-y-3 text-xs font-medium leading-relaxed text-body">
@@ -292,7 +312,7 @@ export function Disclaimer() {
 
 export function Footer() {
   return (
-    <footer className="border-t-[1.5px] border-border">
+    <footer className="border-t-[1.5px] border-border bg-tint-cyan">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-8 md:flex-row">
         <div className="flex items-center gap-3">
           <Logo />
