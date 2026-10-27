@@ -140,7 +140,7 @@ export function PartnerStrip() {
 export function FloatingChips() {
   return (
     <>
-      <div className="panel animate-float absolute -left-16 top-24 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
+      <div className="panel animate-float absolute -top-7 -left-8 z-10 hidden items-center gap-3 p-3 shadow-xl xl:flex">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-success-soft text-success"><Check className="h-4 w-4" strokeWidth={3} /></span>
         <div><div className="text-xs font-extrabold text-foreground">+₦250,000.00</div><div className="text-[10px] font-semibold text-muted-foreground">NIP · Chukwuemeka A.</div></div>
       </div>
