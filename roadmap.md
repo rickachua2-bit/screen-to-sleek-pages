@@ -20,4 +20,5 @@
 - [ ] Guided investments and flights screens (currently open the advanced console)
 - [ ] Saved billers, pay again, scheduled payments (needs new table + SQL run manually)
 - [ ] Link left-menu Cards/Treasury/Disputes/Approvals to live service screens
-- [ ] Real fees per service (waiting on user; provider fee shown where the quote includes it)
+- [x] Live fees and FX from the provider (admin-set rates later)
+- [ ] Admin backend for own rates and markups
