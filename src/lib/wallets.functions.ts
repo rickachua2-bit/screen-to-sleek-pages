@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { CURRENCIES, NOT_ACTIVE, type WalletStatus } from "./wallets";
+import { confirmedSwap, UNCERTAIN_PAYMENT } from "./wallet-safety";
+import { payoutStatus, slikpayTransferFee } from "./transfer-validation";
 
 export interface WalletView { code: string; status: WalletStatus; balance: number; accountNumber: string | null; accountName: string | null; bankName: string | null; routing: string | null; network: string | null; note: string | null }
 
@@ -76,16 +78,16 @@ export const swapCurrency = createServerFn({ method: "POST" })
     try {
       const r = await callPaddle(ctx.mode, "POST", "/v1/crypto/swap", { fromCurrency: data.from, toCurrency: data.to, amount: data.amount }, data.idempotencyKey);
       const d = (r.data ?? {}) as Record<string, unknown>;
-      const toAmount = Number(d["toAmount"]); const rate = Number(d["rate"]); const fee = Number(d["platformFee"] ?? 0);
-      if (!(toAmount > 0)) throw new Error("The swap was not confirmed.");
+      const confirmed = confirmedSwap(d);
+      if (!confirmed) throw new Error(UNCERTAIN_PAYMENT);
+      const toAmount = confirmed.amount; const rate = confirmed.rate; const fee = Number(d["platformFee"]);
       const credited = Math.floor(toAmount * 1e8) / 1e8;
       const reference = typeof d["reference"] === "string" ? d["reference"] : null;
-      await ctx.db.from("ledger_entries").insert({ user_id: ctx.user.id, mode: ctx.mode, currency: data.to, amount: credited, status: "posted", operation: op, reference: `${data.idempotencyKey}:in` });
-      await settleMoney(ctx, data.idempotencyKey, true, reference, { to: data.to, toAmount, rate, fee });
+      await settleMoney(ctx, data.idempotencyKey, "succeeded", reference, { to: data.to, toAmount, rate, ...(Number.isFinite(fee) && fee >= 0 ? { fee } : {}) }, { currency: data.to, amount: credited });
       const key = `fx_rates_${ctx.mode}`;
       await writeRecord(ctx.db, ctx.user.id, key, learnRate(await readRecord(ctx.db, ctx.user.id, key, {}), data.from, data.to, rate));
-      return { reference, fromAmount: data.amount, toAmount, credited, rate, fee, feeCurrency: data.to };
-    } catch (e) { await settleMoney(ctx, data.idempotencyKey, false, null); throw e; }
+      return { reference, fromAmount: data.amount, toAmount, credited, rate, fee: Number.isFinite(fee) && fee >= 0 ? fee : null, feeCurrency: data.to };
+    } catch { throw new Error(UNCERTAIN_PAYMENT); }
   });
 
 export const savePayoutAccount = createServerFn({ method: "POST" })
@@ -116,7 +118,14 @@ export const withdrawFunds = createServerFn({ method: "POST" })
     if (!acct) throw new Error(data.currency === "NGN" ? "Verify your settlement account in KYB first." : "Add your payout account for this currency first.");
     if (!isOwnPayoutAccount(await holderName(ctx.db, ctx.user), acct.accountName)) throw new Error("Payout account is not in your verified name.");
     const op = `WITHDRAW ${data.currency}`;
-    await guardMoney(ctx, data.currency, data.amount, data.pin, op, data.idempotencyKey);
+    const transferFee = data.currency === "NGN" ? slikpayTransferFee(data.amount) : 0;
+    if (data.currency === "NGN") {
+      const resolved = await callPaddle(ctx.mode, "POST", "/v1/accounts/resolve", { accountNumber: acct.accountNumber, bankCode: acct.bankCode });
+      const name = (resolved.data as Record<string, unknown> | null)?.["accountName"];
+      if (typeof name !== "string" || !isOwnPayoutAccount(await holderName(ctx.db, ctx.user), name)) throw new Error("The bank did not confirm your settlement account name.");
+      acct.accountName = name;
+    }
+    await guardMoney(ctx, data.currency, data.amount + transferFee, data.pin, op, data.idempotencyKey);
     try {
       const r = data.currency === "NGN"
         ? await callPaddle(ctx.mode, "POST", "/v1/payouts/transfer", { amount: data.amount, destinationBankCode: acct.bankCode, destinationAccountNumber: acct.accountNumber, destinationAccountName: acct.accountName, narration: "Slikpay withdrawal", reference: data.idempotencyKey }, data.idempotencyKey)
@@ -124,8 +133,11 @@ export const withdrawFunds = createServerFn({ method: "POST" })
       const d = (r.data ?? {}) as Record<string, unknown>;
       const reference = [d["reference"], d["transactionReference"], d["id"]].find((v) => typeof v === "string") as string | undefined;
       const { providerFee } = await import("./ledger-history");
-      const fee = providerFee(d);
-      await settleMoney(ctx, data.idempotencyKey, true, reference ?? null, { recipient: acct.accountName, to: acct.accountNumber, bank: acct.bankName, ...(fee !== undefined ? { fee } : {}) });
+      const fee = data.currency === "NGN" ? transferFee : providerFee(d);
+      const status = payoutStatus(d);
+      await settleMoney(ctx, data.idempotencyKey, status, reference ?? null, { recipient: acct.accountName, to: acct.accountNumber, bank: acct.bankName, ...(fee !== undefined ? { fee } : {}) });
+      if (status === "failed") throw new Error("The bank declined this withdrawal.");
+      if (status === "pending") throw new Error(UNCERTAIN_PAYMENT);
       return { reference: reference ?? null, to: `${acct.accountName} · ${acct.bankName} · ${acct.accountNumber}` };
-    } catch (e) { await settleMoney(ctx, data.idempotencyKey, false, null); throw e; }
+    } catch (e) { if (e instanceof Error && e.message === "The bank declined this withdrawal.") throw e; throw new Error(UNCERTAIN_PAYMENT); }
   });
