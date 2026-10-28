@@ -33,7 +33,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const initials = user?.initials ?? "PO";
   const isBiz = mode === "merchant";
   const groups = onModuleChange ? (isBiz ? MERCHANT_GROUPS : PERSONAL_GROUPS) : [{ title: "", items: nav }];
-  const goMode = (r: Role) => { setRole(r); setSwitcher(false); navigate({ to: r === "merchant" ? "/dashboard" : "/personal" }); };
+  const goMode = (r: Role) => { setRole(r); setSwitcher(false); if (r === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } }); else navigate({ to: "/personal", search: { module: "home" } }); };
   const sidebar = <aside className="merchant-sidebar flex h-full w-[260px] flex-col border-r border-border bg-background/95 backdrop-blur-2xl">
     <div className="flex shrink-0 items-center justify-between px-5 py-6">
       {isBiz ? <div className="flex items-center gap-2"><FlameMark className="h-9 w-9" /><div><div className="text-xl font-extrabold">SLIKPAY<span className="text-cyan">.</span></div><p className="text-[10px] text-muted-foreground">Business · by Sterling Bank</p></div></div> : <Logo sub="Personal · by Sterling Bank" />}
