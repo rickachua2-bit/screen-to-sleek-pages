@@ -289,9 +289,9 @@ function ProfileModule() {
     <div className="grid gap-5 lg:grid-cols-2">
       <Panel title="Profile">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand text-lg font-black text-primary-foreground">{user?.initials ?? "PO"}</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand text-lg font-black text-primary-foreground">{user?.initials ?? "—"}</span>
           <div>
-            <p className="flex items-center gap-1.5 text-base font-extrabold text-foreground">{user?.name ?? "Patrick Otu"} <BadgeCheck className="h-4 w-4 text-success" /></p>
+            <p className="flex items-center gap-1.5 text-base font-extrabold text-foreground">{user?.name ?? ""} <BadgeCheck className="h-4 w-4 text-success" /></p>
             <p className="text-sm font-semibold text-cyan">{tag}</p>
             <p className="text-xs font-semibold text-muted-foreground">{user?.email}</p>
           </div>

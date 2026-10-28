@@ -4,7 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { PERSONAL_NAV, PERSONAL_TABS, personalModule } from "@/lib/personal";
 import { AppShell } from "@/components/slikpay/AppShell";
 import { PersonalWorkspace } from "@/components/slikpay/PersonalWorkspace";
-import { GoLiveProgress } from "@/components/slikpay/PaddleConsole";
+import { GoLiveProgress, useBankingProfile } from "@/components/slikpay/PaddleConsole";
+import { personalTier, TIER_LIMITS } from "@/lib/go-live";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 
 export const Route = createFileRoute("/personal")({
@@ -27,7 +28,10 @@ function Personal() {
   const { module } = Route.useSearch();
   const navigate = useNavigate();
   const [modal, setModal] = useState<ActionKind | null>(null);
-  const first = (user?.name ?? "Patrick").split(" ")[0];
+  const first = (user?.name ?? "there").split(" ")[0];
+  const { profile: banking } = useBankingProfile();
+  const tier = personalTier(banking?.kyc ?? []);
+  const tierText = tier ? `Tier ${tier} Verified${TIER_LIMITS[tier] ? ` · ${TIER_LIMITS[tier]} limit` : ""}` : "Verification not started";
   const setModule = (id: string) => navigate({ to: "/personal", search: { module: id } });
 
   return (
@@ -37,7 +41,7 @@ function Personal() {
       activeModule={module}
       onModuleChange={setModule}
       greeting={`Welcome back, ${first} 👋`}
-      tierBadge="Tier 2 Verified · ₦5,000,000/day limit"
+      tierBadge={tierText}
       onAddMoney={() => setModal("add")}
       onRefresh={authRefresh}
       bottomNav={PERSONAL_TABS}
