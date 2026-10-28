@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  AtSign, Bitcoin, Briefcase, Building, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Fuel, Info, Landmark, Laptop, Loader2, Lock, Mail, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Tractor, Truck, User as UserIcon, UtensilsCrossed, X, type LucideIcon,
+  AtSign, Bitcoin, Briefcase, Building, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Fuel, Info, Landmark, Laptop, Loader2, Lock, Mail, Plus, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Tractor, Truck, User as UserIcon, UtensilsCrossed, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NG_BANKS, type Role } from "@/lib/api";
@@ -485,10 +485,14 @@ const CAT_KEYWORDS: Record<string, string> = {
 };
 
 
-const CAT_OPTS: Opt[] = ALL_CATS.map((c) => ({ value: c.value, label: c.label, group: c.group, icon: c.icon, search: CAT_KEYWORDS[c.value] ?? "" }));
+const OTHER_CAT: Opt = { value: "other", label: "Other — tell us what you do", group: "Not on the list?", icon: Plus, search: "other different something else custom not listed none of these" };
 
-function CategoryPicker({ value, onChange, error, shake }: { value: string; onChange: (v: string) => void; error?: string | undefined; shake?: boolean }) {
+const CAT_OPTS: Opt[] = [...ALL_CATS.map((c) => ({ value: c.value, label: c.label, group: c.group, icon: c.icon, search: CAT_KEYWORDS[c.value] ?? "" })), OTHER_CAT];
+
+function CategoryPicker({ value, onChange, otherText, onOtherText, error, shake }: { value: string; onChange: (v: string) => void; otherText: string; onOtherText: (v: string) => void; error?: string | undefined; shake?: boolean }) {
   const picked = ALL_CATS.find((c) => c.value === value);
+  const isOther = value === OTHER_CAT.value;
+  const otherFilled = otherText.trim().length >= 3;
 
   return (
     <div className={shake && error ? "animate-shake" : undefined}>
@@ -498,8 +502,24 @@ function CategoryPicker({ value, onChange, error, shake }: { value: string; onCh
       </div>
       <SelectMenu id="b-cat" value={value} options={CAT_OPTS} onChange={onChange} searchable
         placeholder="Select your business category" searchPlaceholder="Search categories — e.g. agro, logistics, fintech" />
+      {isOther && (
+        <div className="animate-in fade-in-0 slide-in-from-top-1 mt-2 rounded-2xl border-2 border-dashed border-cobalt/35 bg-cobalt/8 p-3">
+          <label htmlFor="b-cat-other" className="mb-1.5 block text-sm font-bold text-foreground">What does your business do?</label>
+          <div className="relative">
+            <Info className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input id="b-cat-other" className={inputCls()} value={otherText} onChange={(e) => onOtherText(e.target.value)} placeholder="e.g. Drone inspection for pipelines" maxLength={80} />
+          </div>
+          <p className="mt-1.5 text-xs font-semibold text-muted-foreground">Tell us in a few words — we review new categories and add the common ones.</p>
+        </div>
+      )}
       {picked ? (
         <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> {picked.label} selected</p>
+      ) : isOther ? (
+        otherFilled ? (
+          <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> {otherText.trim()} selected</p>
+        ) : (
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">Other selected — tell us what your business does.</p>
+        )
       ) : (
         <p className="mt-1 text-xs font-semibold text-muted-foreground">Pick the category that best describes what your business sells or does.</p>
       )}
