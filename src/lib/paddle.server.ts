@@ -1,6 +1,5 @@
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { accountAdmin } from "./merchant-verification.server";
-import { paddleFailure } from "./provider-errors";
 import type { Mode, Role } from "./paddle-policy";
 
 const BASE = "https://api.getpaddle.online/v1";
