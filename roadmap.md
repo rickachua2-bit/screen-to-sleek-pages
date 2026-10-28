@@ -5,3 +5,8 @@
 - [x] Verify dashboard navigation and mobile drawer; run tests.
 
 Live module operations are outside this presentation task: new workspaces show connection status and temporary drafts, not submitted banking actions.
+
+# Pop-ups and dropdowns
+- [x] Apply shared brand surfaces to dialogs, notifications and dropdowns.
+- [x] Replace native dropdowns with branded accessible selectors.
+- [x] Verify selections and pop-ups on desktop and phone; run existing tests.

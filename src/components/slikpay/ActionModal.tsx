@@ -3,6 +3,7 @@ import { CheckCircle2, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { api, naira, NG_BANKS, type Bank } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { BrandSelect } from "./BrandSelect";
 
 export type ActionKind = "send" | "bills" | "airtime" | "fund" | "swap" | "add" | "softpos";
 
@@ -42,7 +43,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
       setAcctName("");
       return;
     }
-    api.nameEnquiry(f.bank!, f.acct!).then((r) => setAcctName(r.accountName));
+    api.nameEnquiry(f.bank ?? "232", f.acct ?? "").then((r) => setAcctName(r.accountName));
   }, [kind, f.bank, f.acct]);
 
   const amount = Number(f.amount || 0);
@@ -56,10 +57,10 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
     setBusy(true);
     try {
       let r: { message: string; ref: string } | undefined;
-      if (kind === "send") r = await api.transfer({ recipientBank: f.bank!, accountNumber: f.acct ?? "", amount, narration: f.narration ?? "" });
+      if (kind === "send") r = await api.transfer({ recipientBank: f.bank ?? "232", accountNumber: f.acct ?? "", amount, narration: f.narration ?? "" });
       if (kind === "bills" || kind === "airtime") r = await api.payBill({ service: kind === "airtime" ? "airtime" : (f.service as "power" | "cable"), amount, meterOrPhone: f.target ?? "" });
       if (kind === "fund") r = await api.fundCard("crd_1", amount);
-      if (kind === "swap") r = await api.swap({ fromCurrency: f.from!, toCurrency: f.to!, amount });
+      if (kind === "swap") r = await api.swap({ fromCurrency: f.from ?? "NGN", toCurrency: f.to ?? "USD", amount });
       const msg = r ? `${r.message} • ${r.ref}` : "Request received";
       setDone(msg);
       toast.success(r?.message ?? "Done");
@@ -71,11 +72,11 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/25 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div role="dialog" aria-label={TITLES[kind]} className="panel w-full max-w-md p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" onClick={onClose}>
+      <div role="dialog" aria-label={TITLES[kind]} className="slik-popup panel w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-black text-foreground">{TITLES[kind]}</h2>
-          <button aria-label="Close" onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-muted"><X className="h-5 w-5" /></button>
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
         </div>
         {done ? (
           <div className="py-6 text-center">
@@ -103,7 +104,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
             {kind === "send" && (
               <>
                 <Field label="Recipient bank">
-                  <select className="field" value={f.bank} onChange={set("bank")}>{banks.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}</select>
+                  <BrandSelect label="Recipient bank" value={f.bank ?? "232"} onChange={(value) => set("bank")({ target: { value } })} options={banks.map((b) => ({ value: b.code, label: b.name }))} />
                 </Field>
                 <Field label="Account number">
                   <input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={f.acct ?? ""} onChange={set("acct")} />
@@ -113,7 +114,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
             )}
             {kind === "bills" && (
               <Field label="Service">
-                <select className="field" value={f.service} onChange={set("service")}><option value="power">Electricity</option><option value="cable">Cable TV</option></select>
+                <BrandSelect label="Service" value={f.service ?? "power"} onChange={(value) => set("service")({ target: { value } })} options={[{ value: "power", label: "Electricity" }, { value: "cable", label: "Cable TV" }]} />
               </Field>
             )}
             {(kind === "bills" || kind === "airtime") && (
@@ -123,8 +124,8 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
             )}
             {kind === "swap" && (
               <div className="grid grid-cols-2 gap-3">
-                <Field label="From"><select className="field" value={f.from} onChange={set("from")}>{["NGN", "USD", "GBP", "USDT"].map((c) => <option key={c}>{c}</option>)}</select></Field>
-                <Field label="To"><select className="field" value={f.to} onChange={set("to")}>{["USD", "NGN", "GBP", "USDT"].map((c) => <option key={c}>{c}</option>)}</select></Field>
+                <Field label="From"><BrandSelect label="From currency" value={f.from ?? "NGN"} onChange={(value) => set("from")( { target: { value } })} options={["NGN", "USD", "GBP", "USDT"].map((c) => ({ value: c, label: c }))} /></Field>
+                <Field label="To"><BrandSelect label="To currency" value={f.to ?? "USD"} onChange={(value) => set("to")( { target: { value } })} options={["USD", "NGN", "GBP", "USDT"].map((c) => ({ value: c, label: c }))} /></Field>
               </div>
             )}
             <Field label={kind === "fund" ? "Amount (USD)" : `Amount (${kind === "swap" ? f.from : "NGN"})`}>
