@@ -39,6 +39,7 @@ function Personal() {
       greeting={`Welcome back, ${first} 👋`}
       tierBadge="Tier 2 Verified · ₦5,000,000/day limit"
       onAddMoney={() => setModal("add")}
+      onRefresh={authRefresh}
       bottomNav={PERSONAL_TABS}
     >
       {module === "home" || !module ? <GoLiveProgress role="personal" onOpen={() => setModule("golive")} /> : null}
