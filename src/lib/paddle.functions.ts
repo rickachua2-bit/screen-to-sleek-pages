@@ -88,7 +88,11 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         const d = (result.data ?? {}) as Record<string, unknown>;
         const ref = [d["reference"], d["transactionReference"], d["id"]].find((v) => typeof v === "string") as string | undefined;
         const session = [d["sessionId"], d["nipSessionId"], d["session_id"]].find((v) => typeof v === "string") as string | undefined;
-        await db.from("payment_receipts").update({ status: "succeeded", provider_reference: ref ?? null, session_id: session ?? null }).eq("idempotency_key", data.idempotencyKey);
+        const { providerFee } = await import("./ledger-history");
+        const fee = providerFee(d);
+        const body = (data.body ?? {}) as Record<string, unknown>;
+        const recipient = [body["destinationAccountName"], body["accountName"], body["beneficiaryName"]].find((v) => typeof v === "string") as string | undefined;
+        await db.from("payment_receipts").update({ status: "succeeded", provider_reference: ref ?? null, session_id: session ?? null, summary: { ...(fee !== undefined ? { fee } : {}), ...(recipient ? { recipient } : {}) } }).eq("idempotency_key", data.idempotencyKey);
         if (mode === "live") await db.from("ledger_entries").update({ status: "posted" }).eq("reference", data.idempotencyKey);
         receipt = { reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
       }

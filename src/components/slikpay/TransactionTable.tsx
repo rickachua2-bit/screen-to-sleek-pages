@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Check, ChevronRight, Copy, Printer, Share2, X } from "lucide-react";
 import { toast } from "sonner";
-import { naira, type Txn } from "@/lib/api";
+import { money, type Txn } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { FlameMark } from "./Logo";
 
@@ -39,14 +39,14 @@ export function TransactionTable({ txns, balances }: { txns: Txn[]; balances?: M
     let g = groups[groups.length - 1];
     if (!g || g.day !== day) { g = { day, items: [], net: 0 }; groups.push(g); }
     g.items.push(t);
-    if (t.status === "Successful") g.net += t.direction === "credit" ? t.amount : -t.amount;
+    if (t.status === "Successful") g.net += t.direction === "credit" ? (t.net ?? t.amount) : -(t.net ?? t.amount);
   }
   return (
     <>
       <div className="ledger-list overflow-hidden rounded-xl border border-border">
         {groups.map((g) => (
           <div key={g.day}>
-            <div className="ledger-day flex items-center justify-between px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"><span>{g.day}</span><span className="tabular-nums">{g.net >= 0 ? "+" : "−"}{naira(Math.abs(g.net))}</span></div>
+            <div className="ledger-day flex items-center justify-between px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"><span>{g.day}</span><span className="tabular-nums">{g.net >= 0 ? "+" : "−"}{money(Math.abs(g.net), g.items[0]?.currency)}</span></div>
             {g.items.map((t) => {
               const credit = t.direction === "credit";
               return (
@@ -55,8 +55,8 @@ export function TransactionTable({ txns, balances }: { txns: Txn[]; balances?: M
                   <span className="min-w-0"><span className="block truncate text-sm font-bold text-foreground">{t.customer}</span><span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"><span className="ledger-channel">{t.channel}</span><span className="md:hidden">· {time(t.date)}</span></span></span>
                   <span className="hidden min-w-0 items-center font-mono text-xs text-muted-foreground md:flex"><span className="truncate">{t.ref}</span><CopyRef value={t.ref} /></span>
                   <span className="hidden text-xs text-muted-foreground md:block">{time(t.date)}</span>
-                  <span className="flex flex-col items-end gap-1"><span className={`text-sm font-black tabular-nums ${credit ? "text-success" : "text-foreground"} ${t.status === "Failed" ? "line-through opacity-60" : ""}`}>{credit ? "+" : "−"}{naira(t.amount)}</span><StatusBadge s={t.status} /></span>
-                  {balances && <span className="hidden flex-col items-end xl:flex"><span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Balance</span><span className="text-xs font-bold tabular-nums">{naira(balances.get(t.id) ?? 0)}</span></span>}
+                  <span className="flex flex-col items-end gap-1"><span className={`text-sm font-black tabular-nums ${credit ? "text-success" : "text-foreground"} ${t.status === "Failed" ? "line-through opacity-60" : ""}`}>{credit ? "+" : "−"}{money(t.amount, t.currency)}</span>{t.fee !== undefined && <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">Fee {money(t.fee, t.currency)} · {credit ? "You keep" : "Total"} {money(t.net ?? t.amount, t.currency)}</span>}<StatusBadge s={t.status} /></span>
+                  {balances && <span className="hidden flex-col items-end xl:flex"><span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Balance</span><span className="text-xs font-bold tabular-nums">{money(balances.get(t.id) ?? 0, t.currency)}</span></span>}
                   <ChevronRight className="hidden h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary md:block" />
                 </button>
               );
@@ -78,8 +78,12 @@ export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }
     ["Channel", txn.channel],
     [credit ? "From" : "To", txn.customer],
     ["Type", credit ? "Money in" : "Money out"],
+    ["Currency", txn.currency ?? "NGN"],
+    ["Fee", txn.fee !== undefined ? money(txn.fee, txn.currency) : "Not charged or not reported"],
+    ...(txn.fee !== undefined ? [[credit ? "You received" : "Total debited", money(txn.net ?? txn.amount, txn.currency)] as [string, string]] : []),
+    ...(txn.note ? [["Note", txn.note] as [string, string]] : []),
   ];
-  const text = `Slikpay receipt\n${credit ? "+" : "−"}${naira(txn.amount)} · ${txn.status}\n${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}`;
+  const text = `Slikpay receipt\n${credit ? "+" : "−"}${money(txn.amount, txn.currency)} · ${txn.status}\n${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}`;
   const share = async () => {
     try { if (navigator.share) await navigator.share({ title: "Slikpay receipt", text }); else { await navigator.clipboard.writeText(text); toast.success("Receipt copied"); } } catch { /* cancelled */ }
   };
@@ -92,7 +96,7 @@ export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }
             <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
           </div>
           <div className={`mx-auto mt-5 grid h-12 w-12 place-items-center rounded-full ${credit ? "receipt-ic-in" : "receipt-ic-out"}`}>{credit ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}</div>
-          <div className="mt-3 text-3xl font-black tabular-nums">{credit ? "+" : "−"}{naira(txn.amount)}</div>
+          <div className="mt-3 text-3xl font-black tabular-nums">{credit ? "+" : "−"}{money(txn.amount, txn.currency)}</div>
           <div className="mt-2"><StatusBadge s={txn.status} /></div>
         </div>
         <dl className="space-y-3 border-t-[1.5px] border-dashed border-border px-6 py-5 text-sm">
