@@ -7,6 +7,7 @@ import { MERCHANT_GROUPS } from "@/lib/merchant";
 import { PERSONAL_GROUPS } from "@/lib/personal";
 import { Button } from "@/components/ui/button";
 import { FlameMark, Logo } from "./Logo";
+import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
@@ -38,7 +39,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const goMode = (r: Role) => { setRole(r); setSwitcher(false); if (r === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } }); else navigate({ to: "/personal", search: { module: "home" } }); };
   const sidebar = <aside className="merchant-sidebar flex h-full w-[260px] flex-col border-r border-border bg-background/95 backdrop-blur-2xl">
     <div className="flex shrink-0 items-center justify-between px-5 py-6">
-      {isBiz ? <div className="flex items-center gap-2"><FlameMark className="h-9 w-9" /><div><div className="text-xl font-extrabold">SLIKPAY<span className="text-cyan">.</span></div><p className="text-[10px] text-muted-foreground">Business · by Sterling Bank</p></div></div> : <Logo sub="Personal · by Sterling Bank" />}
+      {isBiz ? <div className="flex items-center gap-2"><FlameMark className="h-9 w-9" /><div><div className="text-xl font-extrabold">SLIKPAY<span className="text-cyan">.</span></div><p className="text-[10px] text-muted-foreground">Business</p></div></div> : <Logo sub="Personal" />}
       <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Close menu" onClick={() => setOpen(false)}><X /></Button>
     </div>
     <nav aria-label="Main navigation" className="dropdown-list min-h-0 flex-1 overflow-y-auto px-3 pb-4">
@@ -69,7 +70,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       </header>
       {banking && environment === "Sandbox" && <div className="border-b border-magenta/30 bg-magenta/10 px-7 py-2 text-xs font-semibold text-foreground">Sandbox · test money only. Real transactions start after verification and approval.</div>}
       {currency !== "NGN" && <div className="border-b border-border px-7 py-2 text-xs text-muted-foreground">{currency} selected · settlement balances remain denominated in NGN.</div>}
-      <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>{children}</main>
+      <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>{children}<ComplianceFooter /></main>
       {bottomNav && (
         <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden">
           {bottomNav.map(({ label, icon: Icon, id }) => {

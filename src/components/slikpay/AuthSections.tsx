@@ -107,7 +107,7 @@ export function HeroIntro() {
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-tri text-xs font-black text-primary-foreground">TG</span>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-extrabold text-foreground">Travsify Global Inclusive Ltd</div>
-          <div className="truncate font-mono text-[10px] font-bold text-success">● KYB verified · Corporate entity · Sterling settlement rails</div>
+          <div className="truncate font-mono text-[10px] font-bold text-success">● KYB verified · Corporate entity · Instant settlement</div>
         </div>
         <span className="hidden rounded-full border border-border px-2 py-0.5 font-mono text-[10px] font-bold text-body sm:inline">TLS 1.3</span>
       </div>
@@ -129,7 +129,7 @@ export function PartnerStrip() {
     <div className="border-y-[1.5px] border-border bg-background">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 py-6">
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Trusted rails & partners</span>
-        {["Sterling Bank", "Mastercard", "NIBSS", "Visa", "Verve", "Interswitch"].map((n) => (
+        {["Mastercard", "NIBSS", "Visa", "Verve", "Interswitch"].map((n) => (
           <span key={n} className="text-lg font-black tracking-tight text-muted-foreground/70 transition-colors hover:text-foreground">{n}</span>
         ))}
       </div>
@@ -302,7 +302,7 @@ export function Disclaimer() {
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-chart-4/20 text-foreground"><AlertTriangle className="h-5 w-5" /></span>
         <div className="space-y-3 text-xs font-medium leading-relaxed text-body">
           <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-foreground">Important regulatory status & banking disclaimer</h3>
-          <p><b className="text-foreground">Slikpay is a financial technology company, not a bank.</b> Banking services, dedicated virtual accounts and interbank settlement are provided by licensed partner banks, including Sterling Bank Plc, regulated by the Central Bank of Nigeria and other national regulators.</p>
+          <p><b className="text-foreground">Slikpay is a financial technology company, not a bank.</b> Banking services, dedicated virtual accounts and interbank settlement are provided by our licensed partner banks and regulated financial institutions in each market we serve.</p>
           <p>Card issuing services are provided by licensed partner banks under licence from Mastercard International. Slikpay complies with PCI-DSS Level 1, the Nigeria Data Protection Regulation (NDPR), Kenya Data Protection Act and South Africa's POPIA. Funds held in user accounts are protected under the respective partner banks' deposit insurance schemes.</p>
         </div>
       </div>

@@ -52,7 +52,7 @@ export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", ti
         <MoreVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       <div className="mt-5 font-mono text-3xl font-bold tracking-wider text-foreground">{pretty}</div>
-      <p className="mt-1 text-sm font-semibold text-body">Sterling Bank • {label}</p>
+      <p className="mt-1 text-sm font-semibold text-body">Slikpay • {label}</p>
       <Button
         variant="crisp"
         className="mt-5 rounded-full"

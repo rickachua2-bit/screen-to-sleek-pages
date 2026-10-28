@@ -16,7 +16,7 @@ export const baasService = createServerFn({ method: "POST" })
     const db = accountAdmin();
     const user = await db.auth.getUser(authorization.slice(7));
     if (user.error || !user.data.user) throw new Error("Your session has expired. Sign in again.");
-    if (data.operation === "balance") throw new Error("Live balance access is awaiting Paddle's merchant-specific account mapping; platform settlement float is not your wallet balance.");
+    if (data.operation === "balance") throw new Error("Live balance access is awaiting merchant-specific account mapping; platform settlement float is not your wallet balance.");
     if (data.operation === "nip") throw new Error("Live transfers are locked until merchant-owned funding accounts and independent withdrawal PIN validation are configured.");
     const response = await paddle("/accounts/resolve", { accountNumber: data.accountNumber, bankCode: data.bankCode });
     if (typeof response['accountName'] !== "string" || !response['accountName'].trim()) throw new Error("The bank did not confirm an account name.");

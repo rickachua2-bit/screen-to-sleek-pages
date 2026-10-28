@@ -38,6 +38,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     const access = accessFor(endpoint, role, mode);
     if (!access.allowed) throw new Error(access.reason);
     if (JSON.stringify(data.body).length > 20000) throw new Error("Request is too large.");
+    if (endpoint.id === "post-accounts-virtual") data.body = { ...data.body, bank: "sterling" };
     if (mode === "live" && review !== "approved") throw new Error("Complete verification before using live services.");
     const path = fillPath(endpoint.path, data.params);
 

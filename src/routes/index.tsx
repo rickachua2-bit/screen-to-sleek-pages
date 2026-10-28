@@ -7,9 +7,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Slikpay — Business & Personal Banking" },
-      { name: "description", content: "Slikpay by Sterling Bank: merchant settlement, NUBANs, virtual dollar cards and instant transfers." },
+      { name: "description", content: "Slikpay: merchant settlement, NUBANs, virtual dollar cards and instant transfers." },
       { property: "og:title", content: "Slikpay — Business & Personal Banking" },
-      { property: "og:description", content: "Merchant console and personal wallet powered by Sterling Bank." },
+      { property: "og:description", content: "Merchant console and personal wallet in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
