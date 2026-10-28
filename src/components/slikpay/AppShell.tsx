@@ -101,7 +101,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     <div className="sticky top-0 hidden h-screen shrink-0 lg:block">{sidebar}</div>
     {open && <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)}><div role="dialog" aria-modal="true" aria-label="Navigation menu" className="h-full w-[260px]" onClick={(e) => e.stopPropagation()}>{sidebar}</div></div>}
     <div className="light-workspace min-w-0 flex-1">
-      <header className="sticky top-0 z-30 flex h-[72px] items-center gap-2 border-b border-border bg-background/95 px-4 backdrop-blur-2xl md:gap-4 md:px-7">
+      <header className="topbar-midnight sticky top-0 z-30 flex h-[72px] items-center gap-2 px-4 backdrop-blur-2xl md:gap-4 md:px-7">
         <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
         {greeting && <div className="hidden shrink-0 xl:block"><h1 className="text-lg font-black">{greeting}</h1>{tierBadge && <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-success" />{tierBadge}</p>}</div>}
         {onAddMoney && <Button variant="brand" size="sm" className="hidden shrink-0 rounded-full md:inline-flex" onClick={onAddMoney}><Plus /> Add Money</Button>}
