@@ -223,10 +223,10 @@ function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from:
 
 function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClose, onDone }: { code: string; live: boolean; balance: number; payout: PayoutAccount | null; holder: string; onNavigate?: ((m: string) => void) | undefined; onClose: () => void; onDone: () => Promise<void> }) {
   const withdraw = useServerFn(withdrawFunds); const save = useServerFn(savePayoutAccount);
-  const [amountW, setAmountW] = useState(""); const fee = useFee(railFor("withdraw", code, currencyDef(code)?.kind === "crypto"), amt(amountW));
   const [acct, setAcct] = useState<PayoutAccount | null>(payout);
   const [form, setForm] = useState({ accountNumber: "", accountName: holder, bankName: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
+  const fee = useFee(railFor("withdraw", code, currencyDef(code)?.kind === "crypto"), amt(amount));
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<{ reference: string | null; to: string } | null>(null); const [key] = useState(uuid);
   const addAccount = async () => { setBusy(true); try { await save({ data: { currency: code as "GHS", ...form } }); setAcct(form); toast.success("Payout account saved"); } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save account"); } finally { setBusy(false); } };
   const confirm = async () => { setBusy(true); try { setRef(await withdraw({ data: { currency: code as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } })); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Withdrawal failed"); } finally { setBusy(false); } };
@@ -244,9 +244,9 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
 function SendDialog({ code, live, balance, onClose, onDone }: { code: string; live: boolean; balance: number; onClose: () => void; onDone: () => Promise<void> }) {
   const run = useServerFn(runPaddleOperation);
   const def = currencyDef(code)!;
-  const [amountS, setAmountS] = useState(""); const fee = useFee(railFor("send", code, def.kind === "crypto"), amt(amountS));
   const [v, setV] = useState({ accountName: "", accountNumber: "", bankName: "", narration: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
+  const fee = useFee(railFor("send", code, def.kind === "crypto"), amt(amount));
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<string | null>(null); const [key] = useState(uuid);
   const confirm = async () => { setBusy(true); try { const r = await run({ data: { id: "post-payouts-global", params: {}, body: { amount: amt(amount), currency: code, destinationCurrency: code, narration: v.narration || undefined, beneficiary: { accountNumber: v.accountNumber, accountName: v.accountName, bankName: v.bankName, country: def.country } }, idempotencyKey: key, currency: code, ...(pin ? { pin } : {}) } }); setRef(r.receipt?.reference ?? null); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Transfer failed"); } finally { setBusy(false); } };
   const ok = v.accountName.trim().length > 1 && v.accountNumber.trim().length > 3 && v.bankName.trim().length > 1 && amt(amount) > 0 && amt(amount) <= balance;
@@ -268,7 +268,7 @@ export function DepositQr({ address, code, network, size = 168 }: { address: str
 /** Total across every wallet, shown in naira at live rates. */
 export function PortfolioHeader() {
   const load = useServerFn(getWallets); const loadExtras = useServerFn(getWalletExtras);
-  const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts();
+  const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts(); const pricing = useLivePricing();
   const [data, setData] = useState<{ w: WalletView[]; x: Extras } | null>(null);
   useEffect(() => { let on = true; Promise.all([load(), loadExtras()]).then(([w, x]) => on && setData({ w: w.wallets, x })).catch(() => undefined); return () => { on = false; }; }, [load, loadExtras, banking]);
   if (!data) return null;
