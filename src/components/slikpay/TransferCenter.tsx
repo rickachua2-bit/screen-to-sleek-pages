@@ -15,7 +15,7 @@ type Row = BulkRow & { name?: string; state?: "checking" | "ready" | "sent" | "f
 export function TransferCenter({ initial = "single" }: { initial?: "single" | "bulk" }) {
   const { profile } = useBankingProfile();
   const live = profile?.mode === "live";
-  const balance = profile?.balances?.NGN;
+  const balance = profile?.balances?.["NGN"];
   const [tab, setTab] = useState(initial);
   const [k, setK] = useState(0);
   return <div className="space-y-5">

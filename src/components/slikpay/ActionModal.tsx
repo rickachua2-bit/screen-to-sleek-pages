@@ -42,7 +42,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
           <h2 className="text-lg font-black text-foreground">{TITLES[kind]}</h2>
           <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
         </div>
-        {kind === "add" ? <AddMoney /> : kind === "send" ? <SendNip live={live} onClose={onClose} balance={profile?.balances?.NGN} /> : kind === "softpos" ? (
+        {kind === "add" ? <AddMoney /> : kind === "send" ? <SendNip live={live} onClose={onClose} balance={profile?.balances?.["NGN"]} /> : kind === "softpos" ? (
           <div className="space-y-4 text-center">
             <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-4 border-dashed border-cyan text-sm font-bold text-body">Tap card here</div>
             <p className="text-sm font-semibold text-body">Card acceptance on this device turns on once your terminal is paired.</p>
