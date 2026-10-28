@@ -1,84 +1,35 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { CheckCircle2, Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { CheckCircle2, Copy, Loader2, Lock, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { api, naira, NG_BANKS, type Bank } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { BrandSelect } from "./BrandSelect";
 import { useServerFn } from "@tanstack/react-start";
+import { naira } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 import { baasService } from "@/lib/baas.functions";
+import { listBanks } from "@/lib/transfers.functions";
+import { runPaddleOperation } from "@/lib/paddle.functions";
+import { quoteFee } from "@/lib/pricing.functions";
+import { SERVICES } from "@/lib/services-registry";
+import { useBankingProfile } from "./PaddleConsole";
+import { GuidedService } from "./ServicesHub";
 
 export type ActionKind = "send" | "bills" | "airtime" | "fund" | "swap" | "add" | "softpos";
 
 const TITLES: Record<ActionKind, string> = {
-  send: "Send Money (NIP)",
-  bills: "Pay Utilities",
-  airtime: "Buy Airtime & Data",
-  fund: "Fund USD Virtual Card",
-  swap: "Currency Swap",
-  add: "Add Money",
-  softpos: "SoftPOS — Accept Payment",
+  send: "Bank transfer", bills: "Pay utilities", airtime: "Buy airtime", fund: "Fund card", swap: "Swap currencies", add: "Add money", softpos: "Accept a card payment",
 };
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-bold text-foreground">{label}</span>
-      {children}
-    </label>
-  );
+  return <label className="block"><span className="mb-1.5 block text-sm font-bold text-foreground">{label}</span>{children}</label>;
 }
 
 export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () => void }) {
-  const banking = useServerFn(baasService);
-  const [banks, setBanks] = useState<Bank[]>(NG_BANKS);
-  type Form = Partial<Record<"bank" | "acct" | "amount" | "narration" | "service" | "target" | "from" | "to", string>>;
-  const [f, setF] = useState<Form>({ bank: "232", service: "power", from: "NGN", to: "USD" });
-  const [acctName, setAcctName] = useState("");
-  const [lookupError, setLookupError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<string | null>(null);
-  const set = (k: keyof Form) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
-
-  useEffect(() => {
-    if (kind === "send") api.banks().then(setBanks);
-  }, [kind]);
-  useEffect(() => {
-    let active = true;
-    setAcctName(""); setLookupError("");
-    if (kind !== "send" || (f.acct ?? "").length !== 10) {
-      return;
-    }
-    banking({ data: { operation: "resolve-account", bankCode: f.bank ?? "232", accountNumber: f.acct ?? "" } })
-      .then((r) => { if (active) setAcctName(r.accountName); })
-      .catch((e) => { if (active) setLookupError(e instanceof Error ? e.message : "Account lookup failed."); });
-    return () => { active = false; };
-  }, [kind, f.bank, f.acct, banking]);
-
-  const amount = Number(f.amount || 0);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (kind === "send") { toast.error("Live transfers are awaiting secure funding-account and PIN setup."); return; }
-    if (kind !== "softpos" && kind !== "add" && !(amount > 0)) {
-      toast.error("Enter a valid amount");
-      return;
-    }
-    setBusy(true);
-    try {
-      let r: { message: string; ref: string } | undefined;
-      if (kind === "bills" || kind === "airtime") r = await api.payBill({ service: kind === "airtime" ? "airtime" : (f.service as "power" | "cable"), amount, meterOrPhone: f.target ?? "" });
-      if (kind === "fund") r = await api.fundCard("crd_1", amount);
-      if (kind === "swap") r = await api.swap({ fromCurrency: f.from ?? "NGN", toCurrency: f.to ?? "USD", amount });
-      const msg = r ? `${r.message} • ${r.ref}` : "Request received";
-      setDone(msg);
-      toast.success(r?.message ?? "Done");
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+  const { profile } = useBankingProfile();
+  const live = profile?.mode === "live";
+  // Bills and airtime use the same guided, provider-backed flow as the Services hub.
+  if (kind === "bills" || kind === "airtime") {
+    const svc = SERVICES.find((s) => s.id === (kind === "airtime" ? "airtime" : "power"))!;
+    return <GuidedService service={svc} live={live} onClose={onClose} onDone={() => undefined} />;
   }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" onClick={onClose}>
       <div role="dialog" aria-label={TITLES[kind]} className="slik-popup panel w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
@@ -86,71 +37,86 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
           <h2 className="text-lg font-black text-foreground">{TITLES[kind]}</h2>
           <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
         </div>
-        {done ? (
-          <div className="py-6 text-center">
-            <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
-            <p className="mt-3 font-bold text-foreground">{done}</p>
-            <Button variant="brand" className="mt-6 w-full" onClick={onClose}>Done</Button>
-          </div>
-        ) : kind === "add" ? (
-          <div className="space-y-3 text-sm">
-            <p className="font-semibold text-body">Transfer to your dedicated account from any Nigerian bank:</p>
-            <div className="rounded-xl border-2 border-border p-4">
-              <div className="font-mono text-2xl font-bold text-foreground">7946 4362 44</div>
-              <div className="font-semibold text-muted-foreground">Slikpay</div>
-            </div>
-            <Button variant="brand" className="w-full" onClick={() => { navigator.clipboard?.writeText("7946436244"); toast.success("Account number copied"); }}>Copy account number</Button>
-          </div>
-        ) : kind === "softpos" ? (
+        {kind === "add" ? <AddMoney /> : kind === "send" ? <SendNip live={live} onClose={onClose} /> : kind === "softpos" ? (
           <div className="space-y-4 text-center">
             <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-4 border-dashed border-cyan text-sm font-bold text-body">Tap card here</div>
-            <p className="text-sm font-semibold text-body">Ask your customer to tap their contactless card or phone on this device.</p>
+            <p className="text-sm font-semibold text-body">Card acceptance on this device turns on once your terminal is paired.</p>
             <Button variant="crisp" className="w-full" onClick={onClose}>Close</Button>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4">
-            {kind === "send" && (
-              <>
-                <Field label="Recipient bank">
-                  <BrandSelect label="Recipient bank" value={f.bank ?? "232"} onChange={(value) => set("bank")({ target: { value } })} options={banks.map((b) => ({ value: b.code, label: b.name }))} />
-                </Field>
-                <Field label="Account number">
-                  <input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={f.acct ?? ""} onChange={set("acct")} />
-                </Field>
-                {acctName && <div className="rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">{acctName}</div>}
-                {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
-                <p className="text-sm text-muted-foreground">Live transfers are locked pending funding-account ownership and withdrawal PIN setup.</p>
-              </>
-            )}
-            {kind === "bills" && (
-              <Field label="Service">
-                <BrandSelect label="Service" value={f.service ?? "power"} onChange={(value) => set("service")({ target: { value } })} options={[{ value: "power", label: "Electricity" }, { value: "cable", label: "Cable TV" }]} />
-              </Field>
-            )}
-            {(kind === "bills" || kind === "airtime") && (
-              <Field label={kind === "airtime" ? "Phone number" : "Meter / smartcard number"}>
-                <input className="field font-mono" inputMode="numeric" placeholder={kind === "airtime" ? "0803 000 0000" : "45012345678"} value={f.target ?? ""} onChange={set("target")} />
-              </Field>
-            )}
-            {kind === "swap" && (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="From"><BrandSelect label="From currency" value={f.from ?? "NGN"} onChange={(value) => set("from")( { target: { value } })} options={["NGN", "USD", "GBP", "USDT"].map((c) => ({ value: c, label: c }))} /></Field>
-                <Field label="To"><BrandSelect label="To currency" value={f.to ?? "USD"} onChange={(value) => set("to")( { target: { value } })} options={["USD", "NGN", "GBP", "USDT"].map((c) => ({ value: c, label: c }))} /></Field>
-              </div>
-            )}
-            <Field label={kind === "fund" ? "Amount (USD)" : `Amount (${kind === "swap" ? f.from : "NGN"})`}>
-              <input className="field" inputMode="decimal" placeholder="0.00" value={f.amount ?? ""} onChange={set("amount")} />
-            </Field>
-            {kind === "send" && (
-              <Field label="Narration"><input className="field" placeholder="What's this for?" value={f.narration ?? ""} onChange={set("narration")} /></Field>
-            )}
-            {kind === "send" && amount > 0 && <p className="text-xs font-semibold text-muted-foreground">Amount: {naira(amount)} · Fee not yet quoted</p>}
-            <Button variant="brand" type="submit" disabled={busy || kind === "send"} className="h-11 w-full">
-              {busy && <Loader2 className="animate-spin" />} Continue
-            </Button>
-          </form>
+          <div className="space-y-4 text-sm">
+            <p className="font-semibold text-body">{kind === "swap" ? "Pick a currency at the top of your dashboard and tap Swap to convert at the live rate." : "Card funding opens once a card has been issued to your account."}</p>
+            <Button variant="brand" className="w-full" onClick={onClose}>Got it</Button>
+          </div>
         )}
       </div>
     </div>
   );
+}
+
+function AddMoney() {
+  const { profile } = useBankingProfile();
+  const n = profile?.virtualAccount ?? null; const d = profile?.accountDetails;
+  if (!profile) return <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />;
+  if (!n) return <p className="text-sm font-semibold text-body">Your account number is issued automatically once verification is complete.</p>;
+  const share = [d?.accountName, d?.bankName, n].filter(Boolean).join(" · ");
+  return <div className="space-y-3 text-sm">
+    <p className="font-semibold text-body">Transfer to your dedicated account from any bank:</p>
+    <div className="rounded-xl border-2 border-border p-4">
+      <div className="font-mono text-2xl font-bold text-foreground">{n.slice(0, 4)} {n.slice(4, 8)} {n.slice(8)}</div>
+      {d?.accountName && <div className="font-semibold text-foreground">{d.accountName}</div>}
+      {d?.bankName && <div className="font-semibold text-muted-foreground">{d.bankName}</div>}
+    </div>
+    <Button variant="brand" className="w-full" onClick={async () => { try { await navigator.clipboard.writeText(share); toast.success("Account details copied"); } catch { toast.error("Copy unavailable"); } }}><Copy />Copy details</Button>
+  </div>;
+}
+
+function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
+  const banksFn = useServerFn(listBanks); const resolve = useServerFn(baasService); const run = useServerFn(runPaddleOperation); const feeFn = useServerFn(quoteFee);
+  const [banks, setBanks] = useState<{ code: string; name: string }[] | null>(null);
+  const [q, setQ] = useState(""); const [bank, setBank] = useState<{ code: string; name: string } | null>(null);
+  const [acct, setAcct] = useState(""); const [name, setName] = useState(""); const [lookup, setLookup] = useState("");
+  const [amount, setAmount] = useState(""); const [narration, setNarration] = useState("");
+  const [fee, setFee] = useState<string>(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
+  const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<string | null>(null);
+  const [key] = useState(() => crypto.randomUUID());
+  useEffect(() => { banksFn().then(setBanks).catch(() => setBanks([])); }, [banksFn]);
+  useEffect(() => {
+    let on = true; setName(""); setLookup("");
+    if (!bank || acct.length !== 10) return;
+    setLookup("Checking account…");
+    resolve({ data: { operation: "resolve-account", bankCode: bank.code, accountNumber: acct } }).then((r) => { if (on) { setName(r.accountName); setLookup(""); } }).catch((e) => on && setLookup(e instanceof Error ? e.message : "Account lookup failed."));
+    return () => { on = false; };
+  }, [bank, acct, resolve]);
+  const amt = Number(amount);
+  const filtered = useMemo(() => (banks ?? []).filter((b) => b.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8), [banks, q]);
+  const review = async () => { setStep("review"); setFee("Calculating…"); try { const r = await feeFn({ data: { rail: "payouts", amount: amt } }); setFee(r ? naira(r.fee) : "Shown on receipt"); } catch { setFee("Shown on receipt"); } };
+  const send = async () => {
+    if (live && !/^\d{4}$/.test(pin)) { toast.error("Enter your 4-digit transaction PIN."); return; }
+    setBusy(true);
+    try {
+      const r = await run({ data: { id: "post-payouts-transfer", params: {}, body: { amount: amt, destinationBankCode: bank!.code, destinationAccountNumber: acct, destinationAccountName: name, narration: narration || undefined, reference: key }, idempotencyKey: key, currency: "NGN", ...(pin ? { pin } : {}) } });
+      setRef(r.receipt?.reference ?? null); setStep("done");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Transfer failed. No money was taken."); } finally { setBusy(false); }
+  };
+  if (step === "done") return <div className="py-4 text-center"><CheckCircle2 className="mx-auto h-14 w-14 text-success" /><p className="mt-3 font-bold text-foreground">{naira(amt)} sent to {name}</p>{ref && <p className="mt-1 text-xs text-muted-foreground">Reference <span className="font-mono">{ref}</span></p>}<Button variant="brand" className="mt-6 w-full" onClick={onClose}>Done</Button></div>;
+  if (step === "review") return <div className="space-y-4">
+    <dl className="space-y-2 rounded-xl border border-border p-4 text-sm">{[["To", name], ["Bank", bank!.name], ["Account", acct], ["Amount", naira(amt)], ["Fee", fee], ...(narration ? [["Note", narration]] : [])].map(([k, v]) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-bold">{v}</dd></div>)}</dl>
+    {live && <input className="field text-center font-mono tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} placeholder="PIN" aria-label="Transaction PIN" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} />}
+    <div className="flex gap-2"><Button variant="crisp" onClick={() => setStep("form")}>Edit</Button><Button variant="brand" className="flex-1" disabled={busy} onClick={send}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}Send {naira(amt)}</Button></div>
+  </div>;
+  return <div className="space-y-4">
+    <Field label="Recipient bank">
+      {bank ? <button type="button" onClick={() => setBank(null)} className="field flex items-center justify-between text-left"><span className="font-bold">{bank.name}</span><span className="text-xs text-cyan">Change</span></button> : <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <input className="field pl-9" placeholder={banks ? `Search ${banks.length} banks` : "Loading banks…"} value={q} onChange={(e) => setQ(e.target.value)} />
+        {q && <ul className="mt-1 max-h-48 overflow-auto rounded-xl border border-border bg-popover">{filtered.map((b) => <li key={b.code}><button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-muted" onClick={() => { setBank(b); setQ(""); }}>{b.name}</button></li>)}{!filtered.length && <li className="px-3 py-2 text-xs text-muted-foreground">No bank matches.</li>}</ul>}
+      </div>}
+    </Field>
+    <Field label="Account number"><input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={acct} onChange={(e) => setAcct(e.target.value.replace(/\D/g, ""))} /></Field>
+    {name ? <div className="rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">{name}</div> : lookup && <p role="status" className="text-xs text-muted-foreground">{lookup}</p>}
+    <Field label="Amount (NGN)"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /></Field>
+    <Field label="Note (optional)"><input className="field" maxLength={60} value={narration} onChange={(e) => setNarration(e.target.value)} /></Field>
+    <Button variant="brand" className="h-11 w-full" disabled={!name || !(amt > 0)} onClick={review}>Review transfer</Button>
+  </div>;
 }
