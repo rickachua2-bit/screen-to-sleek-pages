@@ -3,6 +3,8 @@ import { ArrowDownLeft, ArrowUpRight, CalendarDays, Clock, Download, Scale, Sear
 import { Button } from "@/components/ui/button";
 import { exportTransactionsCsv, naira, type Txn } from "@/lib/api";
 import { filterLedger } from "@/lib/merchant";
+import { matchLedger, parseLedgerQuery, runningBalances } from "@/lib/ledger-query";
+import { FlowChart } from "./FlowChart";
 import { TransactionTable } from "./TransactionTable";
 
 const STATUSES = ["All", "Successful", "Pending", "Failed"] as const;
@@ -11,7 +13,7 @@ const PRESETS = [{ l: "Today", d: 0 }, { l: "7 days", d: 7 }, { l: "30 days", d:
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const PAGE = 25;
 
-export function MerchantLedger({ txns, globalSearch = "", recent = false, onViewAll }: { txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
+export function MerchantLedger({ txns, globalSearch = "", recent = false, onViewAll, balance }: { balance?: number | undefined; txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("All");
   const [flow, setFlow] = useState<string>("all");
@@ -20,7 +22,9 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
   const [preset, setPreset] = useState<string>("");
   const [limit, setLimit] = useState(PAGE);
 
-  const base = useMemo(() => filterLedger(txns, query || globalSearch, "All", from, to).filter((t) => flow === "all" || t.direction === flow), [txns, query, globalSearch, from, to, flow]);
+  const smart = useMemo(() => parseLedgerQuery(query || globalSearch), [query, globalSearch]);
+  const balances = useMemo(() => balance === undefined ? undefined : runningBalances([...txns].sort((a, b) => b.date.localeCompare(a.date)), balance), [txns, balance]);
+  const base = useMemo(() => filterLedger(txns, "", "All", from, to).filter((t) => (flow === "all" || t.direction === flow) && matchLedger(t, smart)), [txns, smart, from, to, flow]);
   const rows = status === "All" ? base : base.filter((t) => t.status === status);
   const counts = Object.fromEntries(STATUSES.map((s) => [s, s === "All" ? base.length : base.filter((t) => t.status === s).length]));
   const ok = base.filter((t) => t.status === "Successful");
@@ -53,11 +57,14 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
       <Stat icon={Clock} tone="pending" label="Pending" value={naira(pending)} note={`${counts["Pending"]} awaiting`} />
     </div>}
 
+    {!recent && base.length > 0 && <FlowChart txns={base} />}
+
     <div className="mb-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="ledger-search relative min-w-[220px] flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search ledger" className="h-10 w-full rounded-full bg-transparent pl-10 pr-4 text-sm outline-none placeholder:text-muted-foreground" placeholder="Search customer, reference or channel" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} /></label>
+        <label className="ledger-search relative min-w-[220px] flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search ledger" className="h-10 w-full rounded-full bg-transparent pl-10 pr-4 text-sm outline-none placeholder:text-muted-foreground" placeholder={'Try "failed over 50k", "received from Ada in March"'} value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} /></label>
         <div className="ledger-seg" role="radiogroup" aria-label="Direction">{FLOWS.map((f) => <button key={f.v} type="button" role="radio" aria-checked={flow === f.v} onClick={() => { setFlow(f.v); setLimit(PAGE); }}>{f.l}</button>)}</div>
       </div>
+      {smart.chips.length > 0 && <div className="flex flex-wrap items-center gap-1.5 text-xs"><span className="font-semibold text-muted-foreground">Understood:</span>{smart.chips.map((c) => <span key={c} className="ledger-chip">{c}</span>)}{smart.text && <span className="ledger-chip is-text">“{smart.text}”</span>}</div>}
       {!recent && <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Status">{STATUSES.map((s) => <button key={s} type="button" role="tab" aria-selected={status === s} className={`ledger-tab is-${s.toLowerCase()}`} onClick={() => { setStatus(s); setLimit(PAGE); }}>{s}<span>{counts[s]}</span></button>)}</div>
         <span className="mx-1 hidden h-5 w-px bg-border md:block" />
@@ -67,7 +74,7 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
       </div>}
     </div>
 
-    {shown.length ? <TransactionTable txns={shown} /> : <div className="ledger-empty flex flex-col items-center gap-2 rounded-xl py-14 text-center"><Search className="h-6 w-6 text-muted-foreground" /><p className="text-sm font-bold">{txns.length ? "Nothing matches these filters" : "No transactions yet"}</p><p className="text-xs text-muted-foreground">{txns.length ? "Try a wider date range or clear filters." : "Money you send or receive will appear here instantly."}</p>{filtered && <Button variant="crisp" size="sm" className="mt-2 rounded-full" onClick={clear}>Clear filters</Button>}</div>}
+    {shown.length ? <TransactionTable txns={shown} balances={balances} /> : <div className="ledger-empty flex flex-col items-center gap-2 rounded-xl py-14 text-center"><Search className="h-6 w-6 text-muted-foreground" /><p className="text-sm font-bold">{txns.length ? "Nothing matches these filters" : "No transactions yet"}</p><p className="text-xs text-muted-foreground">{txns.length ? "Try a wider date range or clear filters." : "Money you send or receive will appear here instantly."}</p>{filtered && <Button variant="crisp" size="sm" className="mt-2 rounded-full" onClick={clear}>Clear filters</Button>}</div>}
     {!recent && rows.length > limit && <div className="mt-4 flex justify-center"><Button variant="crisp" size="sm" className="rounded-full" onClick={() => setLimit((l) => l + PAGE)}>Show more · {rows.length - limit} left</Button></div>}
   </section>;
 }
