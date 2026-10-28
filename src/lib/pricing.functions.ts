@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { exactPayoutFee } from "./transfer-validation";
+import { slikpayTransferFee } from "./transfer-validation";
 import { feeIsFlat, parseFxRates, railPrice, type FxRates, type Rail } from "./pricing";
 
 /** Live FX rates and fee rails for the signed-in user's plan and mode. */
@@ -29,13 +29,14 @@ export const getLivePricing = createServerFn({ method: "POST" }).handler(async (
 export const quoteFee = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ rail: z.string().regex(/^[a-z_]{3,40}$/), amount: z.number().positive().max(1e12) }).parse(d))
   .handler(async ({ data }) => {
+    if (data.rail === "payouts") { const fee = slikpayTransferFee(data.amount); return { fee, net: data.amount, description: "1% of the amount, capped at ₦80", currency: "NGN", flat: false }; }
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { mode } = await bankingUser();
     const r = await callPaddle(mode, "POST", "/v1/pricing/calculate", { rail: data.rail, amount: data.amount });
     const d = (r.data ?? {}) as Record<string, unknown>;
     // The calculator falls back to a generic rate for unknown rails; only trust it when it echoes our rail.
     if (d["rail"] !== data.rail) return null;
-    const fee = data.rail === "payouts" ? exactPayoutFee(d) : Number(d["fee"]);
+    const fee = Number(d["fee"]);
     if (!Number.isFinite(fee) || fee < 0) throw new Error("Fees are unavailable. Try again.");
     // A flat provider formula means the same fee applies to every amount, so the UI can quote it once.
     const flat = feeIsFlat(String(d["formula"] ?? d["description"] ?? ""));
