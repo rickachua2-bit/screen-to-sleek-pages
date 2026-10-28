@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getSupabase } from "./supabase";
+import { syncInbound } from "./collections.functions";
 
-/** Streams new transactions/ledger rows for the signed-in user; falls back to a 60s poll. */
+/** Pulls settled incoming transfers into Slikpay; resolves to how many were new. */
+export async function captureInbound() {
+  try { return (await syncInbound()).added; } catch { return 0; }
+}
+
+/** Streams new transactions/ledger rows for the signed-in user; also pulls provider collections every 30s. */
 export function useLiveUpdates(userId: string | undefined, reload: () => Promise<void>) {
   const ref = useRef(reload); ref.current = reload;
   useEffect(() => {
@@ -14,7 +20,9 @@ export function useLiveUpdates(userId: string | undefined, reload: () => Promise
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${userId}` }, (p) => { const r = p.new as { direction?: string; amount?: number }; bump(r.direction === "credit" ? `Money received · ₦${Number(r.amount ?? 0).toLocaleString()}` : undefined); })
       .on("postgres_changes", { event: "*", schema: "public", table: "ledger_entries", filter: `user_id=eq.${userId}` }, () => bump())
       .subscribe();
-    const poll = setInterval(() => { if (document.visibilityState === "visible") void ref.current(); }, 60000);
+    const pull = async () => { const n = await captureInbound(); if (n > 0) bump(`${n} new payment${n > 1 ? "s" : ""} received`); };
+    void pull();
+    const poll = setInterval(() => { if (document.visibilityState === "visible") { void pull(); void ref.current(); } }, 30000);
     return () => { if (t) clearTimeout(t); clearInterval(poll); void sb.removeChannel(ch); };
   }, [userId]);
 }
