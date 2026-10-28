@@ -40,8 +40,9 @@ export function BalanceCard({ title, balance, sub, footer }: { title: string; ba
   );
 }
 
-export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", title = "Dedicated NUBAN Account" }: { nuban?: string; label?: string; title?: string }) {
+export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", title = "Dedicated NUBAN Account", accountName, bankName, status }: { nuban?: string; label?: string; title?: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined }) {
   const pretty = `${nuban.slice(0, 4)} ${nuban.slice(4, 8)} ${nuban.slice(8)}`;
+  const share = [accountName, bankName, nuban].filter(Boolean).join(" · ");
   return (
     <Panel>
       <div className="flex items-center justify-between">
@@ -49,20 +50,17 @@ export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", ti
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt"><Landmark className="h-5 w-5" /></span>
           <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
         </div>
-        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+        {status ? <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${status === "ACTIVE" ? "bg-cyan/15 text-cyan" : "bg-magenta/15 text-magenta"}`}>{status === "ACTIVE" ? "● Active" : status}</span> : <MoreVertical className="h-4 w-4 text-muted-foreground" />}
       </div>
       <div className="mt-5 font-mono text-3xl font-bold tracking-wider text-foreground">{pretty}</div>
-      <p className="mt-1 text-sm font-semibold text-body">Slikpay • {label}</p>
-      <Button
-        variant="crisp"
-        className="mt-5 rounded-full"
-        onClick={async () => {
-          try { await navigator.clipboard.writeText(nuban); } catch { /* clipboard unavailable */ }
-          toast.success("Account number copied", { description: nuban });
-        }}
-      >
-        <Copy /> Copy Account Number
-      </Button>
+      {accountName || bankName ? <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
+        <div><dt className="text-muted-foreground">Account name</dt><dd className="mt-0.5 font-bold text-foreground">{accountName ?? "—"}</dd></div>
+        <div><dt className="text-muted-foreground">Bank</dt><dd className="mt-0.5 font-bold text-foreground">{bankName ?? "—"}</dd></div>
+      </dl> : <p className="mt-1 text-sm font-semibold text-body">Slikpay • {label}</p>}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <Button variant="crisp" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText(nuban); } catch { /* clipboard unavailable */ } toast.success("Account number copied", { description: nuban }); }}><Copy /> Copy number</Button>
+        {share !== nuban && <Button variant="ghost" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText(share); } catch { /* clipboard unavailable */ } toast.success("Account details copied", { description: share }); }}><Copy /> Copy full details</Button>}
+      </div>
     </Panel>
   );
 }

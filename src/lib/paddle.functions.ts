@@ -13,10 +13,20 @@ export const getBankingProfile = createServerFn({ method: "POST" }).handler(asyn
   ]);
   const owned = resources.data ?? [];
   const virtualAccount = owned.find((r) => r.operation === "POST /v1/accounts/virtual" && /^\d{10}$/.test(r.resource_id))?.resource_id ?? null;
+  let accountDetails: { accountName: string | null; bankName: string | null; status: string | null } | null = null;
+  if (virtualAccount) {
+    try {
+      const { callPaddle } = await import("./paddle.server");
+      const r = await callPaddle(mode, "GET", `/v1/accounts/virtual/${virtualAccount}`);
+      const d = (r.data ?? {}) as Record<string, unknown>;
+      const str = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : null);
+      accountDetails = { accountName: str("accountName"), bankName: str("bankName"), status: str("status") };
+    } catch { accountDetails = null; }
+  }
   const cardIssued = owned.some((r) => r.operation.startsWith("POST /v1/cards"));
   const balances: Record<string, number> = {};
   for (const e of ledger.data ?? []) balances[e.currency] = (balances[e.currency] ?? 0) + Number(e.amount);
-  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: receipts.data ?? [], virtualAccount, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
+  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: receipts.data ?? [], virtualAccount, accountDetails, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
 });
 
 const runSchema = z.object({
