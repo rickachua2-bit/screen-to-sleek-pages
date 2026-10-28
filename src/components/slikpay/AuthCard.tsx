@@ -8,6 +8,10 @@ import { useAuth, type AuthResult } from "@/lib/auth";
 import { isEmail, isPin, passwordStrength } from "@/lib/password";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useServerFn } from "@tanstack/react-start";
+import { createVerifiedMerchant, lookupMerchantBusiness } from "@/lib/merchant-verification.functions";
+import { phoneInternational } from "@/lib/verification";
+import { MerchantContactVerification } from "./MerchantContactVerification";
 
 export type Pending = AuthResult;
 type Mode = "in" | "up";
@@ -532,7 +536,11 @@ const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
 
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
-  const { signUp } = useAuth();
+  const { signInWithPassword } = useAuth();
+  const lookup = useServerFn(lookupMerchantBusiness);
+  const createMerchant = useServerFn(createVerifiedMerchant);
+  const [challengeId, setChallengeId] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [step, setStep] = useState(1);
   const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", industryOther: "", bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
@@ -559,14 +567,18 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     };
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
-    setStep(2);
+    setChallengeId(""); setCacVerified(false); setCompanyName("");
+    setStep(4);
   }
 
-  function verifyCac() {
+  async function verifyCac() {
     if (f.cac.trim().length < 4) return fail({ cac: "Enter your CAC registration number" });
     setErr({});
     setCacBusy(true);
-    setTimeout(() => { setCacBusy(false); setCacVerified(true); }, 900);
+    setCacVerified(false); setCompanyName("");
+    try { const r = await lookup({ data: { challengeId, country: f.country, rcNumber: f.cac.trim() } }); setCompanyName(r.companyName); setCacVerified(true); }
+    catch (e) { fail({ cac: e instanceof Error ? e.message : "Business verification failed" }); }
+    finally { setCacBusy(false); }
   }
 
   function next2(e: React.FormEvent) {
@@ -576,16 +588,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     setErr({});
     setStep(3);
   }
-
-  useEffect(() => {
-    const digits = f.nuban.replace(/\D/g, "");
-    if (digits.length === 10) {
-      const t = setTimeout(() => setResolved("ACME LOGISTICS LTD"), 600);
-      return () => clearTimeout(t);
-    }
-    setResolved("");
-    return undefined;
-  }, [f.nuban]);
 
   async function launch(e: React.FormEvent) {
     e.preventDefault();
@@ -600,12 +602,15 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     setErr({});
     setBusy(true);
     try {
-      const r = await signUp(f.email, f.pw, "merchant", { full_name: f.director, phone: f.phone, cac_rc_number: f.cac, category: f.industry === "other" ? f.industryOther.trim() : f.industry });
+      await createMerchant({ data: { challengeId, email: f.email.trim().toLowerCase(), password: f.pw, phone: phoneInternational(f.phone, dialOf(f.country).dial), fullName: f.director, category: f.industry === "other" ? f.industryOther.trim() : f.industry, country: f.country, rcNumber: f.cac.trim(), pin } });
+      const r = await signInWithPassword({ email: f.email.trim().toLowerCase(), password: f.pw });
       onDone(r, true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sign-up failed");
     } finally { setBusy(false); }
   }
+
+  if (step === 4) return <MerchantContactVerification email={f.email.trim().toLowerCase()} phone={phoneInternational(f.phone, dialOf(f.country).dial)} onComplete={(id) => { setChallengeId(id); setStep(2); }} onBack={() => setStep(1)} />;
 
   if (step === 1) {
     return (
@@ -633,7 +638,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           <PasswordInput id="b-pw" value={f.pw} onChange={(v) => setF((p) => ({ ...p, pw: v }))} autoComplete="new-password" />
         </Field>
         <StrengthMeter pw={f.pw} />
-        <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue to Business Verification →</Button>
+        <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue to Phone &amp; Email Verification →</Button>
         <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
@@ -647,18 +652,18 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <Field label="Company Type" id="b-ctype">
           <SelectMenu id="b-ctype" value={f.companyType} options={COMPANY_OPTS} onChange={(v) => setF((p) => ({ ...p, companyType: v }))} placeholder="Select company type" />
         </Field>
-        <Field label="CAC Registration Number" id="b-cac" icon={Landmark} error={err["cac"]} shake>
+        <Field label={f.country === "NG" ? "CAC Registration Number (RC / BN / IT)" : "Business Registration Number"} id="b-cac" icon={Landmark} error={err["cac"]} shake>
           <input id="b-cac" className={`${inputCls()} pr-28`} value={f.cac} onChange={(e) => { setF((p) => ({ ...p, cac: e.target.value })); setCacVerified(false); }} placeholder="e.g. RC 1892341" />
-          <button type="button" onClick={verifyCac} disabled={cacBusy}
+          <Button type="button" onClick={verifyCac} disabled={cacBusy}
             className="absolute right-1.5 top-1/2 flex h-9 -translate-y-1/2 items-center gap-1 rounded-lg bg-gradient-brand px-3 text-xs font-black text-primary-foreground shadow-cobalt disabled:opacity-60">
-            {cacBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />} Verify CAC
-          </button>
+            {cacBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />} Verify
+          </Button>
         </Field>
         {cacVerified && (
           <div className="animate-in fade-in zoom-in-95 rounded-2xl border-2 border-success/40 bg-success-soft p-4 shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--success)_50%,transparent)]">
             <p className="flex items-center gap-1.5 text-sm font-black text-success"><Check className="h-4 w-4" strokeWidth={3} /> Corporate Affairs Commission Record Found</p>
-            <p className="mt-2 text-sm font-extrabold text-foreground">ACME LOGISTICS &amp; PAYMENTS NIGERIA LTD</p>
-            <p className="mt-0.5 text-xs font-semibold text-body">14 Marina Road, Lagos Island · <span className="text-success">ACTIVE</span> · Form CAC 1.1 Verified</p>
+            <p className="mt-2 text-sm font-extrabold text-foreground">{companyName}</p>
+            <p className="mt-0.5 text-xs font-semibold text-success">ACTIVE · Verified by Paddle</p>
           </div>
         )}
         <div>
@@ -822,7 +827,8 @@ function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 const CONFETTI_COLORS = ["var(--cobalt)", "var(--cyan)", "var(--magenta)", "var(--success)"];
 
 function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
-  const nuban = "8204918234";
+  const { profile } = useAuth();
+  const nuban = profile?.nuban;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" role="dialog" aria-modal="true" aria-label="Account ready">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -840,8 +846,8 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
           <Check className="h-10 w-10" strokeWidth={3} />
         </span>
         <h2 className="mt-5 text-2xl font-black text-foreground">Your Slikpay Account is Ready!</h2>
-        <p className="mt-1 text-sm font-semibold text-body">Your dedicated Sterling Bank account has been generated.</p>
-        <div className="mt-5 rounded-2xl border-2 border-cobalt/30 bg-cobalt/5 p-4 text-left">
+        <p className="mt-1 text-sm font-semibold text-body">{nuban ? "Your banking account details are available." : "Your sign-in is ready. Banking account issuance is still pending."}</p>
+        {nuban && <div className="mt-5 rounded-2xl border-2 border-cobalt/30 bg-cobalt/5 p-4 text-left">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Sterling Bank Plc / Slikpay</p>
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <span className="font-mono text-2xl font-black tracking-widest text-foreground">{nuban}</span>
@@ -850,8 +856,8 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
               <Copy className="h-3.5 w-3.5" /> Copy
             </button>
           </div>
-          <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> Active · Instant Settlement Enabled</p>
-        </div>
+          <p className="mt-1.5 text-xs font-bold text-body">Account number on file</p>
+        </div>}
         <Button variant="brand" className="shine mt-5 h-12 w-full bg-gradient-tri text-base" onClick={onEnter}>
           Enter {role === "merchant" ? "Console" : "Wallet"} Dashboard →
         </Button>
