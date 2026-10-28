@@ -287,20 +287,76 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
     try {
       const email = isEmail(id) ? id : `${id.replace(/^@/, "").toLowerCase().replace(/\s+/g, ".")}@slikpay.online`;
       const r = await signInWithPassword({ email, password: pinMode ? pin : pw });
-      onDone(r, remember);
+      // Password is only factor one: require the authenticator app when enrolled, else an emailed code.
+      const factors = await supabase.auth.mfa.listFactors();
+      const totp = factors.data?.totp?.find((f) => f.status === "verified");
+      if (totp) {
+        const ch = await supabase.auth.mfa.challenge({ factorId: totp.id });
+        if (ch.error) throw new Error(ch.error.message);
+        setFactor({ id: totp.id, challengeId: ch.data.id });
+        setMethod("totp");
+      } else {
+        const sent = await startEmail();
+        setChallengeId(sent.challengeId);
+        setMaskedEmail(sent.email);
+        setMethod("email");
+      }
+      setPending(r);
+      setOtp("");
+      setTimer(45);
+      setStep(2);
     } catch (e) {
+      await supabase.auth.signOut().catch(() => undefined);
       const m = e instanceof Error ? e.message : "";
-      fail({ pw: /confirm/i.test(m) ? "Confirm your email first — check your inbox." : "We couldn't sign you in. Check your details." });
+      fail({ pw: /confirm/i.test(m) ? "Confirm your email first — check your inbox." : m && !/sign you in/i.test(m) ? m : "We couldn't sign you in. Check your details." });
     } finally {
       setBusy(false);
     }
   }
 
   async function verify() {
+    if (!pending) return;
+    if (!/^\d{6}$/.test(otp)) return fail({ otp: "Enter the 6-digit code." });
+    setErr({});
     setBusy(true);
-    setBusy(false);
-    if (/^\d{6}$/.test(otp) && pending) onDone(pending, remember);
-    else fail({ otp: "Invalid code. Enter the 6 digits sent to you." });
+    try {
+      if (method === "totp" && factor) {
+        const v = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: factor.challengeId, code: otp });
+        if (v.error) throw new Error("That authenticator code didn't match. Try the latest one.");
+      } else {
+        await verifyEmail({ data: { challengeId, code: otp } });
+      }
+      onDone(pending, remember);
+    } catch (e) {
+      fail({ otp: e instanceof Error ? e.message : "Verification failed. Try again." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    if (method === "totp") return;
+    setBusy(true);
+    try {
+      const sent = await startEmail();
+      setChallengeId(sent.challengeId);
+      setMaskedEmail(sent.email);
+      setOtp("");
+      setTimer(45);
+      toast.success("A new code is on its way");
+    } catch (e) {
+      fail({ otp: e instanceof Error ? e.message : "Could not resend. Try again shortly." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function abandon() {
+    await supabase.auth.signOut().catch(() => undefined);
+    setPending(null);
+    setFactor(null);
+    setStep(1);
+    setOtp("");
   }
 
   if (forgot) {
