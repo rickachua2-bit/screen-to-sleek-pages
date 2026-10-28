@@ -51,7 +51,7 @@ function Dashboard() {
     catch (e) { toast.error(e instanceof Error ? e.message : "Could not issue account"); }
     finally { setIssuing(false); }
   };
-  const acct: Account = { balance: banking?.balances["NGN"] ?? 0, nuban: banking?.virtualAccount ?? "—", bank: "Slikpay", inflow30d, inflowChange: 0 };
+  const acct: Account = { balance: banking?.balances["NGN"] ?? 0, nuban: banking?.virtualAccount ?? "", bank: "Slikpay", inflow30d, inflowChange: 0 };
   const [modal, setModal] = useState<ActionKind | null>(null);
   const [search, setSearch] = useState("");
   const connected = !!profile;
