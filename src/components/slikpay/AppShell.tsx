@@ -4,6 +4,7 @@ import { Bell, Check, ChevronDown, LogOut, Menu, Plus, Search, X, type LucideIco
 import { useAuth } from "@/lib/auth";
 import type { Role } from "@/lib/api";
 import { MERCHANT_GROUPS } from "@/lib/merchant";
+import { PERSONAL_GROUPS } from "@/lib/personal";
 import { Button } from "@/components/ui/button";
 import { FlameMark, Logo } from "./Logo";
 
