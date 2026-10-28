@@ -35,16 +35,31 @@ export async function postCredit(db: SupabaseClient, userId: string, mode: Mode,
   return (tx.data?.length ?? 0) > 0;
 }
 
-/** Pulls recent collections from the provider for every account the user owns. Returns new credits. */
-export async function syncCollections(db: SupabaseClient, userId: string) {
-  const res = await db.from("paddle_resources").select("resource_id, mode").eq("user_id", userId).eq("operation", "POST /v1/accounts/virtual");
+/** Pure: an unrecorded receiving account belongs to this user when its verified name matches theirs. */
+export function adoptableAccount(tx: InboundTx, holder: string | null, owned: Set<string>) {
+  const m = tx.metadata ?? {};
+  const account = s(m["recipientAccountNumber"] ?? tx.accountNumber ?? tx.virtualAccountNumber);
+  const name = s(m["recipientAccountName"] ?? m["payeeName"]);
+  if (!holder || !account || owned.has(account) || !/^\d{10}$/.test(account) || !name) return null;
+  return namesMatch(name, holder) ? account : null;
+}
+
+/** Pulls recent collections for every account the user owns, auto-discovering accounts in their verified business name. */
+export async function syncCollections(db: SupabaseClient, userId: string, holder: string | null = null) {
+  const res = await db.from("paddle_resources").select("resource_id, mode, operation").eq("user_id", userId).like("operation", "%/v1/accounts/virtual%");
   let added = 0;
   for (const mode of ["live", "sandbox"] as const) {
     const owned = new Set((res.data ?? []).filter((r) => r.mode === mode).map((r) => r.resource_id as string));
-    if (!owned.size) continue;
+    if (!owned.size && !holder) continue;
     let list: InboundTx[] = [];
     try { const r = await callPaddle(mode, "GET", "/v1/transactions", { limit: 100 }); list = Array.isArray(r.data) ? (r.data as InboundTx[]) : []; } catch { continue; }
-    for (const t of list) { const c = inboundCredit(t, owned); if (c && (await postCredit(db, userId, mode, c))) added++; }
+    for (const t of list) {
+      const acc = adoptableAccount(t, holder, owned);
+      // unique (mode, resource_id) stops an account already claimed by someone else from being adopted.
+      if (acc) { const ins = await db.from("paddle_resources").insert({ user_id: userId, mode, resource_id: acc, operation: "LINKED /v1/accounts/virtual" }); if (!ins.error) owned.add(acc); }
+      const c = inboundCredit(t, owned);
+      if (c && (await postCredit(db, userId, mode, c))) added++;
+    }
   }
   return added;
 }
