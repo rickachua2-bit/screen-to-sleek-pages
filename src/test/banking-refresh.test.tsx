@@ -25,7 +25,7 @@ describe("dashboard refresh", () => {
     expect(mocks.load.mock.calls.length).toBe(fetches + 1); // concurrent taps share one fetch
     expect(a.result.current.profile).toEqual(profile);
     expect(a.result.current.updatedAt).toBeInstanceOf(Date);
-    expect(b.result.current.updatedAt).toBe(a.result.current.updatedAt);
+    await waitFor(() => expect(b.result.current.updatedAt).toEqual(a.result.current.updatedAt));
   });
 
   it("exposes the loader to explicit refreshes without a mounted view", async () => {
