@@ -3,12 +3,13 @@ import {
   AtSign, Bitcoin, Briefcase, Building, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Fuel, Info, Landmark, Laptop, Loader2, Lock, Mail, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Tractor, Truck, User as UserIcon, UtensilsCrossed, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { api, NG_BANKS, type Role, type User } from "@/lib/api";
+import { NG_BANKS, type Role } from "@/lib/api";
+import { useAuth, type AuthResult } from "@/lib/auth";
 import { isEmail, isPin, passwordStrength } from "@/lib/password";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-export type Pending = { token: string; user: User; role: Role };
+export type Pending = AuthResult;
 type Mode = "in" | "up";
 
 /* ---------- shared bits ---------- */
@@ -258,6 +259,7 @@ function AccountTabs({ role, onChange }: { role: Role; onChange: (r: Role) => vo
 /* ---------- sign in ---------- */
 
 function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: boolean) => void }) {
+  const { signInWithPassword, resetPassword } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
@@ -294,12 +296,11 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
     setBusy(true);
     try {
       const email = isEmail(id) ? id : `${id.replace(/^@/, "").toLowerCase().replace(/\s+/g, ".")}@slikpay.online`;
-      const r = await api.login(email, pinMode ? pin : pw, role);
-      setPending(r);
-      setStep(2);
-      setTimer(45);
-    } catch {
-      fail({ pw: "We couldn't sign you in. Check your details." });
+      const r = await signInWithPassword({ email, password: pinMode ? pin : pw });
+      onDone(r, remember);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      fail({ pw: /confirm/i.test(m) ? "Confirm your email first — check your inbox." : "We couldn't sign you in. Check your details." });
     } finally {
       setBusy(false);
     }
@@ -307,9 +308,8 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 
   async function verify() {
     setBusy(true);
-    const r = await api.verify2fa(otp);
     setBusy(false);
-    if (r.success && pending) onDone(pending, remember);
+    if (/^\d{6}$/.test(otp) && pending) onDone(pending, remember);
     else fail({ otp: "Invalid code. Enter the 6 digits sent to you." });
   }
 
@@ -323,7 +323,7 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
         </Field>
         <Button variant="brand" className="h-12 w-full" onClick={async () => {
           if (!isEmail(id)) return fail({ email: "Enter a valid email address" });
-          await api.forgotPassword(id);
+          try { await resetPassword(id); } catch { return fail({ email: "Couldn't send the link. Try again shortly." }); }
           toast.success("Reset link sent if the account exists");
           setForgot(false);
         }}>Send reset link →</Button>
@@ -538,6 +538,7 @@ const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
 
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
+  const { signUp } = useAuth();
   const [step, setStep] = useState(1);
   const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
@@ -604,9 +605,12 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
     setBusy(true);
-    const r = await api.register({ name: f.director, email: f.email, phone: f.phone, password: f.pw, accountType: "BUSINESS", category: f.industry });
-    setBusy(false);
-    onDone(r, true);
+    try {
+      const r = await signUp(f.email, f.pw, "merchant", { full_name: f.director, phone: f.phone, cac_rc_number: f.cac, category: f.industry });
+      onDone(r, true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sign-up failed");
+    } finally { setBusy(false); }
   }
 
   if (step === 1) {
@@ -721,6 +725,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 /* ---------- personal sign-up ---------- */
 
 function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
+  const { signUp } = useAuth();
   const [step, setStep] = useState(1);
   const [f, setF] = useState({ country: "NG", name: "", email: "", phone: "", pw: "", tag: "", bvn: "" });
   const [pin, setPin] = useState("");
@@ -754,9 +759,12 @@ function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
     setBusy(true);
-    const r = await api.register({ name: f.name, email: f.email, phone: f.phone, password: f.pw, accountType: "PERSONAL" });
-    setBusy(false);
-    onDone(r, true);
+    try {
+      const r = await signUp(f.email, f.pw, "personal", { full_name: f.name, phone: f.phone, sliktag: f.tag });
+      onDone(r, true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sign-up failed");
+    } finally { setBusy(false); }
   }
 
   if (step === 1) {
@@ -900,6 +908,7 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleDone = (p: Pending, remember: boolean) => {
+    if (p.needsConfirmation) { toast.success("Check your email to confirm your account, then sign in."); setMode("in"); setPicked(null); setRole(p.role); return; }
     if (mode === "up") setSuccess(p);
     else onDone(p, remember);
   };

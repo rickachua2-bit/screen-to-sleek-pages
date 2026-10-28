@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Code2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
 import { AuthCard, type Pending } from "@/components/slikpay/AuthCard";
 import { CtaBand, Disclaimer, FeatureGrid, FloatingChips, PartnerStrip, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
 
@@ -22,11 +21,9 @@ export const Route = createFileRoute("/auth")({
 const TRUST = ["Sterling Bank clearing rails", "CBN & NDIC regulated partner", "256-bit TLS · PCI-DSS Level 1"];
 
 function AuthPage() {
-  const { signIn } = useAuth();
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const finish = (p: Pending, remember: boolean) => {
-    signIn(p.token, p.user, p.role, remember);
+  const finish = (p: Pending) => {
     toast.success(`Welcome, ${p.user.name.split(" ")[0]}`);
     if (p.role === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } });
     else navigate({ to: "/personal", search: { module: "home" } });
