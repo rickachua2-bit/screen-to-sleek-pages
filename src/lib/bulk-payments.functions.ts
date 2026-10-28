@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { parseBulkCsv, bulkTotals } from "./transfer-rules";
 
-export interface BatchRow { bankCode: string; account: string; amount: number; note?: string; error?: string; key: string; name?: string; state: "checking" | "ready" | "sent" | "pending" | "failed"; msg?: string }
+export interface BatchRow { bankCode: string; account: string; amount: number; note?: string | undefined; error?: string | undefined; key: string; name?: string | undefined; state: "checking" | "ready" | "sent" | "pending" | "failed"; msg?: string | undefined }
 
 export const preparePaymentBatch = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ csv: z.string().max(1_000_000) }).parse(d))

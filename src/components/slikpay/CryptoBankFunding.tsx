@@ -6,7 +6,7 @@ import { quoteSwap } from "@/lib/pricing";
 import { naira } from "@/lib/api";
 import { slikpayTransferFee } from "@/lib/transfer-validation";
 
-export function CryptoBankFunding({ balances }: { balances?: Record<string, number> }) {
+export function CryptoBankFunding({ balances }: { balances?: Record<string, number> | undefined }) {
   const [coin, setCoin] = useState<"USDT" | "USDC">("USDT"); const [amount, setAmount] = useState("");
   const pricing = useLivePricing();
   const estimate = pricing?.rates ? quoteSwap(coin, "NGN", Number(amount), pricing.rates) : null;

@@ -15,7 +15,7 @@ function download(name: string, csv: string) {
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
 }
-export function BulkPayments({ live, balance }: { live: boolean; balance?: number }) {
+export function BulkPayments({ live, balance }: { live: boolean; balance?: number | undefined }) {
   const prepare = useServerFn(preparePaymentBatch); const read = useServerFn(readPaymentBatch); const list = useServerFn(listPaymentBatches); const run = useServerFn(runPaddleOperation);
   const [rows, setRows] = useState<BatchRow[]>([]); const [id, setId] = useState<string | null>(null);
   const [batches, setBatches] = useState<{ id: string; created_at: string }[]>([]);
