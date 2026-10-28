@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { exactPayoutFee } from "./transfer-validation";
 import { parseFxRates, railPrice, type FxRates, type Rail } from "./pricing";
 
 /** Live FX rates and fee rails for the signed-in user's plan and mode. */
@@ -34,5 +35,7 @@ export const quoteFee = createServerFn({ method: "POST" })
     const d = (r.data ?? {}) as Record<string, unknown>;
     // The calculator falls back to a generic rate for unknown rails; only trust it when it echoes our rail.
     if (d["rail"] !== data.rail) return null;
-    return { fee: Number(d["fee"]) || 0, net: Number(d["netAmount"]) || 0, description: String(d["description"] ?? "").slice(0, 160), currency: String(d["currency"] ?? "") };
+    const fee = data.rail === "payouts" ? exactPayoutFee(d) : Number(d["fee"]);
+    if (!Number.isFinite(fee) || fee < 0) throw new Error("Fees are unavailable. Try again.");
+    return { fee, net: Number(d["netAmount"]) || 0, description: String(d["description"] ?? "").slice(0, 160), currency: String(d["currency"] ?? "") };
   });
