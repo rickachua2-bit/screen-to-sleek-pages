@@ -19,3 +19,4 @@
 - Merchant onboarding uses durable server-only verification challenges and an Auth insertion trigger from `supabase/slikpay_verification.sql`; run it manually in the external project so direct client sign-up cannot bypass OTP and registry proof.
 - `baasService` validates the external Slikpay bearer token, allowlists operations, and blocks payouts/platform balance reads until per-merchant ownership and PIN authorization are established; an authenticated user alone must not spend shared platform funds.
 - External Auth bearer attachment is registered as function middleware in `src/start.ts`, preserving CSRF middleware; server-only credentials live in handler-imported helpers, never browser code.
+- Inline contact controls request independent channel-specific OTP challenges; a server function binds both verified proofs to current contact values before business lookup, so editing either contact cannot reuse stale verification.

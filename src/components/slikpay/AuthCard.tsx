@@ -9,8 +9,8 @@ import { isEmail, isPin, passwordStrength } from "@/lib/password";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useServerFn } from "@tanstack/react-start";
-import { createVerifiedMerchant, lookupMerchantBusiness } from "@/lib/merchant-verification.functions";
-import { phoneInternational } from "@/lib/verification";
+import { combineMerchantContacts, createVerifiedMerchant, lookupMerchantBusiness } from "@/lib/merchant-verification.functions";
+import { contactsVerified, phoneInternational } from "@/lib/verification";
 import { MerchantContactVerification } from "./MerchantContactVerification";
 
 export type Pending = AuthResult;
@@ -539,6 +539,9 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   const { signInWithPassword } = useAuth();
   const lookup = useServerFn(lookupMerchantBusiness);
   const createMerchant = useServerFn(createVerifiedMerchant);
+  const combineContacts = useServerFn(combineMerchantContacts);
+  const [phoneProof, setPhoneProof] = useState<{ value: string; id: string } | null>(null);
+  const [emailProof, setEmailProof] = useState<{ value: string; id: string } | null>(null);
   const [challengeId, setChallengeId] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [step, setStep] = useState(1);
@@ -555,7 +558,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
   const fail = (e: Record<string, string | undefined>) => { setErr(e); setShake((s) => s + 1); };
 
-  function next1(e: React.FormEvent) {
+  async function next1(e: React.FormEvent) {
     e.preventDefault();
     const er = {
       director: f.director.trim().length >= 2 ? undefined : "Enter the director / owner's full name",
@@ -566,8 +569,13 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     };
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
-    setChallengeId(""); setCacVerified(false); setCompanyName("");
-    setStep(4);
+    const phone = phoneInternational(f.phone, dialOf(f.country).dial);
+    const email = f.email.trim().toLowerCase();
+    if (!contactsVerified(phoneProof, emailProof, phone, email) || !phoneProof || !emailProof) return fail({ contacts: "Verify your phone number and email before continuing" });
+    setBusy(true);
+    try { const result = await combineContacts({ data: { phoneId: phoneProof.id, emailId: emailProof.id, phone, email } }); setChallengeId(result.challengeId); setCacVerified(false); setCompanyName(""); setStep(2); }
+    catch (e) { fail({ contacts: e instanceof Error ? e.message : "Contact verification failed" }); }
+    finally { setBusy(false); }
   }
 
   async function verifyCac() {
@@ -609,12 +617,10 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     } finally { setBusy(false); }
   }
 
-  if (step === 4) return <MerchantContactVerification email={f.email.trim().toLowerCase()} phone={phoneInternational(f.phone, dialOf(f.country).dial)} onComplete={(id) => { setChallengeId(id); setStep(2); }} onBack={() => setStep(1)} />;
-
   if (step === 1) {
     return (
-      <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b1-${shake}`}>
-        <StepBar n={1} labels={["Details", "Contacts", "Business", "Security"]} />
+      <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4">
+        <StepBar n={1} labels={["Account Details", "Business", "Security"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
         <Field label="Country of Incorporation" id="b-country">
@@ -625,19 +631,22 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
         <Field label="Official Work Email" id="b-email" icon={Mail} error={err["email"]} shake>
-          <input id="b-email" type="email" autoComplete="email" className={inputCls()} value={f.email} onChange={set("email")} placeholder="director@acme.ng" />
+          <input id="b-email" type="email" autoComplete="email" className={inputCls()} value={f.email} onChange={(e) => { setEmailProof(null); set("email")(e); }} placeholder="director@acme.ng" />
         </Field>
+        <MerchantContactVerification key={`email-${f.email.trim().toLowerCase()}`} channel="email" value={f.email.trim().toLowerCase()} onVerified={setEmailProof} />
         <Field label="Phone Number" id="b-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
             <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">{dialOf(f.country).flag}</span><span className="font-mono">{dialOf(f.country).dial}</span></span>
-            <input id="b-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
+            <input id="b-phone" type="tel" className={`${inputCls(false)} min-w-0 flex-1`} value={f.phone} onChange={(e) => { setPhoneProof(null); set("phone")(e); }} placeholder="803 000 0000" />
           </div>
         </Field>
+        <MerchantContactVerification key={`phone-${phoneInternational(f.phone, dialOf(f.country).dial)}`} channel="phone" value={phoneInternational(f.phone, dialOf(f.country).dial)} onVerified={setPhoneProof} />
         <Field label="Create Password" id="b-pw" icon={Lock} error={err["pw"]} shake>
           <PasswordInput id="b-pw" value={f.pw} onChange={(v) => setF((p) => ({ ...p, pw: v }))} autoComplete="new-password" />
         </Field>
         <StrengthMeter pw={f.pw} />
-        <Button variant="brand" type="submit" className="shine h-12 w-full bg-gradient-tri text-base">Continue to Phone &amp; Email Verification →</Button>
+        <ErrorPill msg={err["contacts"]} />
+        <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri text-base">{busy && <Loader2 className="animate-spin" />}Continue to Business Verification →</Button>
         <button type="button" onClick={onBack} className="w-full text-sm font-bold text-body hover:text-foreground">← Change account type</button>
       </form>
     );
@@ -646,7 +655,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   if (step === 2) {
     return (
       <form onSubmit={next2} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b2-${shake}`}>
-        <StepBar n={3} labels={["Details", "Contacts", "Business", "Security"]} />
+        <StepBar n={2} labels={["Account Details", "Business", "Security"]} />
         <h2 className="text-xl font-black text-foreground">Business &amp; CAC Regulatory Lookup</h2>
         <Field label="Company Type" id="b-ctype">
           <SelectMenu id="b-ctype" value={f.companyType} options={COMPANY_OPTS} onChange={(v) => setF((p) => ({ ...p, companyType: v }))} placeholder="Select company type" />
@@ -686,7 +695,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 
   return (
     <form onSubmit={launch} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b3-${shake}`}>
-      <StepBar n={4} labels={["Details", "Contacts", "Business", "Security"]} />
+      <StepBar n={3} labels={["Account Details", "Business", "Security"]} />
       <h2 className="text-xl font-black text-foreground">Settlement Bank &amp; Security PIN</h2>
       <Field label="Settlement Bank" id="b-bank" error={err["bank"]} shake>
         <SelectMenu id="b-bank" value={f.bank} options={BANK_OPTS} onChange={(v) => setF((p) => ({ ...p, bank: v }))} searchable placeholder="Select a licensed Nigerian bank" />

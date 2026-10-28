@@ -1,46 +1,42 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Loader2, Mail, Smartphone } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { startMerchantVerification, verifyMerchantContact } from "@/lib/merchant-verification.functions";
 
-export function MerchantContactVerification({ email, phone, onComplete, onBack }: { email: string; phone: string; onComplete: (id: string) => void; onBack: () => void }) {
+export function MerchantContactVerification({ channel, value, onVerified }: { channel: "phone" | "email"; value: string; onVerified: (proof: { value: string; id: string } | null) => void }) {
   const start = useServerFn(startMerchantVerification);
   const verify = useServerFn(verifyMerchantContact);
   const [id, setId] = useState("");
-  const [channel, setChannel] = useState<"phone" | "email">("phone");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [phoneDone, setPhoneDone] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const current = useRef(value); current.current = value;
+  const valid = channel === "phone" ? /^\+[1-9]\d{7,14}$/.test(value) : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   async function send() {
-    setBusy(true); setError("");
-    try { const r = await start({ data: { email, phone } }); setId(r.challengeId); setChannel("phone"); setPhoneDone(false); setCode(""); }
-    catch (e) { setError(e instanceof Error ? e.message : "Could not send verification codes."); }
-    finally { setBusy(false); }
+    setOpen(true); setBusy(true); setError(""); setId(""); setVerified(false); setCode(""); onVerified(null);
+    try { const r = await start({ data: { channel, email: channel === "email" ? value : "", phone: channel === "phone" ? value : "" } }); if (current.current === value) setId(r.challengeId); }
+    catch (e) { if (current.current === value) setError(e instanceof Error ? e.message : "Could not send a verification code."); }
+    finally { if (current.current === value) setBusy(false); }
   }
-  async function submit(e: React.FormEvent) {
-    e.preventDefault(); setBusy(true); setError("");
+  async function submit() {
+    setBusy(true); setError("");
     try {
       await verify({ data: { challengeId: id, channel, code } });
-      if (channel === "phone") { setPhoneDone(true); setChannel("email"); setCode(""); }
-      else onComplete(id);
-    } catch (e) { setError(e instanceof Error ? e.message : "Verification failed."); }
-    finally { setBusy(false); }
+      if (current.current === value) { setVerified(true); setOpen(false); setCode(""); onVerified({ value, id }); }
+    } catch (e) { if (current.current === value) setError(e instanceof Error ? e.message : "Verification failed."); }
+    finally { if (current.current === value) setBusy(false); }
   }
-  const Icon = channel === "phone" ? Smartphone : Mail;
-  return <form onSubmit={submit} className="space-y-4">
-    <Icon className="h-8 w-8 text-cyan" />
-    <h2 className="text-xl font-black text-foreground">Verify your {channel === "phone" ? "phone number" : "email"}</h2>
-    <p className="break-words text-sm text-body">{channel === "phone" ? phone : email}</p>
-    {phoneDone && <p className="flex items-center gap-2 text-sm font-bold text-success"><Check className="h-4 w-4" />Phone number verified</p>}
-    {id ? <>
-      <div className="flex justify-center"><InputOTP maxLength={6} value={code} onChange={setCode} autoFocus><InputOTPGroup className="gap-1.5">{[0,1,2,3,4,5].map((i) => <InputOTPSlot key={i} index={i} className="h-12 w-9 rounded-lg border text-lg" />)}</InputOTPGroup></InputOTP></div>
-      <Button variant="brand" type="submit" className="h-12 w-full" disabled={busy || code.length !== 6}>{busy && <Loader2 className="animate-spin" />}Verify {channel === "phone" ? "phone" : "email"}</Button>
-      <Button type="button" variant="ghost" className="w-full" disabled={busy} onClick={send}>Request fresh codes</Button>
-    </> : <Button type="button" variant="brand" className="h-12 w-full" disabled={busy} onClick={send}>{busy && <Loader2 className="animate-spin" />}Send phone and email codes</Button>}
+  if (!valid) return null;
+  return <div className="mt-2 space-y-2">
+    {verified ? <p className="flex items-center gap-1.5 text-xs font-bold text-success"><Check className="h-4 w-4" />{channel === "phone" ? "Phone number" : "Email"} verified</p> : !open ? <Button type="button" variant="outline" size="sm" aria-label={`Verify ${channel}`} className="border-cyan/40 text-cyan" onClick={send}>Verify {channel === "phone" ? "phone number" : "email"}</Button> : <div className="space-y-3 rounded-lg border border-cobalt/40 bg-cobalt/5 p-3" role="group" aria-label={`${channel} verification code`}>
+      <p className="text-xs font-semibold text-body">{id ? "Code sent — enter your 6-digit OTP" : "Enter your 6-digit OTP"}</p>
+      <InputOTP aria-label={`${channel} 6-digit OTP`} maxLength={6} value={code} onChange={setCode} autoFocus disabled={!id || busy} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (id && code.length === 6 && !busy) void submit(); } }}><InputOTPGroup className="gap-1">{[0,1,2,3,4,5].map((i) => <InputOTPSlot key={i} index={i} className="h-10 w-8 rounded-lg border text-lg" />)}</InputOTPGroup></InputOTP>
+      <div className="flex flex-wrap gap-2"><Button variant="brand" size="sm" type="button" disabled={!id || busy || code.length !== 6} onClick={submit}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Confirm code</Button><Button type="button" variant="ghost" size="sm" disabled={busy} onClick={send}>{id ? "Resend code" : "Retry sending"}</Button></div>
+    </div>}
     {error && <p role="alert" className="text-sm font-semibold text-destructive">{error}</p>}
-    <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={onBack}>Back to account details</Button>
-  </form>;
+  </div>;
 }
