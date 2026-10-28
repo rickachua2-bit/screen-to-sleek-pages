@@ -96,7 +96,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       {banking && environment === "Sandbox" && <div className="border-b border-magenta/30 bg-magenta/10 px-7 py-2 text-xs font-semibold text-foreground">Sandbox · test money only. Real transactions start after verification and approval.</div>}
       <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>
         {onModuleChange && <CurrencyBar current={currency} onPick={(c) => { setCurrency(c); if (activeModule !== (isBiz ? "overview" : "home")) onModuleChange(isBiz ? "overview" : "home"); }} />}
-        {currency !== "NGN" && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} />}
+        {currency !== "NGN" && (!activeModule || activeModule === "overview" || activeModule === "home") && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} />}
         {children}<ComplianceFooter /></main>
       {bottomNav && (
         <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden">
