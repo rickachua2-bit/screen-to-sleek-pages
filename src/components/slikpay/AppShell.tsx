@@ -64,6 +64,12 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
       })}</div>)}
     </nav>
+    <div className="shrink-0 border-t border-border px-3 py-3">
+      <Button variant="ghost" onClick={doRefresh} disabled={refreshing} aria-label={refreshing ? "Refreshing dashboard" : "Refresh dashboard"} className="flex h-10 w-full justify-between rounded-lg px-3 font-medium text-muted-foreground hover:bg-muted/60 hover:text-cyan">
+        <span className="flex items-center gap-3 text-sm"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-cyan" : ""}`} />{refreshing ? "Refreshing…" : "Refresh"}</span>
+        {updatedLabel && <span className="text-[10px] font-semibold tabular-nums">{updatedLabel}</span>}
+      </Button>
+    </div>
     <div className="shrink-0 border-t border-border px-4 py-4">
       <div className="mb-4 border-l-2 border-cyan pl-3"><p className="text-[11px] font-bold">Powering your bigger business tomorrow.</p><p className="mt-1 text-[10px] text-cyan">Simple. Secure. Global.</p></div>
       <div className="flex items-center gap-2.5"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-xs font-black text-primary-foreground">{initials}</span><div className="min-w-0"><div className="truncate text-xs font-bold">{isBiz ? "Acme Logistics Ltd" : name}</div>{isBiz && <div className="truncate text-[10px] text-muted-foreground">{name} · Director</div>}</div></div>
