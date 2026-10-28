@@ -36,7 +36,8 @@
 - [ ] Personal wallet menu regrouping
 
 ## Dashboard button redesign (in progress)
-- [ ] Fix recipient bank search and harden API transfer validation, fees and result handling; verify without moving live funds
+- [x] Fix recipient bank search; harden server recipient/NGN validation, exact fees, fee-inclusive holds and truthful result handling; isolated browser checks and 110 tests pass
+- [ ] Certify bank transfers end-to-end — blocked: no external authenticated test session; pending-payment reconciliation contract and deployed transactional/PIN-throttling guarantees remain unverified
 - [x] Apply Composer Split to the bank transfer page; desktop/mobile layout and quick-amount summary checked in isolation; signed-in payment flow remains unverified
 - [x] Three full-dashboard design mockups (buttons styled differently in each) for the user to pick
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
