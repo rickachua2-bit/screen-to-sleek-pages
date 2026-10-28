@@ -245,6 +245,8 @@ function SecurityPill() {
 
 function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const { signInWithPassword, resetPassword } = useAuth();
+  const startEmail = useServerFn(startLoginEmailCode);
+  const verifyEmail = useServerFn(verifyLoginEmailCode);
   const [step, setStep] = useState<1 | 2>(1);
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
@@ -258,6 +260,10 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(45);
   const [forgot, setForgot] = useState(false);
+  const [method, setMethod] = useState<"totp" | "email">("email");
+  const [challengeId, setChallengeId] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [factor, setFactor] = useState<{ id: string; challengeId: string } | null>(null);
 
   useEffect(() => {
     if (step !== 2 || timer <= 0) return;
