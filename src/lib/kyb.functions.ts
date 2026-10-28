@@ -5,8 +5,9 @@ import { MERCHANT_STEPS, namesMatch } from "./go-live";
 // KYB checks always use the live key: they verify real identities even while the account is in sandbox.
 const KYB_MODE = "live" as const;
 
-export type KybPerson = { name: string; bvn: string; ownership?: number; verified: boolean };
-type Detail = { text?: string; people?: KybPerson[]; [k: string]: unknown };
+export type KybPerson = { name: string; bvn: string; ownership?: number | undefined; verified: boolean };
+type Val = string | number | boolean | null | undefined | string[] | KybPerson[];
+type Detail = { [k: string]: Val; text?: string; people?: KybPerson[] };
 type Row = { step: string; status: string; summary: string | null };
 
 const parse = (s: string | null): Detail => { try { const v = JSON.parse(s ?? ""); return v && typeof v === "object" ? v : { text: s ?? "" }; } catch { return { text: s ?? "" }; } };
