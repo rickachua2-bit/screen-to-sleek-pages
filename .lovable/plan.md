@@ -16,7 +16,7 @@ Tax ID, sanctions/PEP screening and the manual compliance review are removed.
 3. **Directors**: add one or more directors (first name, last name, BVN). Each BVN is checked instantly. The step passes once at least one director matches.
 4. **Beneficial owners**: list anyone owning 25% or more (name, ownership %, BVN), checked the same way. If one of the directors is the owner, an "Owner is a director" shortcut reuses that director's check.
 5. **Address & web presence**: business address (street, city, state), plus a website or at least one social link. Validated and saved.
-6. **Settlement account**: pick a bank, then type the 10-digit account number. The account name is fetched automatically. If it doesn't match the verified business name, the step is blocked with a clear message ("This account is in the name of X, not Y") and Continue stays disabled. Small differences such as "Ltd" vs "Limited", capitals and punctuation are ignored.
+6. **Settlement account**: pick a bank from a searchable dropdown (type to filter by bank name or code), then type the 10-digit account number. The list is loaded live from the provider's bank directory, so every bank and microfinance bank on the rails appears. Nothing is hard-coded. If the list can't load, a Retry button is shown. The account name is fetched automatically. If it doesn't match the verified business name, the step is blocked with a clear message ("This account is in the name of X, not Y") and Continue stays disabled. Small differences such as "Ltd" vs "Limited", capitals and punctuation are ignored.
 7. **Two-factor**: the user scans a QR code with Google Authenticator (or any authenticator app) and enters the 6-digit code to confirm.
 
 ## Going live
@@ -38,7 +38,8 @@ Tax ID, sanctions/PEP screening and the manual compliance review are removed.
   - `getKybProfile`: reads `merchant_security` (company_name, rc_number, country), `kyc_steps` and mode, and auto-upserts `business_identity` as verified from `merchant_security`. This is what backfills the current user.
   - `verifyDirector` and `verifyOwner`: run `/v1/identity/bvn`, store a name and masked BVN only in `kyc_steps.summary`/metadata, never the full BVN.
   - `saveOperations`: validates the address and URLs.
-  - `verifySettlementAccount`: `/v1/accounts/banks` for the bank list, `/v1/accounts/resolve`, then a name match against `merchant_security.company_name` on the server. Saves only when it matches.
+  - `listSettlementBanks`: calls `/v1/accounts/banks` with the account's mode key and returns `{ code, name }` sorted by name. It is cached in the query cache, and the bank list goes into a BrandSelect-style searchable dropdown.
+  - `verifySettlementAccount`: calls `/v1/accounts/resolve`, then matches the name against `merchant_security.company_name` on the server. Saves only when it matches.
   - `completeGoLive`: confirms the caller has a verified TOTP factor (Auth MFA, aal2) and every step is verified. Sets `account_modes` to mode live and review approved, then calls live `/v1/accounts/virtual` with `bank: "sterling"`, `accountType: "corporate"` and the verified name, and records the resource.
 - 2FA uses the external project's built-in Auth MFA (`supabase.auth.mfa.enroll({ factorType: "totp" })`, then challenge and verify). Authenticator TOTP is on by default in the external project. If not, I'll tell you which setting to switch on.
 - A small SQL addition for you to run manually: a `metadata jsonb` column on `kyc_steps` and allowing `step` keys for the new steps. Given as a script, same as before.
