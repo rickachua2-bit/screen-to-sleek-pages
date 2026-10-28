@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpDown, ArrowUpRight, Banknote, Copy, Download, FileText, Gauge, Link2, Loader2, Lock, MoreHorizontal, Plus, Repeat, Share2, Wallet, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import { getWalletExtras, getWallets, issueCurrencyWallet, savePayoutAccount, swapCurrency, withdrawFunds, type PayoutAccount, type WalletView } from "@/lib/wallets.functions";
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { CURRENCIES, currencyDef, NOT_ACTIVE } from "@/lib/wallets";
@@ -103,7 +104,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
     {!compact && <div className="grid gap-4 lg:grid-cols-5">
       <div className="panel p-5 lg:col-span-2">
         <h3 className="mb-3 text-sm font-extrabold">{def.kind === "crypto" ? "Deposit address" : "Account details"}</h3>
-        {w?.accountNumber ? <><dl className="space-y-3 text-sm">{[["Account name", w.accountName], ["Bank", w.bankName], [def.kind === "crypto" ? "Address" : "Account number", w.accountNumber], ["Routing / sort code", w.routing], ["Network", w.network]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="text-[10px] font-bold uppercase text-muted-foreground">{k}</dt><dd className="break-all font-mono text-sm font-bold">{v}</dd></div>)}</dl>
+        {w?.accountNumber ? <>{def.kind === "crypto" && <div className="mb-4"><DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} /></div>}<dl className="space-y-3 text-sm">{[["Account name", w.accountName], ["Bank", w.bankName], [def.kind === "crypto" ? "Address" : "Account number", w.accountNumber], ["Routing / sort code", w.routing], ["Network", w.network]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="text-[10px] font-bold uppercase text-muted-foreground">{k}</dt><dd className="break-all font-mono text-sm font-bold">{v}</dd></div>)}</dl>
           <div className="mt-4 flex gap-2"><Button variant="crisp" size="sm" className="rounded-full" onClick={copyAll}><Copy />Copy</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="ghost" size="sm" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
           {def.kind === "crypto" && <p className="mt-3 text-[11px] text-chart-4">Send only {code} on the {w.network ?? def.network} network. Other coins or networks will be lost.</p>}</>
           : <p className="text-xs text-muted-foreground">{w?.status === "not_active" ? NOT_ACTIVE : "Issue an account to see details here."}</p>}
@@ -112,7 +113,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
       <div className="lg:col-span-3"><WalletActivity code={code} extras={extras} /></div>
     </div>}
 
-    {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader><p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
+    {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader>{def.kind === "crypto" && w.accountNumber && <DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} size={220} />}<p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
     {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
@@ -216,6 +217,14 @@ function SendDialog({ code, live, balance, onClose, onDone }: { code: string; li
     : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Account", `${v.bankName} · ${v.accountNumber}`], ["Fee", LIMITS[code]!.fee], ["Arrives", LIMITS[code]!.speed]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
     : <Receipt rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Reference", ref ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
+}
+
+/** Scannable deposit QR for crypto wallets: dark modules on a light tile for reliable scanning. */
+export function DepositQr({ address, code, network, size = 168 }: { address: string; code: string; network?: string | null | undefined; size?: number }) {
+  return <figure className="flex flex-col items-center gap-2">
+    <div className="rounded-2xl bg-foreground p-3 text-background shadow-cobalt"><QRCodeSVG value={address} size={size} level="M" bgColor="transparent" fgColor="currentColor" marginSize={0} title={`${code} deposit address QR code`} /></div>
+    <figcaption className="text-center text-[11px] font-semibold text-muted-foreground">Scan to send {code}{network ? ` on ${network}` : ""}</figcaption>
+  </figure>;
 }
 
 /** Always-visible one-tap currency switcher shown at the top of every dashboard page. */
