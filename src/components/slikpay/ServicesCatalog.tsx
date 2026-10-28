@@ -21,7 +21,7 @@ function ServiceIcon({ name, className }: { name: string; className?: string }) 
 }
 
 export function ServicesCatalog({ items, ctx, title, favourites, recent, launch, toggleFavourite }: {
-  items: ServiceDef[]; ctx: { role: Role; mode: Mode; review: string }; title?: string;
+  items: ServiceDef[]; ctx: { role: Role; mode: Mode; review: string }; title?: string | undefined;
   favourites: string[]; recent: { id: string; label: string; at: string }[];
   launch: (service: ServiceDef) => void; toggleFavourite: (id: string) => void;
 }) {
