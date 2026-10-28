@@ -8,7 +8,8 @@ import { baasService } from "@/lib/baas.functions";
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { parseBulkCsv, type BulkRow } from "@/lib/transfer-rules";
 import { useBankingProfile } from "./PaddleConsole";
-import { SendNip } from "./ActionModal";
+import { SendNip, type TransferPreview } from "./ActionModal";
+import { TransferComposerLayout } from "./TransferComposerLayout";
 
 type Row = BulkRow & { name?: string; state?: "checking" | "ready" | "sent" | "failed"; msg?: string };
 
@@ -18,21 +19,16 @@ export function TransferCenter({ initial = "single" }: { initial?: "single" | "b
   const balance = profile?.balances?.["NGN"];
   const [tab, setTab] = useState(initial);
   const [k, setK] = useState(0);
-  return <div className="space-y-5">
-    <section className="hero-surface relative overflow-hidden rounded-2xl p-6">
-      <p className="text-xs font-bold uppercase tracking-widest text-cyan">Send money</p>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-sm text-muted-foreground">Available balance</p><p className="balance-figure text-3xl font-black text-foreground">{balance !== undefined ? naira(balance) : "—"}</p></div>
-        <span className="chip">{live ? "Live" : "Sandbox · test money"}</span>
-      </div>
-    </section>
-    <div role="tablist" className="ledger-seg inline-flex gap-1">
-      {([["single", "Single transfer", Send], ["bulk", "Bulk upload", Users]] as const).map(([id, label, Icon]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${tab === id ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}><Icon className="h-4 w-4" />{label}</button>)}
+  const [preview, setPreview] = useState<TransferPreview | null>(null);
+  return <div className="transfer-center space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-primary">PAYMENTS</p><h1 className="mt-1 text-2xl font-bold text-foreground">Bank transfer</h1></div>
+    <div role="tablist" aria-label="Transfer type" className="transfer-tabs">
+      {([["single", "Single transfer", Send], ["bulk", "Bulk upload", Users]] as const).map(([id, label, Icon]) => <Button variant="ghost" key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}><Icon className="h-4 w-4" />{label}</Button>)}
+    </div>
     </div>
     {tab === "single"
-      ? <section className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:max-w-2xl"><SendNip key={k} live={live} balance={balance} onClose={() => setK((x) => x + 1)} /></section>
-      : <Bulk live={live} balance={balance} />}
-    <p className="text-xs text-muted-foreground">Scheduled transfers and team approvals are coming soon.</p>
+      ? <TransferComposerLayout balance={balance} live={live} preview={preview}><SendNip key={k} live={live} balance={balance} onPreviewChange={setPreview} onClose={() => setK((x) => x + 1)} /></TransferComposerLayout>
+      : <><div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4 text-sm"><span className="text-muted-foreground">Available balance <strong className="ml-2 text-foreground">{balance !== undefined ? naira(balance) : "—"}</strong></span><span className="text-primary">{live ? "Live" : "Sandbox · test money"}</span></div><Bulk live={live} balance={balance} /></>}
   </div>;
 }
 

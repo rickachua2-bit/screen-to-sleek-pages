@@ -829,3 +829,62 @@ html { scroll-behavior: smooth; }
 .services-grid-4 .services-item { background: linear-gradient(135deg, color-mix(in oklab, var(--service-tone) 14%, var(--card)), color-mix(in oklab, var(--service-tone) 3%, var(--card)) 65%); }
 .services-grid-4 .services-item::before { width: 4px; background: linear-gradient(180deg, var(--service-tone), color-mix(in oklab, var(--service-tone) 30%, var(--magenta))); }
 @media (prefers-reduced-motion: reduce) { .services-item, .services-item-main .services-category-icon { transition: none; transform: none; } .services-item:hover { transform: none; } }
+
+/* Composer Split: white payment form, midnight account overview. */
+.transfer-center { --transfer-paper: oklch(0.995 0.002 255); --transfer-ink: oklch(0.22 0.04 265); --transfer-dim: oklch(0.49 0.035 260); --transfer-line: oklch(0.9 0.015 255); --transfer-soft: oklch(0.97 0.008 255); --transfer-night: oklch(0.18 0.05 265); --transfer-night-raised: oklch(0.23 0.055 265); --transfer-on-night: oklch(0.99 0.003 255); --transfer-night-muted: oklch(0.78 0.035 255); --transfer-shadow: 0 18px 38px -24px color-mix(in oklab, var(--cobalt) 28%, transparent); --foreground: var(--transfer-ink); --card: var(--transfer-paper); --background: var(--transfer-paper); --muted: var(--transfer-soft); --muted-foreground: var(--transfer-dim); --border: var(--transfer-line); --input: var(--transfer-line); --primary: var(--cobalt); }
+.transfer-tabs { display: inline-flex; padding: 4px; border: 1px solid var(--transfer-line); background: var(--transfer-paper); border-radius: 8px; gap: 3px; }
+.transfer-tabs [role="tab"] { font-size: 12px; color: var(--transfer-dim); }
+.transfer-tabs [aria-selected="true"] { color: var(--primary-foreground); background: var(--cobalt); box-shadow: var(--shadow-cobalt); }
+.transfer-composer-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.transfer-story { position: relative; isolation: isolate; overflow: hidden; min-width: 0; padding: 28px; border-radius: 8px; color: var(--transfer-on-night); background: var(--transfer-night); border: 1px solid color-mix(in oklab, var(--cobalt) 35%, var(--transfer-night)); }
+.transfer-story > :not(.transfer-globe) { position: relative; z-index: 1; }
+.transfer-story-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
+.transfer-eyebrow { display: inline-flex; gap: 6px; align-items: center; font-size: 10px; font-weight: 700; color: var(--cyan); }
+.transfer-mode { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; padding: 5px 10px; border-radius: 999px; background: var(--transfer-night-raised); color: var(--transfer-on-night); }
+.transfer-mode > span { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; }
+.transfer-story h2 { margin-top: 28px; font-size: 30px; line-height: 1.3; font-weight: 800; color: var(--transfer-on-night); }
+.transfer-story h2 > span { color: var(--cyan); }
+.transfer-balance { display: flex; gap: 12px; align-items: center; padding: 22px 0; margin-top: 8px; border-bottom: 1px solid color-mix(in oklab, var(--cyan) 18%, transparent); }
+.transfer-balance > svg { color: var(--cyan); flex-shrink: 0; }
+.transfer-balance p { font-size: 12px; color: var(--transfer-night-muted); margin-bottom: 5px; }
+.transfer-balance strong { font-size: 26px; font-weight: 800; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.transfer-currency { margin-left: auto; font-size: 10px; color: var(--transfer-night-muted); }
+.transfer-preview { padding: 25px 0 0; }
+.transfer-preview-title { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--transfer-night-muted); }
+.transfer-preview-title svg { color: var(--cyan); }
+.transfer-preview-amount { display: block; margin: 12px 0 24px; font-size: 36px; line-height: 1.2; font-weight: 800; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.transfer-preview dl { display: grid; gap: 14px; font-size: 12px; }
+.transfer-preview dl > div { display: flex; justify-content: space-between; gap: 18px; }
+.transfer-preview dt { color: var(--transfer-night-muted); flex-shrink: 0; }
+.transfer-preview dd { text-align: right; overflow-wrap: anywhere; font-weight: 600; }
+.transfer-recipient-verified { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; color: var(--cyan); font-size: 11px; }
+.transfer-assurances { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 32px; padding-bottom: 150px; font-size: 10px; color: var(--transfer-night-muted); }
+.transfer-assurances span { display: inline-flex; align-items: center; gap: 7px; }
+.transfer-assurances svg { width: 16px; height: 16px; color: var(--cyan); }
+.transfer-globe { position: absolute; bottom: 0; right: 0; z-index: 0; width: 100%; height: 200px; object-fit: cover; object-position: bottom right; mask-image: linear-gradient(transparent, var(--transfer-on-night) 45%); }
+.transfer-composer { min-width: 0; padding: 28px; border-radius: 8px; border: 1px solid var(--transfer-line); background: var(--transfer-paper); color: var(--transfer-ink); box-shadow: var(--transfer-shadow); }
+.transfer-composer-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 26px; }
+.transfer-composer-heading h2 { font-size: 22px; font-weight: 800; }
+.transfer-composer-heading p { font-size: 12px; color: var(--transfer-dim); margin-top: 4px; }
+.transfer-heading-icon { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border-radius: 8px; color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 8%, var(--transfer-paper)); }
+.transfer-composer .field { background: var(--transfer-paper); border: 1px solid var(--transfer-line); color: var(--transfer-ink); border-radius: 8px; min-height: 44px; }
+.transfer-composer .field:focus { border-color: var(--cobalt); outline: 2px solid color-mix(in oklab, var(--cobalt) 13%, transparent); outline-offset: 1px; }
+.transfer-composer .field::placeholder { color: var(--transfer-dim); }
+.transfer-composer label > span { font-size: 12px; }
+.transfer-bank-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+.transfer-bank-tile { height: 74px; padding: 8px 4px; flex-direction: column; gap: 7px; border-radius: 8px; min-width: 0; background: var(--transfer-paper); }
+.transfer-bank-tile > span:first-child { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 7px; font-size: 12px; font-weight: 800; color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 9%, var(--transfer-paper)); }
+.transfer-bank-tile:nth-child(2n) > span:first-child { color: var(--magenta); background: color-mix(in oklab, var(--magenta) 7%, var(--transfer-paper)); }
+.transfer-bank-tile > span:last-child { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9px; }
+.transfer-verified { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--success-soft); color: var(--success); border-radius: 8px; font-size: 11px; font-weight: 700; }
+.transfer-verified > span { overflow-wrap: anywhere; }
+.transfer-amount-input { position: relative; }
+.transfer-amount-input .field { padding-right: 60px; height: 60px; font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.transfer-amount-input > span { position: absolute; right: 12px; top: 20px; font-size: 11px; font-weight: 700; color: var(--cobalt); }
+.transfer-quick-amount { flex: 1; height: 30px; padding: 0 8px; font-size: 10px; border-radius: 999px; background: var(--transfer-soft); }
+.transfer-quick-amount[aria-pressed="true"] { border-color: var(--cobalt); color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 8%, var(--transfer-paper)); }
+.transfer-submit { background-image: linear-gradient(105deg, var(--magenta), var(--cobalt) 65%); box-shadow: var(--shadow-cobalt); border-radius: 8px; }
+.transfer-secure { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 10px; color: var(--muted-foreground); }
+.transfer-center, .transfer-center .font-mono { letter-spacing: 0; }
+@media (max-width: 1100px) { .transfer-story, .transfer-composer { padding: 22px; } .transfer-composer-layout { gap: 16px; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); } .transfer-story h2 { font-size: 26px; } }
+@media (max-width: 760px) { .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .transfer-story h2 { margin-top: 16px; font-size: 24px; } .transfer-balance { padding: 16px 0; } .transfer-preview, .transfer-assurances, .transfer-globe { display: none; } .transfer-story { padding: 20px; } .transfer-composer { padding: 20px; } .transfer-tabs { width: 100%; } .transfer-tabs > button { flex: 1; } }
