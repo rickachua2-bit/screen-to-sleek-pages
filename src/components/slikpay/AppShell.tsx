@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Check, ChevronDown, LogOut, Menu, Search, X, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, LogOut, Menu, Plus, Search, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import type { Role } from "@/lib/api";
 import { MERCHANT_GROUPS } from "@/lib/merchant";
