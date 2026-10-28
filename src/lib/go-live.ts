@@ -51,3 +51,12 @@ export function progress(role: "merchant" | "personal", kyc: KycRow[], review?: 
   const done = steps.filter((s) => statusOf(s, kyc, review) === "verified").length;
   return { done, total: steps.length, canGoLive: done === steps.length };
 }
+
+/** Highest personal tier whose steps (and all lower tiers) are verified. 0 = not verified yet. */
+export function personalTier(kyc: KycRow[]) {
+  let tier = 0;
+  for (const t of [1, 2, 3]) { const steps = PERSONAL_STEPS.filter((s) => s.tier === t); if (steps.length && steps.every((s) => statusOf(s, kyc) === "verified")) tier = t; else break; }
+  return tier;
+}
+/** Daily limits known from the brief; other tiers are set at approval. */
+export const TIER_LIMITS: Record<number, string> = { 2: "₦5,000,000/day" };

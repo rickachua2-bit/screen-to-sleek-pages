@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { FlameMark, Logo } from "./Logo";
 import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
-import { CurrencyBar, CurrencyWallet } from "./CurrencyWallet";
+import { CurrencyBar, CurrencyWallet, PortfolioHeader } from "./CurrencyWallet";
+import { useLiveUpdates } from "@/lib/live-updates";
 import { setCurrency, useCurrency } from "@/lib/currency-store";
 import { CURRENCIES, currencyDef } from "@/lib/wallets";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
 export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, onRefresh, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; onRefresh?: () => Promise<void>; bottomNav?: NavItem[] }) {
-  const { user, ready, token, signOut, setRole } = useAuth();
+  const { user, profile, txns, ready, token, signOut, setRole } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState(nav[0]?.label ?? "Dashboard");
   const [open, setOpen] = useState(false);
@@ -41,6 +42,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     } finally { setRefreshing(false); }
   };
   const updatedLabel = updatedAt ? `Updated ${updatedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : "";
+  useLiveUpdates(user?.id, async () => { await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]); setUpdatedAt(new Date()); });
   useEffect(() => { if (ready && !token) navigate({ to: "/auth" }); }, [ready, token, navigate]);
   useEffect(() => {
     if (!open) return;
@@ -50,8 +52,9 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     document.addEventListener("keydown", escape);
     return () => { document.body.style.overflow = previous; document.removeEventListener("keydown", escape); };
   }, [open]);
-  const name = user?.name ?? "Patrick Otu";
-  const initials = user?.initials ?? "PO";
+  const name = user?.name ?? "";
+  const initials = user?.initials ?? "—";
+  const notes = [...(banking?.receipts ?? []).slice(0, 6).map((r) => ({ id: r.id, at: r.created_at, text: `${r.status === "succeeded" ? "Completed" : r.status === "failed" ? "Failed" : "Pending"}: ${r.operation.startsWith("SWAP") ? r.operation.replace("->", " → ").replace("SWAP", "Swap") : r.operation.startsWith("WITHDRAW") ? "Withdrawal" : "Transfer"} · ${r.currency ?? ""} ${Number(r.amount ?? 0).toLocaleString()}` })), ...txns.filter((t) => t.direction === "credit").slice(0, 6).map((t) => ({ id: t.id, at: t.date, text: `Received ${t.amount.toLocaleString(undefined, { style: "currency", currency: "NGN" })} from ${t.customer}` }))].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
   const isBiz = mode === "merchant";
   const groups = onModuleChange ? (isBiz ? MERCHANT_GROUPS : PERSONAL_GROUPS) : [{ title: "", items: nav }];
   const goMode = (r: Role) => { setRole(r); setSwitcher(false); if (r === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } }); else navigate({ to: "/personal", search: { module: "home" } }); };
@@ -75,7 +78,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     </div>
     <div className="shrink-0 border-t border-border px-4 py-4">
       <div className="mb-4 border-l-2 border-cyan pl-3"><p className="text-[11px] font-bold">Powering your bigger business tomorrow.</p><p className="mt-1 text-[10px] text-cyan">Simple. Secure. Global.</p></div>
-      <div className="flex items-center gap-2.5"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-xs font-black text-primary-foreground">{initials}</span><div className="min-w-0"><div className="truncate text-xs font-bold">{isBiz ? "Acme Logistics Ltd" : name}</div>{isBiz && <div className="truncate text-[10px] text-muted-foreground">{name} · Director</div>}</div></div>
+      <div className="flex items-center gap-2.5"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-xs font-black text-primary-foreground">{initials}</span><div className="min-w-0"><div className="truncate text-xs font-bold">{isBiz ? (profile?.company_name ?? "Your business") : name}</div>{isBiz && <div className="truncate text-[10px] text-muted-foreground">{name} · Director</div>}</div></div>
       <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate({ to: "/auth" }); }} className="mt-2 w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><LogOut />Sign Out</Button>
     </div>
   </aside>;
@@ -91,10 +94,11 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         <Button variant="ghost" size="icon" className="shrink-0" aria-label={refreshing ? "Refreshing dashboard" : "Refresh dashboard"} onClick={doRefresh} disabled={refreshing}><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-cyan" : ""}`} /></Button>
         <div className="relative shrink-0"><Button variant="crisp" size="sm" onClick={() => { setCurrencies(!currencies); setSwitcher(false); setNotifications(false); }} aria-expanded={currencies}> {currencyDef(currency)?.flag} {currency}<ChevronDown /></Button>{currencies && <div className="merchant-popover absolute right-0 mt-3 w-40 rounded-lg border border-border bg-background p-2 shadow-cobalt">{CURRENCIES.map(({ code: c, flag, name }) => <Button key={c} variant="ghost" className="w-full justify-between" title={name} onClick={() => { setCurrency(c); setCurrencies(false); if (onModuleChange && activeModule !== "overview" && activeModule !== "home") onModuleChange(isBiz ? "overview" : "home"); }}><span>{flag} {c}</span>{c === currency && <Check />}</Button>)}</div>}</div>
         <div className="relative shrink-0"><Button variant="crisp" size="sm" onClick={() => { setSwitcher(!switcher); setCurrencies(false); setNotifications(false); }} aria-expanded={switcher} aria-label="Environment menu"><span className={`h-1.5 w-1.5 rounded-full motion-safe:animate-pulse ${environment === "Live Mode" ? "bg-success" : "bg-chart-4"}`} /><span className="hidden md:inline">{environment}</span><ChevronDown /></Button>{switcher && <div className="merchant-popover absolute right-0 mt-3 w-52 rounded-lg border border-border bg-background p-2 shadow-cobalt"><div className="flex items-center justify-between px-3 py-2 text-xs font-semibold">{environment}<Check className="h-4 w-4 text-cyan" /></div>{environment !== "Live Mode" && <Button variant="ghost" className="w-full justify-start text-xs text-magenta" onClick={() => { setSwitcher(false); onModuleChange?.("golive"); }}>Complete verification to go live →</Button>}<div className="my-1 border-t border-border" /><Button variant="ghost" className="w-full justify-start text-xs" onClick={() => goMode(isBiz ? "personal" : "merchant")}>{isBiz ? "Personal Wallet" : "Business Console"}</Button></div>}</div>
-        <div className="relative shrink-0"><Button variant="ghost" size="icon" aria-label="Notifications" aria-expanded={notifications} onClick={() => { setNotifications(!notifications); setSwitcher(false); setCurrencies(false); }}><Bell />{unread && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-magenta" />}</Button>{notifications && <div className="merchant-popover absolute right-0 mt-3 w-[min(300px,85vw)] rounded-lg border border-border bg-background p-5 shadow-cobalt"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Notifications</h2><Button variant="ghost" size="sm" onClick={() => setUnread(false)}>Mark read</Button></div><p className="mt-4 text-xs text-muted-foreground">Slikpay workspace is ready. Live notifications will appear when your service is connected.</p></div>}</div>
+        <div className="relative shrink-0"><Button variant="ghost" size="icon" aria-label="Notifications" aria-expanded={notifications} onClick={() => { setNotifications(!notifications); setSwitcher(false); setCurrencies(false); }}><Bell />{unread && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-magenta" />}</Button>{notifications && <div className="merchant-popover absolute right-0 mt-3 w-[min(300px,85vw)] rounded-lg border border-border bg-background p-5 shadow-cobalt"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Notifications</h2><Button variant="ghost" size="sm" onClick={() => setUnread(false)}>Mark read</Button></div>{notes.length ? <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">{notes.map((n) => <li key={n.id} className="rounded-lg bg-muted/40 p-2 text-xs"><p className="font-semibold">{n.text}</p><p className="mt-0.5 text-[10px] text-muted-foreground">{new Date(n.at).toLocaleString()}</p></li>)}</ul> : <p className="mt-4 text-xs text-muted-foreground">No activity yet. Payments and transfers will appear here.</p>}</div>}</div>
       </header>
       {banking && environment === "Sandbox" && <div className="border-b border-magenta/30 bg-magenta/10 px-7 py-2 text-xs font-semibold text-foreground">Sandbox · test money only. Real transactions start after verification and approval.</div>}
       <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>
+        {onModuleChange && (!activeModule || activeModule === "overview" || activeModule === "home") && <PortfolioHeader />}
         {onModuleChange && <CurrencyBar current={currency} onPick={(c) => { setCurrency(c); if (activeModule !== (isBiz ? "overview" : "home")) onModuleChange(isBiz ? "overview" : "home"); }} />}
         {currency !== "NGN" && (!activeModule || activeModule === "overview" || activeModule === "home") && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} onNavigate={onModuleChange} />}
         {children}<ComplianceFooter /></main>

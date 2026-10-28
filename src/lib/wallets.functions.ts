@@ -78,7 +78,7 @@ export const swapCurrency = createServerFn({ method: "POST" })
       const d = (r.data ?? {}) as Record<string, unknown>;
       const toAmount = Number(d["toAmount"]); const rate = Number(d["rate"]); const fee = Number(d["platformFee"] ?? 0);
       if (!(toAmount > 0)) throw new Error("The swap was not confirmed.");
-      const credited = Math.floor(toAmount * 100) / 100;
+      const credited = Math.floor(toAmount * 1e8) / 1e8;
       const reference = typeof d["reference"] === "string" ? d["reference"] : null;
       await ctx.db.from("ledger_entries").insert({ user_id: ctx.user.id, mode: ctx.mode, currency: data.to, amount: credited, status: "posted", operation: op, reference: `${data.idempotencyKey}:in` });
       await settleMoney(ctx, data.idempotencyKey, true, reference, { to: data.to, toAmount, rate, fee });
