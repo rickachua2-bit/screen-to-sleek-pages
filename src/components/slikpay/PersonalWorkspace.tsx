@@ -54,11 +54,16 @@ export function ActivityList({ txns, limit }: { txns: Txn[]; limit?: number }) {
             </li>
           );
         })}
-        {rows.length === 0 && <li className="py-8 text-center text-sm font-semibold text-muted-foreground">No transactions match “{q}”.</li>}
+        {rows.length === 0 && <li className="py-8 text-center text-sm font-semibold text-muted-foreground">{q ? <>No transactions match “{q}”.</> : "No transactions yet. Your activity will appear here."}</li>}
       </ul>
       {sel && <ModalReceipt txn={sel} onClose={() => setSel(null)} />}
     </>
   );
+}
+
+function LiveActivity({ filter }: { filter: (t: Txn) => boolean }) {
+  const { txns } = useAuth();
+  return <ActivityList txns={txns.filter(filter)} />;
 }
 
 function useLive() {
