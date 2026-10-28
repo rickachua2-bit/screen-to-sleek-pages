@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useServerFn } from "@tanstack/react-start";
 import { combineMerchantContacts, createVerifiedMerchant, lookupMerchantBusiness } from "@/lib/merchant-verification.functions";
+import { startLoginEmailCode, verifyLoginEmailCode } from "@/lib/login-2fa.functions";
 import { contactsVerified, phoneInternational } from "@/lib/verification";
+import { supabase } from "@/lib/supabase";
 import { MerchantContactVerification } from "./MerchantContactVerification";
 
 export type Pending = AuthResult;
