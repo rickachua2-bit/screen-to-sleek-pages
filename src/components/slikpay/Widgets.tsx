@@ -40,9 +40,10 @@ export function BalanceCard({ title, balance, sub, footer }: { title: string; ba
   );
 }
 
-export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", title = "Dedicated NUBAN Account", accountName, bankName, status }: { nuban?: string; label?: string; title?: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined }) {
+export function NubanCard({ nuban = "", label = "Slikpay Business", title = "Dedicated NUBAN Account", accountName, bankName, status }: { nuban?: string; label?: string; title?: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined }) {
   const pretty = `${nuban.slice(0, 4)} ${nuban.slice(4, 8)} ${nuban.slice(8)}`;
   const share = [accountName, bankName, nuban].filter(Boolean).join(" · ");
+  if (!nuban) return <Panel><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt"><Landmark className="h-5 w-5" /></span><div><h3 className="text-sm font-extrabold text-foreground">{title}</h3><p className="text-xs font-semibold text-muted-foreground">Your account number is issued automatically once verification is complete.</p></div></div></Panel>;
   return (
     <Panel>
       <div className="flex items-center justify-between">
