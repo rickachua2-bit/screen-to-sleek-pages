@@ -239,30 +239,6 @@ function SecurityPill() {
   );
 }
 
-/* ---------- account type tabs ---------- */
-
-function AccountTabs({ role, onChange }: { role: Role; onChange: (r: Role) => void }) {
-  const tabs = [
-    { v: "merchant" as const, icon: Building2, label: "Business / Merchant", desc: "SoftPOS, Dedicated NUBANs, Bulk Payroll & Developer APIs" },
-    { v: "personal" as const, icon: UserIcon, label: "Personal User", desc: "Free P2P, Virtual Cards, Bills & @SlikTag transfers" },
-  ];
-  return (
-    <div>
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1" role="tablist" aria-label="Account type">
-        {tabs.map(({ v, icon: Icon, label }) => (
-          <button key={v} type="button" role="tab" aria-selected={role === v} onClick={() => onChange(v)}
-            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold transition-all ${role === v ? "bg-gradient-brand text-primary-foreground shadow-cobalt" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="h-4 w-4" /> <span className="hidden sm:inline">{label}</span><span className="sm:hidden">{v === "merchant" ? "Business" : "Personal"}</span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 rounded-lg border border-cyan/40 bg-cyan/10 px-3 py-2 text-xs font-semibold text-body">
-        {tabs.find((t) => t.v === role)!.desc}
-      </p>
-    </div>
-  );
-}
-
 /* ---------- sign in ---------- */
 
 function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
