@@ -18,7 +18,8 @@ import { useBankingProfile } from "./PaddleConsole";
 type Extras = Awaited<ReturnType<typeof getWalletExtras>>;
 const uuid = () => globalThis.crypto.randomUUID();
 const dec = (code: string) => (currencyDef(code)?.kind === "crypto" ? 6 : 2);
-export const fmt = (code: string, n: number) => `${currencyDef(code)?.symbol ?? ""}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: dec(code) })}`;
+const LOCALE: Record<string, string> = { NGN: "en-NG", GHS: "en-GH", KES: "en-KE", ZAR: "en-ZA", USD: "en-US", EUR: "en-IE", GBP: "en-GB", USDT: "en-US", USDC: "en-US" };
+export const fmt = (code: string, n: number) => `${currencyDef(code)?.symbol ?? ""}${n.toLocaleString(LOCALE[code] ?? undefined, { minimumFractionDigits: 2, maximumFractionDigits: dec(code) })}`;
 const ICONS: Record<WalletAction, LucideIcon> = { receive: ArrowDownLeft, send: ArrowUpRight, withdraw: Banknote, swap: ArrowLeftRight, request: Link2, more: MoreHorizontal };
 const LIMITS: Record<string, { daily: string; fee: string; speed: string }> = {
   NGN: { daily: "₦5,000,000", fee: "Free to your settlement account", speed: "Instant" },
