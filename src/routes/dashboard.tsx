@@ -13,7 +13,7 @@ import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard")({
-  validateSearch: (search: Record<string, unknown>) => ({ module: merchantModule(search.module) }),
+  validateSearch: (search: Record<string, unknown>) => ({ module: merchantModule(search["module"]) }),
   head: ({ match }) => {
     const label = MERCHANT_NAV.find((n) => n.id === match.search.module)?.label ?? "Business Console";
     const title = `${label} — Slikpay Business`;
