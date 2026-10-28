@@ -524,3 +524,44 @@ html { scroll-behavior: smooth; }
   --surface-1: oklch(0.995 0.003 255); --surface-2: oklch(0.975 0.008 255); --surface-3: oklch(0.955 0.012 255);
   --background: oklch(0.965 0.01 255); --border: oklch(0.45 0.08 262 / 12%); --text-dim: oklch(0.55 0.03 258);
 }
+
+/* Navy Sidebar design: deep cobalt menu, soft white workspace, navy balance card. */
+.merchant-console .merchant-sidebar { background: linear-gradient(180deg, oklch(0.2 0.09 266), oklch(0.15 0.07 268)); }
+.light-workspace {
+  --background: oklch(0.975 0.008 262);
+  --foreground: oklch(0.22 0.06 266);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.06 266);
+  --surface-1: oklch(1 0 0); --surface-2: oklch(0.985 0.006 262); --surface-3: oklch(0.96 0.012 262);
+  --muted: oklch(0.955 0.014 262);
+  --muted-foreground: oklch(0.5 0.04 262);
+  --body: oklch(0.4 0.04 262);
+  --border: oklch(0.45 0.08 262 / 11%);
+  --input: oklch(0.45 0.08 262 / 18%);
+  --cobalt: oklch(0.52 0.25 262);
+  --cyan: oklch(0.62 0.14 215);
+  --magenta: oklch(0.6 0.27 335);
+  --success: oklch(0.58 0.16 155);
+  --success-soft: oklch(0.6 0.15 155 / 12%);
+  --navy: oklch(0.22 0.06 266);
+  --obsidian: oklch(0.2 0.04 266);
+  --gradient-mesh: oklch(0.975 0.008 262);
+  color-scheme: light;
+  background: var(--background);
+  color: var(--foreground);
+}
+.light-workspace .bg-card, .light-workspace .panel { background: var(--card); box-shadow: 0 1px 2px oklch(0.3 0.05 262 / 5%), 0 12px 32px -20px oklch(0.3 0.1 262 / 18%); }
+.light-workspace header { background: color-mix(in oklab, var(--background) 92%, transparent); }
+.light-workspace .field { background: var(--card); color: var(--foreground); border-color: var(--input); }
+/* The balance card stays deep navy with a glowing brand edge. */
+.light-workspace .hero-surface {
+  --foreground: oklch(0.98 0.01 250); --muted-foreground: oklch(0.78 0.04 255); --border: oklch(1 0 0 / 14%);
+  --cyan: oklch(0.88 0.15 195); --magenta: oklch(0.72 0.28 330); --cobalt: oklch(0.62 0.22 262); --muted: oklch(1 0 0 / 10%); --card: oklch(1 0 0 / 8%);
+  color: var(--foreground); border: 0;
+  background: radial-gradient(60% 120% at 100% 50%, color-mix(in oklab, var(--magenta) 55%, transparent), transparent 60%), radial-gradient(40% 80% at 85% 100%, color-mix(in oklab, var(--cyan) 35%, transparent), transparent 70%), linear-gradient(120deg, oklch(0.16 0.07 268), oklch(0.2 0.1 266));
+  box-shadow: 0 30px 60px -30px oklch(0.3 0.15 262 / 60%);
+}
+/* Pop-ups keep their dark branded surface inside the light workspace. */
+.light-workspace .merchant-popover { --foreground: oklch(0.97 0.01 250); --muted-foreground: oklch(0.75 0.035 255); --border: oklch(1 0 0 / 12%); --muted: oklch(1 0 0 / 8%); --cyan: oklch(0.88 0.15 195); color: var(--foreground); }
+.light-workspace .tint-cobalt { color: var(--cobalt); }
+.light-workspace span.bg-gradient-tri:not(.keep-gradient) { color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 10%, transparent); }
