@@ -143,7 +143,8 @@ export const completeGoLive = createServerFn({ method: "POST" }).handler(async (
   const up = await ctx.db.from("account_modes").update({ mode: "live", review_status: "approved", approved_at: new Date().toISOString() }).eq("user_id", ctx.user.id);
   if (up.error) throw new Error("Could not switch your account to live. Try again.");
   const existing = await ctx.db.from("paddle_resources").select("resource_id").eq("user_id", ctx.user.id).eq("mode", "live").eq("operation", "POST /v1/accounts/virtual").limit(1).maybeSingle();
-  if (existing.data) return { live: true, accountNumber: existing.data.resource_id, accountName: biz.name, issueError: null };
+  const stable = async () => { const { ensureStablecoinWallets } = await import("./wallets.server"); await ensureStablecoinWallets(ctx.db, ctx.user, "live", true); };
+  if (existing.data) { await stable(); return { live: true, accountNumber: existing.data.resource_id, accountName: biz.name, issueError: null }; }
   try {
     const { callPaddle } = await import("./paddle.server");
     const r = await callPaddle("live", "POST", "/v1/accounts/virtual", { accountName: biz.name, customerEmail: ctx.user.email, accountType: "corporate", useMerchantBvn: true, currency: "NGN", bank: "sterling" }, crypto.randomUUID());
@@ -151,6 +152,7 @@ export const completeGoLive = createServerFn({ method: "POST" }).handler(async (
     const accountNumber = String(d["accountNumber"] ?? d["account_number"] ?? "");
     if (!/^\d{10}$/.test(accountNumber)) throw new Error("No account number was returned.");
     await ctx.db.from("paddle_resources").upsert({ user_id: ctx.user.id, mode: "live", resource_id: accountNumber, operation: "POST /v1/accounts/virtual" }, { onConflict: "mode,resource_id" });
+    await stable();
     return { live: true, accountNumber, accountName: String(d["accountName"] ?? biz.name), issueError: null };
   } catch (e) {
     return { live: true, accountNumber: null, accountName: biz.name, issueError: e instanceof Error ? e.message : "Account number could not be issued yet." };
