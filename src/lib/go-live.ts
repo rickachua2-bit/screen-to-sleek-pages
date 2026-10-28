@@ -18,7 +18,13 @@ export function normaliseName(n: string) {
   for (const [re, to] of SUFFIX) s = s.replace(re, to);
   return s.replace(/&/g, " & ").replace(/\s+/g, " ").trim();
 }
-export const namesMatch = (a: string, b: string) => normaliseName(a) === normaliseName(b) && normaliseName(a).length > 0;
+// Banks and collection providers often tag sub-accounts with a short prefix, e.g. "FIN-ACME LTD" or "FLW/ACME LTD".
+const TAG = /^\s*[a-z0-9]{2,12}\s*[-/:|]\s*/i;
+export function namesMatch(account: string, business: string) {
+  const b = normaliseName(business);
+  if (!b) return false;
+  return normaliseName(account) === b || normaliseName(account.replace(TAG, "")) === b;
+}
 
 export const PERSONAL_STEPS: GoLiveStep[] = [
   { key: "contacts", title: "Phone & email verified", detail: "Confirmed with one-time codes.", auto: true, tier: 1 },
