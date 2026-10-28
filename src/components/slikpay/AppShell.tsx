@@ -11,7 +11,7 @@ import { FlameMark, Logo } from "./Logo";
 import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
 import { CurrencyBar, CurrencyWallet, PortfolioHeader } from "./CurrencyWallet";
-import { useLiveUpdates } from "@/lib/live-updates";
+import { captureInbound, useLiveUpdates } from "@/lib/live-updates";
 import { setCurrency, useCurrency } from "@/lib/currency-store";
 import { CURRENCIES, currencyDef } from "@/lib/wallets";
 
@@ -34,7 +34,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]);
+      await captureInbound(); await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]);
       setUpdatedAt(new Date());
       toast.success("Dashboard refreshed");
     } catch (e) {
