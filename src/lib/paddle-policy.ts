@@ -1,4 +1,4 @@
-import catalog from "./paddle-catalog.json";
+import catalog from "./paddle-catalog";
 
 export type PaddleField = { name: string; type: string; required?: boolean; enum?: string[]; example?: unknown; hint?: string };
 export type PaddleEndpoint = { id: string; method: "GET" | "POST" | "DELETE"; path: string; tag: string; summary: string; fields: PaddleField[]; params: { name: string; in: string; required?: boolean }[] };
