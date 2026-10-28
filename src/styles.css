@@ -647,6 +647,7 @@ html { scroll-behavior: smooth; }
     box-shadow: inset 0 1px 0 oklch(1 0 0 / 35%), 0 10px 22px -8px color-mix(in oklab, var(--magenta) 70%, transparent);
   }
 }
+.quick-chip-icon { background: oklch(1 0 0 / 14%); color: var(--cyan); }
 .group:enabled:hover .wallet-action { transform: translateY(-2px) scale(1.06); filter: brightness(1.08); box-shadow: inset 0 1px 0 oklch(1 0 0 / 40%), 0 14px 28px -8px color-mix(in oklab, var(--cyan) 70%, transparent); }
 
 @utility quick-chip {
