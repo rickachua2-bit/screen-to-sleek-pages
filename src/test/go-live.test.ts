@@ -22,3 +22,13 @@ describe("business go-live", () => {
     expect(namesMatch("FIN-OTHER COMPANY LTD", "TRAVSIFY GLOBAL INCLUSIVE LIMITED")).toBe(false);
   });
 });
+
+import { personalTier } from "@/lib/go-live";
+describe("personal tier", () => {
+  it("is 0 until tier-1 identity is verified, then rises tier by tier", () => {
+    expect(personalTier([])).toBe(0);
+    expect(personalTier([{ step: "personal_bvn", status: "verified" }])).toBe(1);
+    expect(personalTier([{ step: "personal_bvn", status: "verified" }, { step: "liveness", status: "verified" }])).toBe(2);
+    expect(personalTier([{ step: "liveness", status: "verified" }])).toBe(0);
+  });
+});
