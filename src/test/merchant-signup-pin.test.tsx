@@ -7,7 +7,8 @@ const mocks = vi.hoisted(() => ({
   lookup: vi.fn().mockResolvedValue({ companyName: "Verified Business" }),
   create: vi.fn().mockRejectedValue(new Error("Stopped before account creation")),
 }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, createServerFn: () => ({ inputValidator: () => ({ handler: (h: unknown) => h }), handler: (h: unknown) => h }) }));
+vi.mock("@/lib/login-2fa.functions", () => ({ startLoginEmailCode: vi.fn(), verifyLoginEmailCode: vi.fn() }));
 vi.mock("@/lib/merchant-verification.functions", () => ({ combineMerchantContacts: mocks.combine, lookupMerchantBusiness: mocks.lookup, createVerifiedMerchant: mocks.create }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ signInWithPassword: vi.fn() }) }));
 vi.mock("@/components/slikpay/MerchantContactVerification", () => ({
