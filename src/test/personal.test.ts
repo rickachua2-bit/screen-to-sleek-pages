@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { PERSONAL_NAV, PERSONAL_TABS, personalModule } from "@/lib/personal";
 
 describe("personal navigation", () => {
-  it("has 8 modules with unique ids", () => {
-    expect(PERSONAL_NAV).toHaveLength(8);
-    expect(new Set(PERSONAL_NAV.map((n) => n.id)).size).toBe(8);
+  it("has 10 modules with unique ids", () => {
+    expect(PERSONAL_NAV).toHaveLength(10);
+    expect(new Set(PERSONAL_NAV.map((n) => n.id)).size).toBe(10);
   });
   it("mobile bottom bar has exactly Home, Transfers, Bills, Cards, Profile", () => {
     expect(PERSONAL_TABS.map((t) => t.label)).toEqual(["Home & Wallet", "Transfers", "Bills", "Cards", "Profile"]);

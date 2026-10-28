@@ -23,3 +23,12 @@ Live module operations are outside this presentation task: new workspaces show c
 - [ ] Enable country-specific registries. Blocked on Paddle documentation for countries other than Nigeria.
 - [ ] Enable live payouts, balances, virtual accounts and receipt reconciliation. Blocked on merchant ownership mapping, payout/PIN contract, idempotency and reconciliation safeguards.
 - [ ] Make public OTP issuance production-safe. Blocked on provider-backed delivery abuse controls and an agreed policy.
+# Paddle banking (sandbox and live)
+- [x] Generate catalog of all 170 Paddle endpoints; build access rules, ownership checks, ledger holds, receipts and webhook receiver.
+- [x] Add an All Services screen and a Go Live checklist (director/holder BVN) to both dashboards.
+- [ ] Run supabase/slikpay_banking.sql in the account project. Blocked on the user.
+- [ ] Add Paddle sandbox key and webhook secret. Blocked on the user.
+- [ ] Remaining KYB steps after director check. Blocked on the user's list.
+- [ ] Storefronts, invoices and payment links built by Slikpay on top of Paddle checkout.
+- [ ] Dedicated screens per area (cards, flights, payouts) that replace the generic forms.
+- [ ] Event ticketing. Blocked on Paddle documentation.

@@ -1,8 +1,8 @@
-import { ArrowLeftRight, BadgeCheck, Code2, CreditCard, FileText, Globe, LayoutDashboard, Link2, QrCode, Repeat, Scale, Settings, ShieldCheck, Smartphone, UserCheck, Users, Wallet } from "lucide-react";
+import { ArrowLeftRight, Boxes, Rocket, BadgeCheck, Code2, CreditCard, FileText, Globe, LayoutDashboard, Link2, QrCode, Repeat, Scale, Settings, ShieldCheck, Smartphone, UserCheck, Users, Wallet } from "lucide-react";
 import type { Txn } from "./api";
 
 export const MERCHANT_GROUPS = [
-  { title: "Core & Overview", items: [{ id: "overview", label: "Dashboard", icon: LayoutDashboard }, { id: "transactions", label: "Transactions & Ledger", icon: ArrowLeftRight }] },
+  { title: "Core & Overview", items: [{ id: "overview", label: "Dashboard", icon: LayoutDashboard }, { id: "transactions", label: "Transactions & Ledger", icon: ArrowLeftRight }, { id: "services", label: "All Banking Services", icon: Boxes }, { id: "golive", label: "Go Live (KYB)", icon: Rocket }] },
   { title: "Collections & Acceptance", items: [{ id: "softpos", label: "SoftPOS Terminals", icon: Smartphone }, { id: "smarttag", label: "SmartTag & QR Hardware", icon: QrCode }, { id: "links", label: "Payment Links & Invoices", icon: Link2 }, { id: "mandates", label: "Direct Mandates & Debits", icon: Repeat }] },
   { title: "Disbursements & Cards", items: [{ id: "banking", label: "Commercial Banking", icon: Wallet }, { id: "payroll", label: "Bulk Payroll & Payouts", icon: Users }, { id: "cards", label: "Virtual Corporate Cards", icon: CreditCard }] },
   { title: "Operations & Governance", items: [{ id: "shifts", label: "Shift & Loss Prevention", icon: ShieldCheck }, { id: "disputes", label: "Disputes & Chargebacks", icon: Scale }, { id: "approvals", label: "Maker-Checker Approvals", icon: UserCheck }] },

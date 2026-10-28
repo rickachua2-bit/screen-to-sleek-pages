@@ -1,3 +1,4 @@
+import { GoLive, PaddleConsole } from "./PaddleConsole";
 import { useState } from "react";
 import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -330,6 +331,8 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "savings": return <SavingsModule />;
     case "rewards": return <RewardsModule />;
     case "profile": return <ProfileModule />;
+    case "services": return <PaddleConsole role="personal" />;
+    case "golive": return <GoLive role="personal" />;
     default: return <HomeModule open={open} />;
   }
 }
