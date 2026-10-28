@@ -128,7 +128,15 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
       <div className="lg:col-span-3"><WalletActivity code={code} extras={extras} /></div>
     </div>}
 
-    {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader>{def.kind === "crypto" && w.accountNumber && <DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} size={220} />}<p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
+    {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame sm:max-w-md"><DialogHeader><DialogTitle className="flex items-center gap-2"><span className="text-xl">{def.flag}</span>Receive {code}</DialogTitle></DialogHeader>
+      {def.kind === "crypto" && w.accountNumber ? <div className="flex flex-col items-center gap-4 text-center">
+        <span className="rounded-full border border-cyan/40 bg-cyan/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan">{w.network ?? def.network} network</span>
+        <div className="rounded-3xl bg-gradient-tri p-[2px] shadow-lg"><div className="rounded-[22px] bg-background p-3"><DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} size={220} /></div></div>
+        <div className="w-full rounded-2xl border border-border bg-background/40 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deposit address</p><p className="mt-1 break-all font-mono text-sm font-bold">{w.accountNumber}</p></div>
+        <p className="text-[11px] text-chart-4">Send only {code} on the {w.network ?? def.network} network. Other coins or networks will be lost.</p>
+      </div> : <><p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p></>}
+      <div className="flex gap-2"><Button variant="brand" className="flex-1 rounded-full" onClick={copyAll}><Copy />Copy address</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="crisp" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
+    </DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
     {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} rates={extras?.rates ?? {}} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
