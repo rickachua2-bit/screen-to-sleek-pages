@@ -370,10 +370,10 @@ html { scroll-behavior: smooth; }
 .confetti-piece { position: absolute; top: 0; width: 8px; height: 14px; border-radius: 2px; animation: confetti-fall linear forwards; }
 
 /* Custom dropdown panels: brand-tinted scrollbar + readable dark surface */
-.dropdown-list { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--cobalt) 50%, transparent) transparent; }
+.dropdown-list { scrollbar-width: thin; scrollbar-color: var(--cobalt) oklch(0.55 0.05 262 / 10%); }
 .dropdown-list::-webkit-scrollbar { width: 8px; }
 .dropdown-list::-webkit-scrollbar-track { background: transparent; }
-.dropdown-list::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in oklab, var(--cobalt) 45%, transparent); }
+.dropdown-list::-webkit-scrollbar-thumb { border-radius: 999px; background: linear-gradient(180deg, var(--cyan), var(--cobalt)); }
 .theme-flame .dropdown-list { background: oklch(0.19 0.05 268 / 97%); }
 
 /* Merchant console surfaces reuse the flame palette without decorative patterns. */
@@ -443,7 +443,7 @@ html { scroll-behavior: smooth; }
 .slik-select-trigger { border-color: var(--border); background: var(--background); transition: border-color 150ms, box-shadow 150ms; }
 .slik-select-trigger:hover, .slik-select-trigger[data-state="open"] { border-color: var(--cyan); }
 .slik-select-trigger:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-.slik-dropdown { scrollbar-width: thin; scrollbar-color: var(--cobalt) transparent; }
+.slik-dropdown { scrollbar-width: thin; scrollbar-color: var(--cobalt) oklch(0.55 0.05 262 / 10%); }
 .slik-dropdown [role="option"], .slik-dropdown [role^="menuitem"], .merchant-popover button { min-height: 40px; border-radius: 6px; }
 .slik-dropdown [role="option"][data-state="checked"], .slik-dropdown [role="option"][aria-selected="true"], .slik-dropdown [role^="menuitem"][data-state="checked"], .merchant-popover button:has(svg) { background: var(--overlay-selected); }
 .slik-dropdown [role="option"][data-highlighted], .slik-dropdown [role="option"][data-active="true"], .slik-dropdown [role^="menuitem"]:focus, .merchant-popover button:hover { background: var(--overlay-hover); color: var(--foreground); }
@@ -592,5 +592,15 @@ html { scroll-behavior: smooth; }
 .merchant-sidebar .sidebar-item-active::before { content: ""; position: absolute; left: -8px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 3px 3px 0; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
 .merchant-sidebar .sidebar-icon-btn { display: inline-flex; height: 28px; width: 28px; align-items: center; justify-content: center; border-radius: 6px; color: oklch(0.95 0.02 258); transition: background .12s, color .12s; }
 .merchant-sidebar .sidebar-icon-btn:hover { background: oklch(1 0 0 / 8%); color: var(--foreground); }
-.sidebar-scroll { scrollbar-width: thin; scrollbar-color: oklch(1 0 0 / 12%) transparent; }
-.sidebar-scroll::-webkit-scrollbar { width: 6px; } .sidebar-scroll::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 12%); border-radius: 999px; }
+/* Scrollbars are brand blue everywhere, so merchants always see where a page or list scrolls. */
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--cyan) 40%, var(--cobalt)) oklch(0.55 0.05 262 / 12%); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: oklch(0.55 0.05 262 / 8%); }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--cyan), var(--cobalt)); border: 2px solid transparent; border-radius: 999px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--cobalt); background-clip: padding-box; }
+.light-workspace { scrollbar-color: var(--cobalt) oklch(0.55 0.05 262 / 10%); }
+.sidebar-scroll { scrollbar-width: thin; scrollbar-color: var(--cyan) oklch(1 0 0 / 8%); }
+.sidebar-scroll::-webkit-scrollbar { width: 8px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: oklch(1 0 0 / 6%); border-radius: 999px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--cyan), color-mix(in oklab, var(--cyan) 35%, var(--cobalt))); border: 0; border-radius: 999px; }
+.sidebar-scroll:hover::-webkit-scrollbar-thumb { background: var(--cyan); }
