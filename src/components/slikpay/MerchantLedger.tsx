@@ -13,7 +13,7 @@ const PRESETS = [{ l: "Today", d: 0 }, { l: "7 days", d: 7 }, { l: "30 days", d:
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const PAGE = 25;
 
-export function MerchantLedger({ txns, globalSearch = "", recent = false, onViewAll, balance }: { balance?: number; txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
+export function MerchantLedger({ txns, globalSearch = "", recent = false, onViewAll, balance }: { balance?: number | undefined; txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("All");
   const [flow, setFlow] = useState<string>("all");

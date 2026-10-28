@@ -31,7 +31,7 @@ function CopyRef({ value }: { value: string }) {
   return <button type="button" aria-label="Copy reference" className="ml-1 inline-grid h-6 w-6 place-items-center rounded-full text-muted-foreground opacity-0 transition hover:bg-primary/10 hover:text-primary group-hover:opacity-100 focus:opacity-100" onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(value); setDone(true); setTimeout(() => setDone(false), 1200); }}>{done ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}</button>;
 }
 
-export function TransactionTable({ txns, balances }: { txns: Txn[]; balances?: Map<string, number> }) {
+export function TransactionTable({ txns, balances }: { txns: Txn[]; balances?: Map<string, number> | undefined }) {
   const [sel, setSel] = useState<Txn | null>(null);
   const groups: { day: string; items: Txn[]; net: number }[] = [];
   for (const t of txns) {
