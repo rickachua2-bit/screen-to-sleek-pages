@@ -1,6 +1,5 @@
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { accountAdmin } from "./merchant-verification.server";
-import { paddleFailure } from "./provider-errors";
 import type { Mode, Role } from "./paddle-policy";
 
 const BASE = "https://api.getpaddle.online/v1";
@@ -24,7 +23,10 @@ export async function callPaddle(mode: Mode, method: string, path: string, body?
   const response = await fetch(url, init);
   const payload: unknown = await response.json().catch(() => null);
   // Never log keys, PINs or provider bodies.
-  if (!response.ok) throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After"), response.headers.get("X-RateLimit-Reset")));
+  if (!response.ok) {
+    if (response.status === 429) throw new Error("Banking service is busy. Wait before retrying; check your ledger if a payment was submitted.");
+    throw new Error(`Banking service could not complete the request (HTTP ${response.status}). Check your ledger before retrying a payment.`);
+  }
   const p = payload as { success?: boolean; data?: unknown; message?: string } | null;
   if (p && p.success === false) throw new Error("The service did not confirm this request.");
   return { data: p && "data" in p ? p.data : payload, message: typeof p?.message === "string" ? p.message.slice(0, 200) : undefined };

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { exactPayoutFee, payoutBody, payoutStatus } from "./transfer-validation";
 import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scopeOf } from "./paddle-policy";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
@@ -50,6 +51,19 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     if (JSON.stringify(data.body).length > 20000) throw new Error("Request is too large.");
     if (endpoint.id === "post-accounts-virtual") data.body = { ...data.body, bank: "sterling" };
     if (mode === "live" && review !== "approved") throw new Error("Complete verification before using live services.");
+    const isTransfer = endpoint.id === "post-payouts-transfer";
+    let transferFee = 0;
+    if (isTransfer) {
+      data.currency = "NGN";
+      data.body = payoutBody.parse(data.body);
+      data.body["reference"] = data.idempotencyKey;
+      const resolved = await callPaddle(mode, "POST", "/v1/accounts/resolve", { accountNumber: data.body["destinationAccountNumber"], bankCode: data.body["destinationBankCode"] });
+      const accountName = (resolved.data as Record<string, unknown> | null)?.["accountName"];
+      if (typeof accountName !== "string" || !accountName.trim()) throw new Error("The bank did not confirm the recipient. Check the account details.");
+      data.body["destinationAccountName"] = accountName.trim();
+      const quoted = await callPaddle(mode, "POST", "/v1/pricing/calculate", { rail: "payouts", amount: data.body["amount"] });
+      transferFee = exactPayoutFee(quoted.data);
+    }
     const path = fillPath(endpoint.path, data.params);
 
     // Resource-specific calls must target something this user created.
@@ -64,17 +78,24 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     const operation = `${endpoint.method} ${endpoint.path}`;
     if (money) {
       if (!amount) throw new Error("Enter a valid amount.");
+      const prior = await db.from("payment_receipts").select("id").eq("idempotency_key", data.idempotencyKey).maybeSingle();
+      if (prior.error) throw new Error("Could not check this payment. Try again.");
+      if (prior.data) throw new Error("This payment was already submitted. Check your ledger before sending again.");
       if (mode === "live") {
         if (!data.pin) throw new Error("Enter your 4-digit transaction PIN.");
         const sec = await db.from("merchant_security").select("pin_digest, pin_salt").eq("user_id", user.id).maybeSingle();
         const { pinDigest } = await import("./merchant-verification.server");
         if (!sec.data || sec.data.pin_digest !== await pinDigest(data.pin, sec.data.pin_salt)) throw new Error("Incorrect transaction PIN.");
-        const held = await db.rpc("hold_funds", { p_user: user.id, p_mode: mode, p_currency: data.currency, p_amount: amount, p_operation: operation, p_reference: data.idempotencyKey });
-        if (held.error) throw new Error("Could not reserve funds. Try again.");
-        if (held.data !== true) throw new Error("Insufficient balance for this transaction.");
       }
-      const receipt = await db.from("payment_receipts").insert({ user_id: user.id, mode, operation, idempotency_key: data.idempotencyKey, status: "pending", amount, currency: data.currency });
-      if (receipt.error) throw new Error("This request was already submitted.");
+      const inserted = await db.from("payment_receipts").insert({ user_id: user.id, mode, operation, idempotency_key: data.idempotencyKey, status: "pending", amount, currency: data.currency });
+      if (inserted.error) throw new Error("Could not create this payment, or it was already submitted. Check your ledger.");
+      if (mode === "live") {
+        const held = await db.rpc("hold_funds", { p_user: user.id, p_mode: mode, p_currency: data.currency, p_amount: amount + transferFee, p_operation: operation, p_reference: data.idempotencyKey });
+        if (held.error || held.data !== true) {
+          await db.from("payment_receipts").update({ status: "failed" }).eq("user_id", user.id).eq("idempotency_key", data.idempotencyKey);
+          throw new Error(held.error ? "Could not reserve funds. Check your ledger before retrying." : "Insufficient balance including fees.");
+        }
+      }
     }
 
     try {
@@ -89,19 +110,23 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         const ref = [d["reference"], d["transactionReference"], d["id"]].find((v) => typeof v === "string") as string | undefined;
         const session = [d["sessionId"], d["nipSessionId"], d["session_id"]].find((v) => typeof v === "string") as string | undefined;
         const { providerFee } = await import("./ledger-history");
-        const fee = providerFee(d);
+        const fee = isTransfer ? transferFee : providerFee(d);
+        const status = isTransfer ? payoutStatus(result.data) : "succeeded";
         const body = (data.body ?? {}) as Record<string, unknown>;
         const recipient = [body["destinationAccountName"], body["accountName"], body["beneficiaryName"]].find((v) => typeof v === "string") as string | undefined;
-        await db.from("payment_receipts").update({ status: "succeeded", provider_reference: ref ?? null, session_id: session ?? null, summary: { ...(fee !== undefined ? { fee } : {}), ...(recipient ? { recipient } : {}) } }).eq("idempotency_key", data.idempotencyKey);
-        if (mode === "live") await db.from("ledger_entries").update({ status: "posted" }).eq("reference", data.idempotencyKey);
-        receipt = { reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
+        const saved = await db.from("payment_receipts").update({ status, provider_reference: ref ?? null, session_id: session ?? null, summary: { ...(fee !== undefined ? { fee } : {}), ...(recipient ? { recipient } : {}) } }).eq("user_id", user.id).eq("idempotency_key", data.idempotencyKey);
+        if (saved.error) throw new Error("Payment submitted but the receipt could not update. Check your ledger before retrying.");
+        if (mode === "live" && status !== "pending") {
+          const ledger = await db.from("ledger_entries").update({ status: status === "succeeded" ? "posted" : "released" }).eq("user_id", user.id).eq("reference", data.idempotencyKey);
+          if (ledger.error) throw new Error("Payment status needs reconciliation. Do not send again.");
+        }
+        receipt = { status, reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
       }
       return { mode, message: result.message ?? null, resultJson: JSON.stringify(result.data ?? null).slice(0, 200000), receipt };
     } catch (e) {
-      if (money) {
-        await db.from("payment_receipts").update({ status: "failed" }).eq("idempotency_key", data.idempotencyKey);
-        if (mode === "live") await db.from("ledger_entries").update({ status: "released" }).eq("reference", data.idempotencyKey);
-      }
+      // An exception after dispatch is not proof that the bank rejected the payment.
+      // Keep the receipt pending and the debit held until a definitive result is reconciled.
+      if (money) throw new Error("Payment status could not be confirmed. Check your ledger before retrying; funds remain reserved while the result is reviewed.");
       throw e;
     }
   });

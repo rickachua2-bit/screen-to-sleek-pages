@@ -888,3 +888,20 @@ html { scroll-behavior: smooth; }
 .transfer-center, .transfer-center .font-mono { letter-spacing: 0; }
 @media (max-width: 1100px) { .transfer-story, .transfer-composer { padding: 22px; } .transfer-composer-layout { gap: 16px; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); } .transfer-story h2 { font-size: 26px; } }
 @media (max-width: 760px) { .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .transfer-story h2 { margin-top: 16px; font-size: 24px; } .transfer-balance { padding: 16px 0; } .transfer-preview, .transfer-assurances, .transfer-globe { display: none; } .transfer-story { padding: 20px; } .transfer-composer { padding: 20px; } .transfer-tabs { width: 100%; } .transfer-tabs > button { flex: 1; } }
+
+/* Bank search stays readable and visible in both the page and payment dialog. */
+.recipient-bank-picker { min-width: 0; }
+.recipient-bank-search { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0 8px 0 12px; min-height: 46px; background: var(--background); color: var(--foreground); border: 1.5px solid var(--border); border-radius: 8px; }
+.recipient-bank-search:focus-within { border-color: var(--cobalt); outline: 2px solid color-mix(in oklab, var(--cobalt) 15%, transparent); }
+.recipient-bank-search > svg { color: var(--cobalt); }
+.recipient-bank-search input { min-width: 0; flex: 1; width: 100%; height: 44px; background: transparent; color: var(--foreground); font-size: 13px; outline: none; }
+.recipient-bank-search input::placeholder { color: var(--muted-foreground); opacity: 1; }
+.recipient-bank-search button { flex-shrink: 0; color: var(--foreground); }
+.recipient-bank-selected { display: flex; gap: 7px; align-items: center; padding: 8px 2px 0; color: var(--primary); font-size: 12px; font-weight: 700; }
+.recipient-bank-selected > span { overflow-wrap: anywhere; }
+.recipient-bank-results { margin-top: 8px; max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); }
+.recipient-bank-option { width: 100%; min-height: 42px; height: auto; display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; white-space: normal; text-align: left; font-size: 12px; color: var(--foreground); }
+.recipient-bank-option > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.recipient-bank-option > span:last-child { flex-shrink: 0; color: var(--primary); }
+.light-workspace .transfer-composer .recipient-bank-search, .light-workspace .transfer-composer .recipient-bank-results { background: var(--transfer-paper); color: var(--transfer-ink); border-color: var(--transfer-line); }
+@media (max-width: 1000px) and (min-width: 761px) { .transfer-composer-layout { grid-template-columns: minmax(0, .65fr) minmax(0, 1fr); } .transfer-story { padding: 18px; } }

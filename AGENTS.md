@@ -28,3 +28,4 @@
 - The Services hub is driven by src/lib/services-registry.ts (product tiles → catalog op ids, per-service guided flow configs); money still flows only through runPaddleOperation so PIN, holds and receipts stay in one place.
 - ServicesCatalog owns the shared visual banking/business catalog; ServicesHub retains account context, navigation and guided operations so design changes never duplicate payment logic.
 - TransferComposerLayout owns the split transfer presentation; SendNip retains bank lookup, review and payment execution and publishes display-only preview state so the page and modal share one payment flow.
+- NIP transfer execution re-resolves the recipient, derives NGN and reserves principal plus the provider fee server-side; ambiguous dispatch outcomes retain held funds and pending receipts rather than claiming failure or making funds spendable again.
