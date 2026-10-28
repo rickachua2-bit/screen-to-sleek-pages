@@ -291,10 +291,10 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const idOk = isBiz ? id.trim().length >= 3 : id.trim().length >= 3;
+    const idOk = id.trim().length >= 3;
     const secretOk = pinMode ? isPin(pin) : pw.length >= 8;
     const next = {
-      id: idOk ? undefined : isBiz ? "Enter your work email or Merchant ID" : "Enter your phone number or @SlikTag",
+      id: idOk ? undefined : "Enter your email, phone number or @SlikTag",
       pw: secretOk ? undefined : pinMode ? "PIN must be exactly 4 digits" : "Password must be at least 8 characters",
     };
     if (next.id || next.pw) return fail(next);
