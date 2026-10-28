@@ -89,6 +89,33 @@ export const MOCK_TXNS: Txn[] = [
   { id: "6", date: "2026-10-25T09:30:00", ref: "SLK-CRD-30118722", channel: "Card", customer: "AWS EMEA", amount: 32400, direction: "debit", status: "Failed" },
 ];
 
+export const PERSONAL_ACCOUNT: Account = {
+  balance: 1420500,
+  nuban: "8204918234",
+  bank: "Sterling Bank",
+  inflow30d: 612400,
+  inflowChange: 9.2,
+};
+
+export const PERSONAL_TXNS: Txn[] = [
+  { id: "p1", date: "2026-10-27T14:14:00", ref: "SLK-P2P-90124471", channel: "NIP", customer: "Babatunde Adeleke (@babatunde)", amount: 12500, direction: "debit", status: "Successful" },
+  { id: "p2", date: "2026-10-27T11:02:00", ref: "SLK-NIP-88213977", channel: "NIP", customer: "Salary — Travsify Global", amount: 450000, direction: "credit", status: "Successful" },
+  { id: "p3", date: "2026-10-26T20:41:00", ref: "SLK-CRD-55612098", channel: "Card", customer: "Netflix", amount: 4400, direction: "debit", status: "Successful" },
+  { id: "p4", date: "2026-10-26T09:15:00", ref: "SLK-BIL-66098112", channel: "Bills", customer: "EKEDC Prepaid", amount: 20000, direction: "debit", status: "Successful" },
+  { id: "p5", date: "2026-10-25T16:30:00", ref: "SLK-BIL-66098820", channel: "Bills", customer: "MTN Airtime", amount: 2000, direction: "debit", status: "Successful" },
+  { id: "p6", date: "2026-10-25T08:12:00", ref: "SLK-P2P-90110023", channel: "NIP", customer: "From Chiamaka Eze (@chiamaka)", amount: 50000, direction: "credit", status: "Successful" },
+  { id: "p7", date: "2026-10-24T19:55:00", ref: "SLK-CRD-55607734", channel: "Card", customer: "Amazon Prime", amount: 6900, direction: "debit", status: "Pending" },
+];
+
+export const PERSONAL_SPEND = [
+  { label: "Transfers & P2P", pct: 42, cls: "stroke-cobalt", dot: "bg-cobalt" },
+  { label: "Utility Bills & Power", pct: 24, cls: "stroke-navy", dot: "bg-navy" },
+  { label: "Online Shopping & Card", pct: 21, cls: "stroke-magenta", dot: "bg-magenta" },
+  { label: "Subscriptions & Airtime", pct: 13, cls: "stroke-cyan", dot: "bg-cyan" },
+];
+
+export const USD_CARD = { balance: 450, last4: "8492", holder: "PATRICK OTU", expiry: "08/28" };
+
 export const NG_BANKS: Bank[] = [
   { code: "232", name: "Sterling Bank" },
   { code: "044", name: "Access Bank" },

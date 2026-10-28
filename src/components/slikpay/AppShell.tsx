@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FlameMark, Logo } from "./Logo";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
-export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void }) {
+export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; bottomNav?: NavItem[] }) {
   const { user, ready, token, signOut, setRole } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState(nav[0]?.label ?? "Dashboard");
