@@ -116,7 +116,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
 
       {open && (
         <div className={`animate-in fade-in-0 zoom-in-95 absolute left-0 right-0 z-40 origin-top ${up ? "bottom-[calc(100%+6px)] slide-in-from-bottom-1" : "top-[calc(100%+6px)] slide-in-from-top-1"}`}>
-          <div className="panel dropdown-list max-h-64 overflow-auto p-1.5 backdrop-blur-xl shadow-[0_28px_70px_-24px_color-mix(in_oklab,var(--cobalt)_60%,transparent)]">
+          <div className="slik-dropdown panel dropdown-list max-h-64 overflow-auto p-1.5 backdrop-blur-xl ">
             {searchable && (
               <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1.5 bg-card/95 px-1.5 pb-1.5 pt-0.5 backdrop-blur-xl">
                 <div className="relative">
@@ -822,7 +822,7 @@ const CONFETTI_COLORS = ["var(--cobalt)", "var(--cyan)", "var(--magenta)", "var(
 function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
   const nuban = "8204918234";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Account ready">
+    <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" role="dialog" aria-modal="true" aria-label="Account ready">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         {Array.from({ length: 40 }, (_, i) => (
           <span key={i} className="confetti-piece" style={{
@@ -833,7 +833,7 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
           }} />
         ))}
       </div>
-      <div className="panel relative w-full max-w-md animate-in zoom-in-95 rounded-3xl p-7 text-center shadow-2xl">
+      <div className="slik-popup panel relative w-full max-w-md animate-in zoom-in-95 p-7 text-center shadow-2xl">
         <span className="mx-auto flex h-20 w-20 animate-in zoom-in-50 items-center justify-center rounded-3xl bg-gradient-tri text-primary-foreground shadow-cobalt duration-500">
           <Check className="h-10 w-10" strokeWidth={3} />
         </span>

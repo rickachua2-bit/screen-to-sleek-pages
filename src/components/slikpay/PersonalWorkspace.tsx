@@ -9,6 +9,7 @@ import { Panel, QuickAction } from "./Widgets";
 import { DonutChart } from "./Charts";
 import { ModalReceipt, StatusBadge } from "./TransactionTable";
 import { CardGraphic } from "./CardGraphic";
+import { BrandSelect } from "./BrandSelect";
 import type { ActionKind } from "./ActionModal";
 
 const fmt = (d: string) => {
@@ -141,6 +142,8 @@ function AirtimeModule({ open }: { open: (k: ActionKind) => void }) {
 
 function BillsModule({ open }: { open: (k: ActionKind) => void }) {
   const [tab, setTab] = useState<"power" | "cable">("power");
+  const [provider, setProvider] = useState("");
+  const providers = tab === "power" ? ELECTRICITY_DISCOS : CABLE_TV;
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Panel title="Pay a Bill">
@@ -150,7 +153,7 @@ function BillsModule({ open }: { open: (k: ActionKind) => void }) {
           ))}
         </div>
         <label className="mt-4 block"><span className="mb-1.5 block text-sm font-bold text-foreground">{tab === "power" ? "Disco" : "Provider"}</span>
-          <select className="field">{(tab === "power" ? ELECTRICITY_DISCOS : CABLE_TV).map((d) => <option key={d}>{d}</option>)}</select>
+          <BrandSelect label={tab === "power" ? "Disco" : "Provider"} value={providers.includes(provider) ? provider : (providers[0] ?? "")} onChange={setProvider} options={providers.map((d) => ({ value: d, label: d }))} />
         </label>
         <label className="mt-3 block"><span className="mb-1.5 block text-sm font-bold text-foreground">{tab === "power" ? "Meter number" : "Smartcard / IUC number"}</span><input className="field font-mono" inputMode="numeric" placeholder={tab === "power" ? "45012345678" : "7034567890"} /></label>
         <Button variant="brand" className="mt-4 w-full" onClick={() => open("bills")}><Zap /> Pay now</Button>

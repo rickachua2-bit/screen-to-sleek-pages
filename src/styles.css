@@ -349,3 +349,68 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   .merchant-console *, .merchant-console *::before, .merchant-console *::after { animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* Shared Slikpay overlay system, including content rendered in portals. */
+:root {
+  --overlay-canvas: oklch(0.12 0.035 268 / 78%);
+  --overlay-surface: oklch(0.2 0.055 268);
+  --overlay-field: oklch(0.15 0.04 268);
+  --overlay-foreground: oklch(0.97 0.01 250);
+  --overlay-muted: oklch(0.75 0.035 255);
+  --overlay-border: oklch(0.62 0.22 262 / 45%);
+  --overlay-hover: oklch(0.62 0.22 262 / 18%);
+  --overlay-selected: linear-gradient(110deg, oklch(0.62 0.22 262 / 25%), oklch(0.68 0.32 328 / 14%));
+  --overlay-gradient: radial-gradient(ellipse at top right, oklch(0.68 0.32 328 / 10%), transparent 55%), linear-gradient(145deg, oklch(0.23 0.07 265), var(--overlay-surface));
+  --overlay-shadow: 0 24px 70px -20px oklch(0.08 0.035 268 / 85%), 0 0 28px -12px oklch(0.62 0.22 262 / 45%);
+  --overlay-edge: linear-gradient(90deg, var(--cobalt), var(--cyan), var(--magenta));
+}
+.slik-overlay-backdrop { background: var(--overlay-canvas); backdrop-filter: blur(10px); }
+.slik-popup, .slik-dropdown, .merchant-popover, .theme-flame .panel.dropdown-list, [data-sonner-toast] {
+  --background: var(--overlay-field);
+  --foreground: var(--overlay-foreground);
+  --popover: var(--overlay-surface);
+  --popover-foreground: var(--overlay-foreground);
+  --card: var(--overlay-surface);
+  --body: var(--overlay-foreground);
+  --muted: var(--overlay-hover);
+  --muted-foreground: var(--overlay-muted);
+  --accent: var(--overlay-hover);
+  --accent-foreground: var(--overlay-foreground);
+  --border: var(--overlay-border);
+  --input: var(--overlay-border);
+  --cobalt: oklch(0.62 0.22 262);
+  --cyan: oklch(0.9 0.16 195);
+  --magenta: oklch(0.68 0.32 328);
+  --success: oklch(0.78 0.17 155);
+  --success-soft: oklch(0.55 0.15 155 / 18%);
+  --primary-foreground: oklch(1 0 0);
+  color-scheme: dark;
+  color: var(--foreground);
+  border: 1px solid var(--overlay-border);
+  border-top-color: var(--cyan);
+  border-radius: 8px;
+  background: var(--overlay-gradient);
+  box-shadow: var(--overlay-shadow);
+  background-clip: padding-box;
+}
+.slik-popup { max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; animation: slik-popup-enter 180ms ease-out; }
+.slik-popup > :first-child:not(.absolute) { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.slik-popup .field { background: var(--overlay-field); border-width: 1px; border-radius: 8px; transition: border-color 150ms, box-shadow 150ms; }
+.slik-popup .field:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--overlay-hover); }
+.slik-select-trigger { border-color: var(--border); background: var(--background); transition: border-color 150ms, box-shadow 150ms; }
+.slik-select-trigger:hover, .slik-select-trigger[data-state="open"] { border-color: var(--cyan); }
+.slik-select-trigger:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.slik-dropdown { scrollbar-width: thin; scrollbar-color: var(--cobalt) transparent; }
+.slik-dropdown [role="option"], .slik-dropdown [role^="menuitem"], .merchant-popover button { min-height: 40px; border-radius: 6px; }
+.slik-dropdown [role="option"][data-state="checked"], .slik-dropdown [role="option"][aria-selected="true"], .slik-dropdown [role^="menuitem"][data-state="checked"], .merchant-popover button:has(svg) { background: var(--overlay-selected); }
+.slik-dropdown [role="option"][data-highlighted], .slik-dropdown [role="option"][data-active="true"], .slik-dropdown [role^="menuitem"]:focus, .merchant-popover button:hover { background: var(--overlay-hover); color: var(--foreground); }
+.slik-dropdown [role="option"] svg, .merchant-popover button svg { color: var(--cyan); }
+.merchant-popover { animation: slik-popup-enter 160ms ease-out; }
+[data-sonner-toast][data-styled="true"] { background: var(--overlay-gradient); border-color: var(--overlay-border); color: var(--overlay-foreground); box-shadow: var(--overlay-shadow); }
+[data-sonner-toast] [data-description] { color: var(--overlay-muted); }
+[data-sonner-toast][data-type="success"] [data-icon] { color: var(--success); }
+[data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive); }
+[data-sonner-toast][data-type="info"] [data-icon] { color: var(--cyan); }
+@keyframes slik-popup-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .slik-popup, .slik-dropdown, .merchant-popover { animation: none; } }
+@media print { .slik-popup.print-area { max-height: none; overflow: visible; box-shadow: none; } }

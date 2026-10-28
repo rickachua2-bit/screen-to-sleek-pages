@@ -60,11 +60,11 @@ export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }
     ["Settlement bank", "Sterling Bank"],
   ];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/25 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div role="dialog" aria-label="Transaction receipt" className="print-area panel w-full max-w-sm p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" onClick={onClose}>
+      <div role="dialog" aria-label="Transaction receipt" className="slik-popup print-area panel w-full max-w-sm p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2"><FlameMark className="h-7 w-7" /><span className="font-black">Slikpay Receipt</span></div>
-          <button aria-label="Close" onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-muted"><X className="h-5 w-5" /></button>
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
         </div>
         <div className="my-6 text-center">
           <div className="text-3xl font-black text-foreground">{naira(txn.amount)}</div>
