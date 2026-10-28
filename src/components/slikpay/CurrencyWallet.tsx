@@ -24,6 +24,7 @@ const dec = (code: string) => (currencyDef(code)?.kind === "crypto" ? 6 : 2);
 const LOCALE: Record<string, string> = { NGN: "en-NG", GHS: "en-GH", KES: "en-KE", ZAR: "en-ZA", USD: "en-US", EUR: "en-IE", GBP: "en-GB", USDT: "en-US", USDC: "en-US" };
 export const fmt = (code: string, n: number) => `${currencyDef(code)?.symbol ?? ""}${n.toLocaleString(LOCALE[code] ?? undefined, { minimumFractionDigits: 2, maximumFractionDigits: dec(code) })}`;
 const ICONS: Record<WalletAction, LucideIcon> = { receive: ArrowDownLeft, send: ArrowUpRight, withdraw: Banknote, swap: ArrowLeftRight, request: Link2, more: MoreHorizontal };
+const TINTS: Record<WalletAction, string> = { receive: "tint-cyan", send: "tint-cobalt", withdraw: "tint-magenta", swap: "tint-cobalt", request: "tint-cyan", more: "tint-cobalt" };
 
 export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: string; mode?: string | undefined; onNavigate?: ((module: string) => void) | undefined; compact?: boolean }) {
   const def = currencyDef(code)!;
