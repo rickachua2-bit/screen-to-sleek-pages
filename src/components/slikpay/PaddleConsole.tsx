@@ -16,13 +16,40 @@ function label(e: PaddleEndpoint) {
   return s;
 }
 
+export interface BankingSnapshot { profile: Profile | null; error: string; updatedAt: Date | null }
+type BankingListener = (snapshot: BankingSnapshot) => void;
+const bankingListeners = new Set<BankingListener>();
+const bankingSnapshot: BankingSnapshot = { profile: null, error: "", updatedAt: null };
+let bankingInFlight: Promise<void> | null = null;
+let bankingLoader: (() => Promise<Profile>) | null = null;
+function emitBanking() { const s = { ...bankingSnapshot }; for (const l of [...bankingListeners]) l(s); }
+
+// One fetch per refresh, shared by every part of the shell (banner, balances, mode indicator).
+export function refreshBankingProfile(load?: () => Promise<Profile>): Promise<void> {
+  if (load) bankingLoader = load;
+  if (bankingInFlight) return bankingInFlight;
+  const loader = bankingLoader;
+  if (!loader) return Promise.resolve();
+  bankingInFlight = loader()
+    .then((p) => { bankingSnapshot.profile = p; bankingSnapshot.error = ""; bankingSnapshot.updatedAt = new Date(); })
+    .catch((e: unknown) => { bankingSnapshot.error = e instanceof Error ? e.message : "Banking profile unavailable"; })
+    .finally(() => { bankingInFlight = null; emitBanking(); });
+  return bankingInFlight;
+}
+export function resetBankingProfileForTests() {
+  bankingSnapshot.profile = null; bankingSnapshot.error = ""; bankingSnapshot.updatedAt = null; bankingInFlight = null;
+}
+
 export function useBankingProfile() {
   const load = useServerFn(getBankingProfile);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [error, setError] = useState("");
-  const refresh = () => load().then((p) => { setProfile(p); setError(""); }).catch((e: unknown) => setError(e instanceof Error ? e.message : "Banking profile unavailable"));
-  useEffect(() => { void refresh(); }, []);
-  return { profile, error, refresh };
+  const [snapshot, setSnapshot] = useState<BankingSnapshot>({ ...bankingSnapshot });
+  useEffect(() => {
+    bankingLoader = load;
+    bankingListeners.add(setSnapshot);
+    void refreshBankingProfile();
+    return () => { bankingListeners.delete(setSnapshot); };
+  }, [load]);
+  return { profile: snapshot.profile, error: snapshot.error, updatedAt: snapshot.updatedAt, refresh: refreshBankingProfile };
 }
 
 export function ModeBanner({ profile, error }: { profile: Profile | null; error: string }) {

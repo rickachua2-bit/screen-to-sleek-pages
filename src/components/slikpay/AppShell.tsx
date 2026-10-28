@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Check, ChevronDown, LogOut, Menu, Plus, Search, X, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, LogOut, Menu, Plus, RefreshCw, Search, X, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import type { Role } from "@/lib/api";
 import { MERCHANT_GROUPS } from "@/lib/merchant";
@@ -11,7 +12,7 @@ import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
-export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; bottomNav?: NavItem[] }) {
+export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, onRefresh, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; onRefresh?: () => Promise<void>; bottomNav?: NavItem[] }) {
   const { user, ready, token, signOut, setRole } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState(nav[0]?.label ?? "Dashboard");
@@ -19,10 +20,24 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const [switcher, setSwitcher] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [unread, setUnread] = useState(true);
-  const { profile: banking } = useBankingProfile();
+  const { profile: banking, refresh: bankingRefresh } = useBankingProfile();
   const environment = banking?.mode === "live" ? "Live Mode" : "Sandbox";
   const [currency, setCurrency] = useState("NGN");
   const [currencies, setCurrencies] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const doRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]);
+      setUpdatedAt(new Date());
+      toast.success("Dashboard refreshed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Refresh failed — try again");
+    } finally { setRefreshing(false); }
+  };
+  const updatedLabel = updatedAt ? `Updated ${updatedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : "";
   useEffect(() => { if (ready && !token) navigate({ to: "/auth" }); }, [ready, token, navigate]);
   useEffect(() => {
     if (!open) return;
@@ -49,6 +64,12 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
       })}</div>)}
     </nav>
+    <div className="shrink-0 border-t border-border px-3 py-3">
+      <Button variant="ghost" onClick={doRefresh} disabled={refreshing} aria-label={refreshing ? "Refreshing dashboard" : "Refresh dashboard"} className="flex h-10 w-full justify-between rounded-lg px-3 font-medium text-muted-foreground hover:bg-muted/60 hover:text-cyan">
+        <span className="flex items-center gap-3 text-sm"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-cyan" : ""}`} />{refreshing ? "Refreshing…" : "Refresh"}</span>
+        {updatedLabel && <span className="text-[10px] font-semibold tabular-nums">{updatedLabel}</span>}
+      </Button>
+    </div>
     <div className="shrink-0 border-t border-border px-4 py-4">
       <div className="mb-4 border-l-2 border-cyan pl-3"><p className="text-[11px] font-bold">Powering your bigger business tomorrow.</p><p className="mt-1 text-[10px] text-cyan">Simple. Secure. Global.</p></div>
       <div className="flex items-center gap-2.5"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-xs font-black text-primary-foreground">{initials}</span><div className="min-w-0"><div className="truncate text-xs font-bold">{isBiz ? "Acme Logistics Ltd" : name}</div>{isBiz && <div className="truncate text-[10px] text-muted-foreground">{name} · Director</div>}</div></div>
@@ -64,6 +85,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         {greeting && <div className="hidden shrink-0 xl:block"><h1 className="text-lg font-black">{greeting}</h1>{tierBadge && <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-success" />{tierBadge}</p>}</div>}
         {onAddMoney && <Button variant="brand" size="sm" className="hidden shrink-0 rounded-full md:inline-flex" onClick={onAddMoney}><Plus /> Add Money</Button>}
         <label className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><input aria-label="Global search" className="field h-10 pl-9 text-xs" placeholder={isBiz ? "Search transactions, customers, payments, or reference..." : "Search transactions..."} value={onSearchChange ? search : undefined} onChange={(e) => onSearchChange?.(e.target.value)} /></label>
+        <Button variant="ghost" size="icon" className="shrink-0" aria-label={refreshing ? "Refreshing dashboard" : "Refresh dashboard"} onClick={doRefresh} disabled={refreshing}><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-cyan" : ""}`} /></Button>
         <div className="relative hidden sm:block"><Button variant="crisp" size="sm" onClick={() => { setCurrencies(!currencies); setSwitcher(false); setNotifications(false); }} aria-expanded={currencies}> {currency === "NGN" ? "🇳🇬 NGN (₦)" : currency}<ChevronDown /></Button>{currencies && <div className="merchant-popover absolute right-0 mt-3 w-40 rounded-lg border border-border bg-background p-2 shadow-cobalt">{["NGN", "KES", "GHS", "ZAR", "USD", "EUR", "GBP", "USDT"].map((c) => <Button key={c} variant="ghost" className="w-full justify-between" onClick={() => { setCurrency(c); setCurrencies(false); }}>{c}{c === currency && <Check />}</Button>)}</div>}</div>
         <div className="relative shrink-0"><Button variant="crisp" size="sm" onClick={() => { setSwitcher(!switcher); setCurrencies(false); setNotifications(false); }} aria-expanded={switcher} aria-label="Environment menu"><span className={`h-1.5 w-1.5 rounded-full motion-safe:animate-pulse ${environment === "Live Mode" ? "bg-success" : "bg-chart-4"}`} /><span className="hidden md:inline">{environment}</span><ChevronDown /></Button>{switcher && <div className="merchant-popover absolute right-0 mt-3 w-52 rounded-lg border border-border bg-background p-2 shadow-cobalt"><div className="flex items-center justify-between px-3 py-2 text-xs font-semibold">{environment}<Check className="h-4 w-4 text-cyan" /></div>{environment !== "Live Mode" && <Button variant="ghost" className="w-full justify-start text-xs text-magenta" onClick={() => { setSwitcher(false); onModuleChange?.("golive"); }}>Complete verification to go live →</Button>}<div className="my-1 border-t border-border" /><Button variant="ghost" className="w-full justify-start text-xs" onClick={() => goMode(isBiz ? "personal" : "merchant")}>{isBiz ? "Personal Wallet" : "Business Console"}</Button></div>}</div>
         <div className="relative shrink-0"><Button variant="ghost" size="icon" aria-label="Notifications" aria-expanded={notifications} onClick={() => { setNotifications(!notifications); setSwitcher(false); setCurrencies(false); }}><Bell />{unread && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-magenta" />}</Button>{notifications && <div className="merchant-popover absolute right-0 mt-3 w-[min(300px,85vw)] rounded-lg border border-border bg-background p-5 shadow-cobalt"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Notifications</h2><Button variant="ghost" size="sm" onClick={() => setUnread(false)}>Mark read</Button></div><p className="mt-4 text-xs text-muted-foreground">Slikpay workspace is ready. Live notifications will appear when your service is connected.</p></div>}</div>
