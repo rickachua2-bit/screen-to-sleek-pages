@@ -43,6 +43,7 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
-- [ ] Review bulk-upload gaps against global payment standards and report confirmed limitations
+- [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
 - [ ] Add fiat/crypto choices to bank transfers, including USDT/USDC conversion to NGN and bank payout, only through verified supported rails
 - [ ] Verify quote, fee, balance reservation, conversion and payout status end-to-end — blocked: external authenticated test access and confirmed conversion/payout contract
+- [ ] Harden swap/withdrawal idempotency and ambiguous-result handling before exposing bank cash-out
