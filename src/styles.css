@@ -607,3 +607,30 @@ html { scroll-behavior: smooth; }
   html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--cyan) 40%, var(--cobalt)) oklch(0.55 0.05 262 / 12%); }
   .sidebar-scroll { scrollbar-color: var(--cyan) oklch(1 0 0 / 8%); }
 }
+
+/* Issued account: restrained navy surface, bright details and a signature brand edge. */
+.receiving-account {
+  --background: oklch(0.19 0.065 266);
+  --foreground: oklch(0.99 0.005 250);
+  --muted-foreground: oklch(0.8 0.035 255);
+  --cyan: oklch(0.9 0.16 195);
+  --cobalt: oklch(0.59 0.23 262);
+  --magenta: oklch(0.68 0.28 330);
+  --accent: oklch(1 0 0 / 10%);
+  --accent-foreground: var(--foreground);
+  --ring: var(--cyan);
+  --account-edge: oklch(1 0 0 / 13%);
+  --account-surface: linear-gradient(115deg, var(--background) 50%, color-mix(in oklab, var(--cobalt) 24%, var(--background)));
+  --account-shadow: 0 14px 32px -20px color-mix(in oklab, var(--cobalt) 65%, transparent);
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 8px;
+  color: var(--foreground); background: var(--account-surface);
+  border: 1px solid var(--account-edge); box-shadow: var(--account-shadow);
+}
+.receiving-account::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: linear-gradient(90deg, var(--cobalt), var(--cyan) 60%, var(--magenta)); }
+.receiving-account-icon { color: var(--cyan); background: color-mix(in oklab, var(--cobalt) 18%, transparent); border: 1px solid var(--account-edge); }
+.receiving-account-status { color: var(--muted-foreground); background: var(--accent); border: 1px solid var(--account-edge); }
+.receiving-account-status.is-active { color: var(--cyan); background: color-mix(in oklab, var(--cyan) 9%, transparent); }
+.receiving-account-number, .merchant-console .receiving-account-number { letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receiving-account-copy { color: var(--foreground); background: var(--accent); border: 1px solid var(--account-edge); border-radius: 8px; }
+.receiving-account-footer { border-top: 1px solid var(--account-edge); background: color-mix(in oklab, var(--foreground) 4%, transparent); }
+.receiving-account-details { color: var(--cyan); }
