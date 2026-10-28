@@ -33,3 +33,7 @@
 - [ ] Stocks, treasury, flights screens
 - [ ] Disputes, statements, approvals, team on provider records
 - [ ] Personal wallet menu regrouping
+
+## Dashboard button redesign (in progress)
+- [ ] Three full-dashboard design mockups (buttons styled differently in each) for the user to pick
+- [ ] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
