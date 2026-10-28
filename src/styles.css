@@ -575,8 +575,15 @@ html { scroll-behavior: smooth; }
 /* Modern compact sidebar */
 .merchant-sidebar .sidebar-search { background: oklch(1 0 0 / 6%); border: 1px solid oklch(1 0 0 / 8%); color: var(--foreground); outline: none; transition: border-color .15s, background .15s; }
 .merchant-sidebar .sidebar-search:focus { border-color: color-mix(in oklab, var(--cyan) 60%, transparent); background: oklch(1 0 0 / 9%); }
-.merchant-sidebar .sidebar-item { position: relative; color: oklch(0.8 0.03 258); transition: background-color .12s ease, color .12s ease; }
-.merchant-sidebar .sidebar-item svg { color: oklch(0.7 0.04 258); transition: color .12s; }
+/* The menu is always deep navy, so its text is set to full white for maximum legibility. */
+.merchant-sidebar { color: oklch(1 0 0); }
+.merchant-sidebar .sidebar-search { color: oklch(1 0 0); }
+.merchant-sidebar .sidebar-search::placeholder { color: oklch(0.85 0.03 258); }
+.merchant-sidebar .sidebar-group-title { color: oklch(0.92 0.03 258); transition: color .12s; }
+.merchant-sidebar .sidebar-group-title:hover { color: oklch(1 0 0); }
+.merchant-sidebar .sidebar-meta { color: oklch(0.9 0.03 258); }
+.merchant-sidebar .sidebar-item { position: relative; color: oklch(1 0 0); font-weight: 600; transition: background-color .12s ease, color .12s ease; }
+.merchant-sidebar .sidebar-item svg { color: oklch(0.97 0.02 258); transition: color .12s; }
 .merchant-sidebar .sidebar-item:hover { background: oklch(1 0 0 / 6%); color: oklch(0.98 0 0); }
 .merchant-sidebar .sidebar-item:hover svg { color: oklch(0.98 0 0); }
 .merchant-sidebar .sidebar-item:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
