@@ -74,7 +74,14 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
   const share = w ? [w.accountName, w.bankName, w.accountNumber, w.routing, w.network && `${w.network} network`].filter(Boolean).join(" · ") : "";
   const copyAll = async () => { try { await navigator.clipboard.writeText(share); } catch { /* clipboard unavailable */ } toast.success("Details copied"); };
 
+  const actionGrid = (
+      <div className="relative mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
+        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-40"><span className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/50 text-foreground transition-all group-enabled:group-hover:scale-105 group-enabled:group-hover:bg-gradient-tri group-enabled:group-hover:text-primary-foreground">{a.enabled ? <Icon className="h-5 w-5" /> : <Lock className="h-4 w-4" />}</span><span className="text-[11px] font-bold">{a.label}</span></button>;
+          return a.id === "more" ? <DropdownMenu key="more"><DropdownMenuTrigger asChild>{btn}</DropdownMenuTrigger><DropdownMenuContent align="end" className="theme-flame"><DropdownMenuItem onSelect={exportCsv}><Download />Download {code} statement</DropdownMenuItem><DropdownMenuItem onSelect={() => setDialog("limits")}><Gauge />Limits & fees</DropdownMenuItem><DropdownMenuItem disabled={!w?.accountNumber} onSelect={copyAll}><Copy />Copy all details</DropdownMenuItem></DropdownMenuContent></DropdownMenu> : btn; })}
+      </div>
+  );
   return <section className="space-y-4">
+    {compact && <div className="panel p-5"><div className="mb-1 flex items-center justify-between"><h3 className="text-sm font-extrabold">Naira wallet actions</h3><span className="text-[10px] text-muted-foreground">Swap · withdraw · statements</span></div>{actionGrid}</div>}
     {!compact && <div className="hero-surface p-6 md:p-8">
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -90,23 +97,20 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
         <p className="flex-1 text-xs text-foreground/85">{w.status === "not_active" ? <><Lock className="mr-1 inline h-3.5 w-3.5" />{NOT_ACTIVE}. You can still swap into {code} and hold a balance.</> : `No ${code} ${def.kind === "crypto" ? "wallet" : "account"} yet. Issue one to receive ${code}, or swap into it right now.`}</p>
         <Button variant="brand" size="sm" className="rounded-full" disabled={busy || w.status === "not_active"} onClick={doIssue}>{busy ? <Loader2 className="animate-spin" /> : <Plus />}{w.status === "not_active" ? NOT_ACTIVE : "Issue account"}</Button>
       </div>}
-      <div className="relative mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-40"><span className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/50 text-foreground transition-all group-enabled:group-hover:scale-105 group-enabled:group-hover:bg-gradient-tri group-enabled:group-hover:text-primary-foreground">{a.enabled ? <Icon className="h-5 w-5" /> : <Lock className="h-4 w-4" />}</span><span className="text-[11px] font-bold">{a.label}</span></button>;
-          return a.id === "more" ? <DropdownMenu key="more"><DropdownMenuTrigger asChild>{btn}</DropdownMenuTrigger><DropdownMenuContent align="end" className="theme-flame"><DropdownMenuItem onSelect={exportCsv}><Download />Download {code} statement</DropdownMenuItem><DropdownMenuItem onSelect={() => setDialog("limits")}><Gauge />Limits & fees</DropdownMenuItem><DropdownMenuItem disabled={!w?.accountNumber} onSelect={copyAll}><Copy />Copy all details</DropdownMenuItem></DropdownMenuContent></DropdownMenu> : btn; })}
-      </div>
+      {actionGrid}
     </div>}
 
-    <div className={`grid gap-4 ${compact ? "" : "lg:grid-cols-5"}`}>
-      {!compact && <div className="panel p-5 lg:col-span-2">
+    {!compact && <div className="grid gap-4 lg:grid-cols-5">
+      <div className="panel p-5 lg:col-span-2">
         <h3 className="mb-3 text-sm font-extrabold">{def.kind === "crypto" ? "Deposit address" : "Account details"}</h3>
         {w?.accountNumber ? <><dl className="space-y-3 text-sm">{[["Account name", w.accountName], ["Bank", w.bankName], [def.kind === "crypto" ? "Address" : "Account number", w.accountNumber], ["Routing / sort code", w.routing], ["Network", w.network]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="text-[10px] font-bold uppercase text-muted-foreground">{k}</dt><dd className="break-all font-mono text-sm font-bold">{v}</dd></div>)}</dl>
           <div className="mt-4 flex gap-2"><Button variant="crisp" size="sm" className="rounded-full" onClick={copyAll}><Copy />Copy</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="ghost" size="sm" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
           {def.kind === "crypto" && <p className="mt-3 text-[11px] text-chart-4">Send only {code} on the {w.network ?? def.network} network. Other coins or networks will be lost.</p>}</>
           : <p className="text-xs text-muted-foreground">{w?.status === "not_active" ? NOT_ACTIVE : "Issue an account to see details here."}</p>}
         <div className="mt-5 border-t border-border pt-4"><h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold"><Gauge className="h-3.5 w-3.5 text-cyan" />Limits & fees</h4><LimitsList code={code} /></div>
-      </div>}
-      <div className={compact ? "" : "lg:col-span-3"}><WalletActivity code={code} extras={extras} /></div>
-    </div>
+      </div>
+      <div className="lg:col-span-3"><WalletActivity code={code} extras={extras} /></div>
+    </div>}
 
     {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader><p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
