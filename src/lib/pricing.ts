@@ -36,6 +36,9 @@ export function railFor(action: "send" | "withdraw" | "swap" | "receive", code: 
   return ({ NGN: "payouts", GHS: "ghana_momo_b2c", KES: "kenya_mpesa_b2c", ZAR: "sa_rtc_payout", USD: "global_usd_ach", EUR: "global_eur_sepa", GBP: "global_gbp_fps" } as Record<string, string>)[code] ?? null;
 }
 
+/** The provider prices some rails flat per movement (e.g. ₦80 per NIP transfer); detect that from its own formula text. */
+export function feeIsFlat(formula: string) { return /flat/i.test(formula); }
+
 /** Pick the price text for the user's plan from a provider rail row. */
 export function railPrice(row: Record<string, unknown>, plan: string): Rail {
   const p = plan.toLowerCase();

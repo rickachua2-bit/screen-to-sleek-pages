@@ -37,5 +37,7 @@ export const quoteFee = createServerFn({ method: "POST" })
     if (d["rail"] !== data.rail) return null;
     const fee = data.rail === "payouts" ? exactPayoutFee(d) : Number(d["fee"]);
     if (!Number.isFinite(fee) || fee < 0) throw new Error("Fees are unavailable. Try again.");
-    return { fee, net: Number(d["netAmount"]) || 0, description: String(d["description"] ?? "").slice(0, 160), currency: String(d["currency"] ?? "") };
+    // A flat provider formula means the same fee applies to every amount, so the UI can quote it once.
+    const flat = feeIsFlat(String(d["formula"] ?? d["description"] ?? ""));
+    return { fee, net: Number(d["netAmount"]) || 0, description: String(d["description"] ?? "").slice(0, 160), currency: String(d["currency"] ?? ""), flat };
   });
