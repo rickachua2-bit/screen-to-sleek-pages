@@ -12,8 +12,12 @@ Live module operations are outside this presentation task: new workspaces show c
 - [x] Verify selections and pop-ups on desktop and phone; run existing tests.
 
 # Verified merchant sign-up and live banking
-- [ ] Confirm banking provider documentation, phone OTP/CAC contracts, supported countries, PIN validation and transfer ownership safeguards. Blocked on provider documentation.
-- [ ] Use the saved RESEND_API_KEY for email OTP delivery from info@globalline.io; verify the sending domain before live delivery.
-- [ ] Implement server-enforced phone/email verification and country-aware registered-business lookup without mock success.
-- [ ] Implement authenticated banking proxy, live balance/name resolution, PIN-protected transfers and provider-backed NIP receipts.
-- [ ] Test verification gates and banking safeguards; verify connected journeys without initiating unapproved real transfers.
+- [x] Inspect Paddle phone OTP, Nigerian CAC and banking documentation; identify mismatched payout routes and missing tenant safeguards.
+- [x] Use saved email/Paddle/account-service secrets server-side; confirm Resend has verified globalline.io.
+- [x] Add phone/email OTP screens, durable verification proof, server-gated merchant creation and real Nigerian business lookup without mock success.
+- [x] Add authenticated name-resolution proxy, blocked unsafe transfers/float reads, and provider-sourced Central NIP Session ID receipt support.
+- [x] Run 21 tests and verify the live sign-up setup gate with no runtime errors.
+- [ ] Activate and verify merchant OTP/CAC/signup end-to-end. Blocked on the user applying supabase/slikpay_verification.sql in the external account project's SQL editor and testing with a controlled real phone/email.
+- [ ] Enable country-specific registries. Blocked on Paddle documentation for countries other than Nigeria.
+- [ ] Enable live payouts, balances, virtual accounts and receipt reconciliation. Blocked on merchant ownership mapping, payout/PIN contract, idempotency and reconciliation safeguards.
+- [ ] Make public OTP issuance production-safe. Blocked on provider-backed delivery abuse controls and an agreed policy.
