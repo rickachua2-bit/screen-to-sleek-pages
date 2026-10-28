@@ -44,7 +44,7 @@ export async function issueWallet(db: Db, user: User, mode: Mode, code: string) 
   if (!accountNumber) throw new Error("NOT_ACTIVE");
   const w: WalletDetails = def.kind === "crypto"
     ? { id: accountNumber, accountNumber, accountName: `${name} (${code})`, bankName: null, routing: null, network: s(d, "network") ?? def.network ?? null, status: "ACTIVE" }
-    : { id: s(d, "id") ?? accountNumber, accountNumber, accountName: s(d, "accountName") ?? name, bankName: s(d, "bankName"), routing: s(d, "routingNumber", "sortCode", "bic"), network: null, status: s(d, "status") ?? "ACTIVE" };
+    : { id: s(d, "id") ?? accountNumber, accountNumber, accountName: (s(d, "accountName") ?? name).replace(/\s*\/?\s*paddle.*$/i, ""), bankName: s(d, "bankName")?.replace(/paddle\s*/ig, "") ?? null, routing: s(d, "routingNumber", "sortCode", "bic"), network: null, status: s(d, "status") ?? "ACTIVE" };
   await db.from("paddle_resources").upsert({ user_id: user.id, mode, resource_id: JSON.stringify(w), operation: walletOperation(code) }, { onConflict: "mode,resource_id", ignoreDuplicates: true });
   return w;
 }
