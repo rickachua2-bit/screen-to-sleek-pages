@@ -534,7 +534,7 @@ const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boolean) => void; onBack: () => void }) {
   const { signUp } = useAuth();
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", industryOther: "", bank: "", nuban: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
@@ -555,7 +555,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
       email: isEmail(f.email) ? undefined : "Enter a valid work email",
       phone: f.phone.replace(/\D/g, "").length >= 10 ? undefined : "Enter a valid phone number",
       pw: f.pw.length >= 8 ? undefined : "Password must be at least 8 characters",
-      industry: f.industry ? undefined : "Select your business category",
+      industry: f.industry ? (f.industry === "other" ? (f.industryOther.trim().length >= 3 ? undefined : "Tell us what your business does") : undefined) : "Select your business category",
     };
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
@@ -600,7 +600,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     setErr({});
     setBusy(true);
     try {
-      const r = await signUp(f.email, f.pw, "merchant", { full_name: f.director, phone: f.phone, cac_rc_number: f.cac, category: f.industry });
+      const r = await signUp(f.email, f.pw, "merchant", { full_name: f.director, phone: f.phone, cac_rc_number: f.cac, category: f.industry === "other" ? f.industryOther.trim() : f.industry });
       onDone(r, true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sign-up failed");
@@ -616,7 +616,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <Field label="Country of Incorporation" id="b-country">
           <CountrySelect id="b-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
         </Field>
-        <CategoryPicker value={f.industry} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
+        <CategoryPicker value={f.industry} otherText={f.industryOther} onOtherText={(v) => { setF((p) => ({ ...p, industryOther: v })); setErr((e) => ({ ...e, industry: undefined })); }} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
         <Field label="Full Name of Director / Owner" id="b-director" icon={UserIcon} error={err["director"]} shake>
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
