@@ -31,7 +31,7 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const { module } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, profile, txns } = useAuth();
+  const { user, profile, txns, refresh: authRefresh } = useAuth();
   const since = Date.now() - 30 * 864e5;
   const inflow30d = txns.filter((t) => t.direction === "credit" && t.status === "Successful" && new Date(t.date).getTime() >= since).reduce((a, t) => a + t.amount, 0);
   const { profile: banking, refresh } = useBankingProfile();
@@ -53,7 +53,7 @@ function Dashboard() {
   const connected = !!profile;
   const changeModule = (id: string) => { navigate({ to: "/dashboard", search: { module: id } }); };
   const current = MERCHANT_NAV.find((n) => n.id === module);
-  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch}>
+  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch} onRefresh={authRefresh}>
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1><p className="mt-2 text-xs text-muted-foreground">{module === "overview" ? `Welcome back, ${user?.name.split(" ")[0] ?? "there"}. Here’s your business at a glance.` : `${profile?.company_name ?? "Your business"} · Merchant workspace`}</p></div>
       <ConnectionBadge />

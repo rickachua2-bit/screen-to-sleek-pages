@@ -23,7 +23,7 @@ export const Route = createFileRoute("/personal")({
 });
 
 function Personal() {
-  const { user } = useAuth();
+  const { user, refresh: authRefresh } = useAuth();
   const { module } = Route.useSearch();
   const navigate = useNavigate();
   const [modal, setModal] = useState<ActionKind | null>(null);
