@@ -39,13 +39,14 @@ const inputCls = (icon = true) => `field h-12 rounded-xl text-sm font-semibold f
 
 type Opt = { value: string; label: string; flag?: string; hint?: string; group?: string; icon?: LucideIcon; search?: string };
 
-function SelectMenu({ id, value, options, onChange, placeholder, searchable = false }: {
+function SelectMenu({ id, value, options, onChange, placeholder, searchable = false, searchPlaceholder = "Search…" }: {
   id: string;
   value: string;
   options: Opt[];
   onChange: (v: string) => void;
   placeholder?: string;
   searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -123,7 +124,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
               <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1.5 bg-card/95 px-1.5 pb-1.5 pt-0.5 backdrop-blur-xl">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input autoFocus value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder="Search…" aria-label="Search options"
+                  <input autoFocus value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder={searchPlaceholder} aria-label="Search options"
                     className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
                 </div>
               </div>
