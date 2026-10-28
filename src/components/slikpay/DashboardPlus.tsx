@@ -30,7 +30,7 @@ export function PrivacyToggle({ className = "" }: { className?: string }) {
   return <Button variant="ghost" size="icon" className={className} aria-label={hidden ? "Show amounts" : "Hide amounts"} aria-pressed={hidden} onClick={() => setHideAmounts(!hidden)}>{hidden ? <EyeOff /> : <Eye />}</Button>;
 }
 
-export function DashboardHero({ name, business, balance, mode, txns, onOpenCommand, onGoLive }: { name: string; business?: string | null; balance: number; mode?: string; txns: Txn[]; onOpenCommand: () => void; onGoLive: () => void }) {
+export function DashboardHero({ name, business, balance, mode, txns, onOpenCommand, onGoLive }: { name: string; business?: string | null | undefined; balance: number; mode?: string | undefined; txns: Txn[]; onOpenCommand: () => void; onGoLive: () => void }) {
   const hidden = useHideAmounts();
   const shown = useCountUp(balance);
   const [hour, setHour] = useState<number | null>(null);
@@ -66,7 +66,7 @@ export function InsightsStrip({ txns }: { txns: Txn[] }) {
   return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{items.map(({ icon: Icon, tone, label, value }) => <div key={label} className="panel hover-lift flex items-center gap-3 p-4"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted ${tone}`}><Icon className="h-4 w-4" /></span><div className="min-w-0"><p className="text-[10px] font-bold uppercase text-muted-foreground">{label}</p><p className="truncate text-sm font-extrabold">{value}</p></div></div>)}</div>;
 }
 
-export function FlipNubanCard({ nuban, accountName, bankName, status, sandbox }: { nuban: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined; sandbox?: boolean }) {
+export function FlipNubanCard({ nuban, accountName, bankName, status, sandbox }: { nuban: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined; sandbox?: boolean | undefined }) {
   const [flipped, setFlipped] = useState(false);
   const pretty = `${nuban.slice(0, 4)} ${nuban.slice(4, 8)} ${nuban.slice(8)}`;
   const share = [accountName, bankName, nuban].filter(Boolean).join(" · ");
@@ -116,7 +116,7 @@ export function merchantQuickActions(open: (k: ActionKind) => void, go: (m: stri
   ];
 }
 
-export function QuickActionFab({ items, raised }: { items: QuickItem[]; raised?: boolean }) {
+export function QuickActionFab({ items, raised }: { items: QuickItem[]; raised?: boolean | undefined }) {
   const [open, setOpen] = useState(false);
   useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); }; document.addEventListener("keydown", k); return () => document.removeEventListener("keydown", k); }, [open]);
   const r = 112;
