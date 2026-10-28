@@ -565,3 +565,10 @@ html { scroll-behavior: smooth; }
 .light-workspace .merchant-popover { --foreground: oklch(0.97 0.01 250); --muted-foreground: oklch(0.75 0.035 255); --border: oklch(1 0 0 / 12%); --muted: oklch(1 0 0 / 8%); --cyan: oklch(0.88 0.15 195); color: var(--foreground); }
 .light-workspace .tint-cobalt { color: var(--cobalt); }
 .light-workspace span.bg-gradient-tri:not(.keep-gradient) { color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 10%, transparent); }
+.light-workspace .dropdown-list { background: transparent; }
+.light-workspace nav[aria-label="Choose wallet currency"] button[aria-pressed="false"] { background: var(--card); color: var(--body); border-color: var(--border); box-shadow: 0 1px 2px oklch(0.3 0.05 262 / 6%); }
+.light-workspace nav[aria-label="Choose wallet currency"] button[aria-pressed="true"] { background: var(--cobalt); box-shadow: 0 8px 20px -10px var(--cobalt); }
+.light-workspace .balance-figure { font-family: var(--font-sans, inherit); letter-spacing: -0.03em; }
+.merchant-console .merchant-nav-item svg { background: transparent; padding: 0; color: oklch(0.8 0.04 255); }
+.merchant-console .nav-pill-active { background: color-mix(in oklab, var(--cobalt) 35%, transparent); box-shadow: none; }
+.merchant-console .nav-pill-active svg { background: transparent !important; color: oklch(0.98 0 0) !important; }
