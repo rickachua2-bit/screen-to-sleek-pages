@@ -31,7 +31,7 @@ function CopyRef({ value }: { value: string }) {
   return <button type="button" aria-label="Copy reference" className="ml-1 inline-grid h-6 w-6 place-items-center rounded-full text-muted-foreground opacity-0 transition hover:bg-primary/10 hover:text-primary group-hover:opacity-100 focus:opacity-100" onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(value); setDone(true); setTimeout(() => setDone(false), 1200); }}>{done ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}</button>;
 }
 
-export function TransactionTable({ txns }: { txns: Txn[] }) {
+export function TransactionTable({ txns, balances }: { txns: Txn[]; balances?: Map<string, number> }) {
   const [sel, setSel] = useState<Txn | null>(null);
   const groups: { day: string; items: Txn[]; net: number }[] = [];
   for (const t of txns) {
@@ -50,12 +50,13 @@ export function TransactionTable({ txns }: { txns: Txn[] }) {
             {g.items.map((t) => {
               const credit = t.direction === "credit";
               return (
-                <button type="button" key={t.id} onClick={() => setSel(t)} className="ledger-row group grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 text-left md:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,1fr)_110px_auto_20px]">
+                <button type="button" key={t.id} onClick={() => setSel(t)} className="ledger-row group grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 text-left md:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,1fr)_80px_auto_20px] xl:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,1fr)_80px_auto_120px_20px]">
                   <span className={`ledger-avatar relative grid h-10 w-10 place-items-center rounded-full text-xs font-black ${credit ? "is-in" : "is-out"}`}>{initials(t.customer)}<span className="ledger-dir absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full">{credit ? <ArrowDownLeft className="h-2.5 w-2.5" /> : <ArrowUpRight className="h-2.5 w-2.5" />}</span></span>
                   <span className="min-w-0"><span className="block truncate text-sm font-bold text-foreground">{t.customer}</span><span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"><span className="ledger-channel">{t.channel}</span><span className="md:hidden">· {time(t.date)}</span></span></span>
                   <span className="hidden min-w-0 items-center font-mono text-xs text-muted-foreground md:flex"><span className="truncate">{t.ref}</span><CopyRef value={t.ref} /></span>
                   <span className="hidden text-xs text-muted-foreground md:block">{time(t.date)}</span>
                   <span className="flex flex-col items-end gap-1"><span className={`text-sm font-black tabular-nums ${credit ? "text-success" : "text-foreground"} ${t.status === "Failed" ? "line-through opacity-60" : ""}`}>{credit ? "+" : "−"}{naira(t.amount)}</span><StatusBadge s={t.status} /></span>
+                  {balances && <span className="hidden flex-col items-end xl:flex"><span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Balance</span><span className="text-xs font-bold tabular-nums">{naira(balances.get(t.id) ?? 0)}</span></span>}
                   <ChevronRight className="hidden h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary md:block" />
                 </button>
               );
