@@ -1,4 +1,5 @@
 import { GoLive, PaddleConsole, useBankingProfile } from "./PaddleConsole";
+import { ServicesHub } from "./ServicesHub";
 import { personalTier, TIER_LIMITS } from "@/lib/go-live";
 import { useState } from "react";
 import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
@@ -330,7 +331,7 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "savings": return <SavingsModule />;
     case "rewards": return <RewardsModule />;
     case "profile": return <ProfileModule />;
-    case "services": return <PaddleConsole role="personal" />;
+    case "services": return <ServicesHub role="personal" />;
     case "golive": return <GoLive role="personal" />;
     default: return <HomeModule open={open} />;
   }
