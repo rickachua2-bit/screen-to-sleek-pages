@@ -12,7 +12,7 @@ Live module operations are outside this presentation task: new workspaces show c
 - [x] Verify selections and pop-ups on desktop and phone; run existing tests.
 
 # Verified merchant sign-up and live banking
-- [ ] Put phone and email Verify controls and six-digit OTP entries inline on account-details step one; gate continuation on both verified contacts.
+- [x] Put phone and email Verify controls and six-digit OTP entries inline on account-details step one; gate continuation on both verified contacts. Verified live UI, 25 tests passed; live delivery still awaits external setup.
 - [x] Inspect Paddle phone OTP, Nigerian CAC and banking documentation; identify mismatched payout routes and missing tenant safeguards.
 - [x] Use saved email/Paddle/account-service secrets server-side; confirm Resend has verified globalline.io.
 - [x] Add phone/email OTP screens, durable verification proof, server-gated merchant creation and real Nigerian business lookup without mock success.
