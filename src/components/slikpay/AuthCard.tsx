@@ -546,7 +546,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
-  const [resolved, setResolved] = useState("");
   const [pin, setPin] = useState("");
   const [pin2, setPin2] = useState("");
   const [terms, setTerms] = useState(false);
@@ -615,7 +614,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   if (step === 1) {
     return (
       <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b1-${shake}`}>
-        <StepBar n={1} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
+        <StepBar n={1} labels={["Details", "Contacts", "Business", "Security"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
         <Field label="Country of Incorporation" id="b-country">
@@ -647,7 +646,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   if (step === 2) {
     return (
       <form onSubmit={next2} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b2-${shake}`}>
-        <StepBar n={2} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
+        <StepBar n={3} labels={["Details", "Contacts", "Business", "Security"]} />
         <h2 className="text-xl font-black text-foreground">Business &amp; CAC Regulatory Lookup</h2>
         <Field label="Company Type" id="b-ctype">
           <SelectMenu id="b-ctype" value={f.companyType} options={COMPANY_OPTS} onChange={(v) => setF((p) => ({ ...p, companyType: v }))} placeholder="Select company type" />
@@ -687,14 +686,14 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 
   return (
     <form onSubmit={launch} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b3-${shake}`}>
-      <StepBar n={3} labels={["Account Details", "CAC Verification", "Settlement & PIN"]} />
+      <StepBar n={4} labels={["Details", "Contacts", "Business", "Security"]} />
       <h2 className="text-xl font-black text-foreground">Settlement Bank &amp; Security PIN</h2>
       <Field label="Settlement Bank" id="b-bank" error={err["bank"]} shake>
         <SelectMenu id="b-bank" value={f.bank} options={BANK_OPTS} onChange={(v) => setF((p) => ({ ...p, bank: v }))} searchable placeholder="Select a licensed Nigerian bank" />
       </Field>
       <Field label="10-Digit Settlement NUBAN Account Number" id="b-nuban" error={err["nuban"]} shake>
         <input id="b-nuban" inputMode="numeric" maxLength={10} className={`${inputCls(false)} font-mono tracking-widest`} value={f.nuban} onChange={(e) => setF((p) => ({ ...p, nuban: e.target.value.replace(/\D/g, "") }))} placeholder="0123456789" />
-        {resolved && <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> Account Resolved: {resolved}</p>}
+        <p className="mt-1 text-xs text-muted-foreground">Settlement activation and bank-account verification are pending.</p>
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Create 4-Digit Transaction PIN" id="b-pin" error={err["pin"]} shake>

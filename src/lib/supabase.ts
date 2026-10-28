@@ -48,6 +48,7 @@ export async function fetchTransactions(userId: string, limit = 100): Promise<Tx
   return (data ?? []).map((r) => ({
     id: r.id, date: r.created_at, ref: r.reference, channel: r.channel, customer: r.customer,
     amount: Number(r.amount), direction: r.direction, status: r.status,
+    nipSessionId: typeof r.metadata?.nipSessionId === "string" ? r.metadata.nipSessionId : undefined,
   })) as Txn[];
 }
 

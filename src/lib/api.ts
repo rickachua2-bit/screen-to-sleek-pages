@@ -1,5 +1,5 @@
-// Central Slikpay API client. Every call falls back to realistic mock data when
-// the API is unreachable so the UI never breaks.
+// Legacy read-only demos may fall back offline. Identity and money movement
+// must never manufacture successful service responses.
 export type Role = "merchant" | "personal";
 export interface User {
   id: string;
@@ -17,6 +17,7 @@ export interface Txn {
   amount: number;
   direction: "credit" | "debit";
   status: "Successful" | "Pending" | "Failed";
+  nipSessionId?: string;
 }
 export interface Account {
   balance: number;
@@ -40,9 +41,7 @@ export async function request<T>(path: string, init: RequestInit = {}, fallback?
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
   const token = readLS("slikpay_token");
-  const apiKey = readLS("slikpay_api_key");
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  if (apiKey) headers.set("x-api-key", apiKey);
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
@@ -149,18 +148,16 @@ export const api = {
     })),
   me: () => request<{ user: User; role: Role }>("/auth/me"),
   verify2fa: (code: string) =>
-    request<{ success: boolean }>("/auth/2fa/verify", json({ code }), () => ({ success: /^\d{6}$/.test(code) })),
+    request<{ success: boolean }>("/auth/2fa/verify", json({ code })),
   forgotPassword: (email: string) => request("/auth/forgot-password", json({ email }), ok("Reset link sent")),
   accounts: () => request<Account>("/accounts", {}, () => MOCK_ACCOUNT),
   transactions: (limit = 20, page = 1) =>
     request<Txn[]>(`/transactions?limit=${limit}&page=${page}`, {}, () => MOCK_TXNS.slice(0, limit)),
   banks: () => request<Bank[]>("/transfers/banks", {}, () => NG_BANKS),
   nameEnquiry: (bankCode: string, nuban: string) =>
-    request<{ accountName: string }>("/transfers/name-enquiry", json({ bankCode, nuban }), () => ({
-      accountName: nuban.length === 10 ? "ADEBAYO OLUWASEUN JAMES" : "",
-    })),
+    request<{ accountName: string }>("/transfers/name-enquiry", json({ bankCode, nuban })),
   transfer: (b: { recipientBank: string; accountNumber: string; amount: number; narration: string }) =>
-    request<{ success: boolean; message: string; ref: string }>("/transfers", json(b), ok("Transfer successful")),
+    Promise.reject<{ success: boolean; message: string; ref: string }>(new Error("Live transfers are locked until secure funding-account ownership and withdrawal PIN validation are configured.")),
   cards: () => request<{ id: string; balance: number; last4: string }[]>("/cards", {}, () => [{ id: "crd_1", balance: 0, last4: "1234" }]),
   createCard: () => request("/cards/create", json({}), ok("Card created")),
   fundCard: (id: string, amount: number) =>
