@@ -531,6 +531,7 @@ function CategoryPicker({ value, onChange, otherText, onOtherText, error, shake 
   );
 }
 
+const PROOF_KEY = "slikpay.merchantContactProofs";
 const VOLUMES = ["₦1M - ₦10M", "₦10M - ₦50M", "₦50M+"];
 
 
@@ -539,8 +540,17 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   const lookup = useServerFn(lookupMerchantBusiness);
   const createMerchant = useServerFn(createVerifiedMerchant);
   const combineContacts = useServerFn(combineMerchantContacts);
-  const [phoneProof, setPhoneProof] = useState<{ value: string; id: string } | null>(null);
-  const [emailProof, setEmailProof] = useState<{ value: string; id: string } | null>(null);
+  const [phoneProof, setPhoneProofState] = useState<{ value: string; id: string } | null>(null);
+  const [emailProof, setEmailProofState] = useState<{ value: string; id: string } | null>(null);
+  // Verified contacts survive a page reload; the server re-checks each proof before continuing.
+  useEffect(() => {
+    try { const saved = JSON.parse(sessionStorage.getItem(PROOF_KEY) ?? "{}"); if (saved.phone) setPhoneProofState(saved.phone); if (saved.email) setEmailProofState(saved.email); } catch { /* ignore */ }
+  }, []);
+  const storeProof = (channel: "phone" | "email", proof: { value: string; id: string } | null) => {
+    try { const saved = JSON.parse(sessionStorage.getItem(PROOF_KEY) ?? "{}"); if (proof) saved[channel] = proof; else delete saved[channel]; sessionStorage.setItem(PROOF_KEY, JSON.stringify(saved)); } catch { /* ignore */ }
+  };
+  const setPhoneProof = (proof: { value: string; id: string } | null) => { if (!proof) return; setPhoneProofState(proof); storeProof("phone", proof); setErr((e) => ({ ...e, contacts: undefined })); };
+  const setEmailProof = (proof: { value: string; id: string } | null) => { if (!proof) return; setEmailProofState(proof); storeProof("email", proof); setErr((e) => ({ ...e, contacts: undefined })); };
   const [challengeId, setChallengeId] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [step, setStep] = useState(1);
@@ -573,7 +583,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     if (!contactsVerified(phoneProof, emailProof, phone, email) || !phoneProof || !emailProof) return fail({ contacts: "Verify your phone number and email before continuing" });
     setBusy(true);
     try { const result = await combineContacts({ data: { phoneId: phoneProof.id, emailId: emailProof.id, phone, email } }); setChallengeId(result.challengeId); setCacVerified(false); setCompanyName(""); setStep(2); }
-    catch (e) { fail({ contacts: e instanceof Error ? e.message : "Contact verification failed" }); }
+    catch (e) { try { sessionStorage.removeItem(PROOF_KEY); } catch { /* ignore */ } setPhoneProofState(null); setEmailProofState(null); fail({ contacts: e instanceof Error ? e.message : "Contact verification failed" }); }
     finally { setBusy(false); }
   }
 
@@ -607,6 +617,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
     setBusy(true);
     try {
       await createMerchant({ data: { challengeId, email: f.email.trim().toLowerCase(), password: f.pw, phone: phoneInternational(f.phone, dialOf(f.country).dial), fullName: f.director, category: f.industry === "other" ? f.industryOther.trim() : f.industry, country: f.country, rcNumber: f.cac.trim(), pin } });
+      try { sessionStorage.removeItem(PROOF_KEY); } catch { /* ignore */ }
       const r = await signInWithPassword({ email: f.email.trim().toLowerCase(), password: f.pw });
       onDone(r, true);
     } catch (e) {
@@ -628,16 +639,16 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
         <Field label="Official Work Email" id="b-email" icon={Mail} error={err["email"]} shake>
-          <input id="b-email" type="email" autoComplete="email" className={inputCls()} value={f.email} onChange={(e) => { setEmailProof(null); set("email")(e); }} placeholder="director@acme.ng" />
+          <input id="b-email" type="email" autoComplete="email" className={inputCls()} value={f.email} onChange={set("email")} placeholder="director@acme.ng" />
         </Field>
-        <MerchantContactVerification key={`email-${f.email.trim().toLowerCase()}`} channel="email" value={f.email.trim().toLowerCase()} onVerified={setEmailProof} />
+        <MerchantContactVerification key={`email-${f.email.trim().toLowerCase()}`} channel="email" value={f.email.trim().toLowerCase()} alreadyVerified={emailProof?.value === f.email.trim().toLowerCase()} onVerified={setEmailProof} />
         <Field label="Phone Number" id="b-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
             <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">{dialOf(f.country).flag}</span><span className="font-mono">{dialOf(f.country).dial}</span></span>
-            <input id="b-phone" type="tel" className={`${inputCls(false)} min-w-0 flex-1`} value={f.phone} onChange={(e) => { setPhoneProof(null); set("phone")(e); }} placeholder="803 000 0000" />
+            <input id="b-phone" type="tel" className={`${inputCls(false)} min-w-0 flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
-        <MerchantContactVerification key={`phone-${phoneInternational(f.phone, dialOf(f.country).dial)}`} channel="phone" value={phoneInternational(f.phone, dialOf(f.country).dial)} onVerified={setPhoneProof} />
+        <MerchantContactVerification key={`phone-${phoneInternational(f.phone, dialOf(f.country).dial)}`} channel="phone" value={phoneInternational(f.phone, dialOf(f.country).dial)} alreadyVerified={phoneProof?.value === phoneInternational(f.phone, dialOf(f.country).dial)} onVerified={setPhoneProof} />
         <Field label="Create Password" id="b-pw" icon={Lock} error={err["pw"]} shake>
           <PasswordInput id="b-pw" value={f.pw} onChange={(v) => setF((p) => ({ ...p, pw: v }))} autoComplete="new-password" />
         </Field>
