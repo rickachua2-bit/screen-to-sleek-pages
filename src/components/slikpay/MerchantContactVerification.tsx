@@ -6,7 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { startMerchantVerification, verifyMerchantContact } from "@/lib/merchant-verification.functions";
 import { verificationRetry } from "@/lib/provider-errors";
 
-export function MerchantContactVerification({ channel, value, onVerified }: { channel: "phone" | "email"; value: string; onVerified: (proof: { value: string; id: string } | null) => void }) {
+export function MerchantContactVerification({ channel, value, onVerified, alreadyVerified = false }: { channel: "phone" | "email"; value: string; alreadyVerified?: boolean; onVerified: (proof: { value: string; id: string } | null) => void }) {
   const start = useServerFn(startMerchantVerification);
   const verify = useServerFn(verifyMerchantContact);
   const [id, setId] = useState("");
@@ -45,7 +45,7 @@ export function MerchantContactVerification({ channel, value, onVerified }: { ch
   }
   if (!valid) return null;
   return <div className="mt-2 space-y-2">
-    {verified ? <p className="flex items-center gap-1.5 text-xs font-bold text-success"><Check className="h-4 w-4" />{channel === "phone" ? "Phone number" : "Email"} verified</p> : !open ? <Button type="button" variant="outline" size="sm" aria-label={`Verify ${channel}`} className="border-cyan/40 text-cyan" onClick={send}>Verify {channel === "phone" ? "phone number" : "email"}</Button> : <div className="otp-panel space-y-3.5 rounded-2xl p-4" role="group" aria-label={`${channel} verification code`}>
+    {verified || alreadyVerified ? <p className="flex items-center gap-1.5 text-xs font-bold text-success"><Check className="h-4 w-4" />{channel === "phone" ? "Phone number" : "Email"} verified</p> : !open ? <Button type="button" variant="outline" size="sm" aria-label={`Verify ${channel}`} className="border-cyan/40 text-cyan" onClick={send}>Verify {channel === "phone" ? "phone number" : "email"}</Button> : <div className="otp-panel space-y-3.5 rounded-2xl p-4" role="group" aria-label={`${channel} verification code`}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold text-foreground">{id ? "Code sent — enter your 6-digit OTP" : "Enter your 6-digit OTP"}</p>
         <span className="rounded-full bg-cobalt/25 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-cyan">{channel === "phone" ? "SMS" : "Email"}</span>
