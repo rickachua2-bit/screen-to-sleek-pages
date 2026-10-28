@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { PERSONAL_NAV, PERSONAL_TABS, personalModule } from "@/lib/personal";
 import { AppShell } from "@/components/slikpay/AppShell";
 import { PersonalWorkspace } from "@/components/slikpay/PersonalWorkspace";
+import { GoLiveProgress } from "@/components/slikpay/PaddleConsole";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 
 export const Route = createFileRoute("/personal")({
@@ -40,6 +41,7 @@ function Personal() {
       onAddMoney={() => setModal("add")}
       bottomNav={PERSONAL_TABS}
     >
+      {module === "home" || !module ? <GoLiveProgress role="personal" onOpen={() => setModule("golive")} /> : null}
       <PersonalWorkspace module={module} open={setModal} />
       {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
     </AppShell>
