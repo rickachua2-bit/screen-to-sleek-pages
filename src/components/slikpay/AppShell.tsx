@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Check, ChevronDown, LogOut, Menu, Plus, Search, X, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, LogOut, Menu, Plus, RefreshCw, Search, X, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import type { Role } from "@/lib/api";
 import { MERCHANT_GROUPS } from "@/lib/merchant";
@@ -11,7 +12,7 @@ import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
-export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; bottomNav?: NavItem[] }) {
+export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, onRefresh, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; onRefresh?: () => Promise<void>; bottomNav?: NavItem[] }) {
   const { user, ready, token, signOut, setRole } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState(nav[0]?.label ?? "Dashboard");
@@ -19,10 +20,24 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const [switcher, setSwitcher] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [unread, setUnread] = useState(true);
-  const { profile: banking } = useBankingProfile();
+  const { profile: banking, refresh: bankingRefresh } = useBankingProfile();
   const environment = banking?.mode === "live" ? "Live Mode" : "Sandbox";
   const [currency, setCurrency] = useState("NGN");
   const [currencies, setCurrencies] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const doRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]);
+      setUpdatedAt(new Date());
+      toast.success("Dashboard refreshed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Refresh failed — try again");
+    } finally { setRefreshing(false); }
+  };
+  const updatedLabel = updatedAt ? `Updated ${updatedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : "";
   useEffect(() => { if (ready && !token) navigate({ to: "/auth" }); }, [ready, token, navigate]);
   useEffect(() => {
     if (!open) return;
