@@ -1,7 +1,7 @@
-import { naira, type Txn } from "@/lib/api";
+import { money, type Txn } from "@/lib/api";
 
 /** Money in vs money out per day for the filtered rows (successful only). */
-export function FlowChart({ txns }: { txns: Txn[] }) {
+export function FlowChart({ txns, currency = "NGN" }: { txns: Txn[]; currency?: string }) {
   const map = new Map<string, { inn: number; out: number }>();
   for (const t of txns) {
     if (t.status !== "Successful") continue;
@@ -16,7 +16,7 @@ export function FlowChart({ txns }: { txns: Txn[] }) {
   return <div className="ledger-chart mb-5 rounded-xl border border-border p-4">
     <div className="mb-3 flex items-center justify-between text-xs"><span className="font-bold">Money in vs out</span><span className="flex gap-3 text-muted-foreground"><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-success" />In</span><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-primary" />Out</span></span></div>
     <div className="flex h-28 items-end gap-1.5">
-      {days.map(([d, v]) => <div key={d} className="group relative flex h-full flex-1 items-end justify-center gap-0.5" title={`${new Date(d).toLocaleDateString("en-NG", { day: "numeric", month: "short" })} · in ${naira(v.inn)} · out ${naira(v.out)}`}>
+      {days.map(([d, v]) => <div key={d} className="group relative flex h-full flex-1 items-end justify-center gap-0.5" title={`${new Date(d).toLocaleDateString("en-NG", { day: "numeric", month: "short" })} · in ${money(v.inn, currency)} · out ${money(v.out, currency)}`}>
         <span className="w-1/2 max-w-3 rounded-t bg-success transition-all group-hover:opacity-80" style={{ height: `${Math.max(2, (v.inn / max) * 100)}%` }} />
         <span className="w-1/2 max-w-3 rounded-t bg-primary transition-all group-hover:opacity-80" style={{ height: `${Math.max(2, (v.out / max) * 100)}%` }} />
       </div>)}

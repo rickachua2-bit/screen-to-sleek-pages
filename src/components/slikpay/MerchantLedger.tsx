@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Clock, Download, Scale, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exportTransactionsCsv, naira, type Txn } from "@/lib/api";
+import { exportTransactionsCsv, money, type Txn } from "@/lib/api";
+import { getLedgerHistory } from "@/lib/ledger.functions";
+import { useCurrency } from "@/lib/currency-store";
 import { filterLedger } from "@/lib/merchant";
 import { matchLedger, parseLedgerQuery, runningBalances } from "@/lib/ledger-query";
 import { FlowChart } from "./FlowChart";
@@ -13,7 +15,7 @@ const PRESETS = [{ l: "Today", d: 0 }, { l: "7 days", d: 7 }, { l: "30 days", d:
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const PAGE = 25;
 
-export function MerchantLedger({ txns, globalSearch = "", recent = false, onViewAll, balance }: { balance?: number | undefined; txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
+export function MerchantLedger({ txns: feed, globalSearch = "", recent = false, onViewAll, balances: wallet }: { balances?: Record<string, number> | undefined; txns: Txn[]; globalSearch?: string; recent?: boolean; onViewAll?: () => void }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("All");
   const [flow, setFlow] = useState<string>("all");
@@ -21,9 +23,21 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
   const [to, setTo] = useState("");
   const [preset, setPreset] = useState<string>("");
   const [limit, setLimit] = useState(PAGE);
+  const [history, setHistory] = useState<Txn[] | null>(null);
+  const selected = useCurrency();
+  const [cur, setCur] = useState<string>(selected || "NGN");
+  useEffect(() => { setCur(selected || "NGN"); }, [selected]);
+  // Re-pull the full history whenever the live feed changes (new credit, refresh).
+  useEffect(() => { let on = true; getLedgerHistory().then((r) => { if (on) setHistory(r.rows); }).catch(() => { if (on) setHistory(null); }); return () => { on = false; }; }, [feed]);
+  const all = history ?? feed;
+  const currencies = useMemo(() => [...new Set(["NGN", ...all.map((t) => t.currency ?? "NGN"), ...Object.keys(wallet ?? {})])], [all, wallet]);
+  const txns = useMemo(() => all.filter((t) => (t.currency ?? "NGN") === cur), [all, cur]);
+  const fmt = (n: number) => money(n, cur);
+  const fees = txns.filter((t) => t.status === "Successful" && t.fee !== undefined).reduce((a, t) => a + (t.fee ?? 0), 0);
+  const feeKnown = txns.some((t) => t.fee !== undefined);
 
   const smart = useMemo(() => parseLedgerQuery(query || globalSearch), [query, globalSearch]);
-  const balances = useMemo(() => balance === undefined ? undefined : runningBalances([...txns].sort((a, b) => b.date.localeCompare(a.date)), balance), [txns, balance]);
+  const balances = useMemo(() => wallet?.[cur] === undefined ? undefined : runningBalances([...txns].sort((a, b) => b.date.localeCompare(a.date)), wallet[cur]!), [txns, wallet, cur]);
   const base = useMemo(() => filterLedger(txns, "", "All", from, to).filter((t) => (flow === "all" || t.direction === flow) && matchLedger(t, smart)), [txns, smart, from, to, flow]);
   const rows = status === "All" ? base : base.filter((t) => t.status === status);
   const counts = Object.fromEntries(STATUSES.map((s) => [s, s === "All" ? base.length : base.filter((t) => t.status === s).length]));
@@ -50,14 +64,16 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
       </div>
     </div>
 
+    {currencies.length > 1 && <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Currency">{currencies.map((c) => <button key={c} type="button" role="tab" aria-selected={cur === c} className="ledger-tab" onClick={() => { setCur(c); setLimit(PAGE); }}>{c}<span>{all.filter((t) => (t.currency ?? "NGN") === c).length}</span></button>)}</div>}
+
     {!recent && <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Stat icon={ArrowDownLeft} tone="in" label="Money in" value={naira(moneyIn)} note={`${ok.filter((t) => t.direction === "credit").length} successful`} />
-      <Stat icon={ArrowUpRight} tone="out" label="Money out" value={naira(moneyOut)} note={`${ok.filter((t) => t.direction === "debit").length} successful`} />
-      <Stat icon={Scale} tone="net" label="Net flow" value={`${moneyIn - moneyOut < 0 ? "−" : "+"}${naira(Math.abs(moneyIn - moneyOut))}`} note="In minus out" />
-      <Stat icon={Clock} tone="pending" label="Pending" value={naira(pending)} note={`${counts["Pending"]} awaiting`} />
+      <Stat icon={ArrowDownLeft} tone="in" label="Money in" value={fmt(moneyIn)} note={`${ok.filter((t) => t.direction === "credit").length} successful`} />
+      <Stat icon={ArrowUpRight} tone="out" label="Money out" value={fmt(moneyOut)} note={`${ok.filter((t) => t.direction === "debit").length} successful`} />
+      <Stat icon={Scale} tone="net" label="Net flow" value={`${moneyIn - moneyOut < 0 ? "−" : "+"}${fmt(Math.abs(moneyIn - moneyOut))}`} note={feeKnown ? `Fees ${fmt(fees)}` : "In minus out"} />
+      <Stat icon={Clock} tone="pending" label="Pending" value={fmt(pending)} note={`${counts["Pending"]} awaiting`} />
     </div>}
 
-    {!recent && base.length > 0 && <FlowChart txns={base} />}
+    {!recent && base.length > 0 && <FlowChart txns={base} currency={cur} />}
 
     <div className="mb-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -74,7 +90,7 @@ export function MerchantLedger({ txns, globalSearch = "", recent = false, onView
       </div>}
     </div>
 
-    {shown.length ? <TransactionTable txns={shown} balances={balances} /> : <div className="ledger-empty flex flex-col items-center gap-2 rounded-xl py-14 text-center"><Search className="h-6 w-6 text-muted-foreground" /><p className="text-sm font-bold">{txns.length ? "Nothing matches these filters" : "No transactions yet"}</p><p className="text-xs text-muted-foreground">{txns.length ? "Try a wider date range or clear filters." : "Money you send or receive will appear here instantly."}</p>{filtered && <Button variant="crisp" size="sm" className="mt-2 rounded-full" onClick={clear}>Clear filters</Button>}</div>}
+    {shown.length ? <TransactionTable txns={shown} balances={balances} /> : <div className="ledger-empty flex flex-col items-center gap-2 rounded-xl py-14 text-center"><Search className="h-6 w-6 text-muted-foreground" /><p className="text-sm font-bold">{txns.length ? "Nothing matches these filters" : `No ${cur} transactions yet`}</p><p className="text-xs text-muted-foreground">{txns.length ? "Try a wider date range or clear filters." : "Money you send or receive will appear here instantly."}</p>{filtered && <Button variant="crisp" size="sm" className="mt-2 rounded-full" onClick={clear}>Clear filters</Button>}</div>}
     {!recent && rows.length > limit && <div className="mt-4 flex justify-center"><Button variant="crisp" size="sm" className="rounded-full" onClick={() => setLimit((l) => l + PAGE)}>Show more · {rows.length - limit} left</Button></div>}
   </section>;
 }
