@@ -11,6 +11,11 @@ import { quoteFee } from "@/lib/pricing.functions";
 import { SERVICES } from "@/lib/services-registry";
 import { useBankingProfile } from "./PaddleConsole";
 import { GuidedService } from "./ServicesHub";
+import { isDuplicate, rememberRecipient, type Recipient } from "@/lib/transfer-rules";
+
+const RECENTS_KEY = "slikpay.recentRecipients";
+const loadRecents = (): Recipient[] => { try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]"); } catch { return []; } };
+const QUICK = [1000, 5000, 10000, 50000];
 
 export type ActionKind = "send" | "bills" | "airtime" | "fund" | "swap" | "add" | "softpos";
 
@@ -80,6 +85,9 @@ function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
   const [fee, setFee] = useState<string>(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<string | null>(null);
   const [key] = useState(() => crypto.randomUUID());
+  const [recents, setRecents] = useState<Recipient[]>([]);
+  useEffect(() => { setRecents(loadRecents()); }, []);
+  const pick = (r: Recipient) => { setBank({ code: r.bankCode, name: r.bankName }); setAcct(r.account); };
   useEffect(() => { banksFn().then(setBanks).catch(() => setBanks([])); }, [banksFn]);
   useEffect(() => {
     let on = true; setName(""); setLookup("");
@@ -97,15 +105,27 @@ function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
     try {
       const r = await run({ data: { id: "post-payouts-transfer", params: {}, body: { amount: amt, destinationBankCode: bank!.code, destinationAccountNumber: acct, destinationAccountName: name, narration: narration || undefined, reference: key }, idempotencyKey: key, currency: "NGN", ...(pin ? { pin } : {}) } });
       setRef(r.receipt?.reference ?? null); setStep("done");
+      const next = rememberRecipient(recents, { bankCode: bank!.code, bankName: bank!.name, account: acct, name, amount: amt, at: Date.now() });
+      setRecents(next); try { localStorage.setItem(RECENTS_KEY, JSON.stringify(next)); } catch { /* storage full */ }
     } catch (e) { toast.error(e instanceof Error ? e.message : "Transfer failed. No money was taken."); } finally { setBusy(false); }
   };
-  if (step === "done") return <div className="py-4 text-center"><CheckCircle2 className="mx-auto h-14 w-14 text-success" /><p className="mt-3 font-bold text-foreground">{naira(amt)} sent to {name}</p>{ref && <p className="mt-1 text-xs text-muted-foreground">Reference <span className="font-mono">{ref}</span></p>}<Button variant="brand" className="mt-6 w-full" onClick={onClose}>Done</Button></div>;
+  if (step === "done") {
+    const text = `Slikpay transfer receipt\n${naira(amt)} to ${name}\n${bank!.name} · ${acct}${ref ? `\nReference ${ref}` : ""}`;
+    return <div className="py-2 text-center">
+      <CheckCircle2 className="mx-auto h-14 w-14 text-success" /><p className="mt-3 text-lg font-bold text-foreground">{naira(amt)} sent to {name}</p>
+      <ol className="mx-auto mt-4 max-w-xs space-y-2 text-left text-sm">{[["Payment authorised", true], ["Sent to " + bank!.name, true], ["Arrival confirmed by bank", false]].map(([l, ok]) => <li key={String(l)} className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-success" : "animate-pulse bg-cyan"}`} /><span className={ok ? "font-semibold text-foreground" : "text-muted-foreground"}>{l}</span></li>)}</ol>
+      {ref && <p className="mt-3 text-xs text-muted-foreground">Reference <span className="font-mono">{ref}</span></p>}
+      <div className="mt-5 flex gap-2"><Button variant="crisp" className="flex-1" onClick={async () => { try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast.success("Receipt copied"); } } catch { /* cancelled */ } }}>Share</Button><Button variant="crisp" className="flex-1" onClick={() => window.print()}>Print</Button></div>
+      <Button variant="brand" className="mt-2 w-full" onClick={onClose}>Done</Button></div>;
+  }
   if (step === "review") return <div className="space-y-4">
     <dl className="space-y-2 rounded-xl border border-border p-4 text-sm">{[["To", name], ["Bank", bank!.name], ["Account", acct], ["Amount", naira(amt)], ["Fee", fee], ...(narration ? [["Note", narration]] : [])].map(([k, v]) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-bold">{v}</dd></div>)}</dl>
     {live && <input className="field text-center font-mono tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} placeholder="PIN" aria-label="Transaction PIN" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} />}
     <div className="flex gap-2"><Button variant="crisp" onClick={() => setStep("form")}>Edit</Button><Button variant="brand" className="flex-1" disabled={busy} onClick={send}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}Send {naira(amt)}</Button></div>
   </div>;
+  const dup = name && amt > 0 && isDuplicate(recents, { account: acct, amount: amt });
   return <div className="space-y-4">
+    {recents.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Recent recipients</p><div className="flex gap-3 overflow-x-auto pb-1">{recents.map((r) => <button key={r.account} type="button" onClick={() => pick(r)} className="flex w-16 shrink-0 flex-col items-center gap-1 text-center"><span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-primary to-cyan text-sm font-bold text-primary-foreground">{r.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}</span><span className="w-full truncate text-[11px] font-semibold text-foreground">{r.name.split(" ")[0]}</span></button>)}</div></div>}
     <Field label="Recipient bank">
       {bank ? <button type="button" onClick={() => setBank(null)} className="field flex items-center justify-between text-left"><span className="font-bold">{bank.name}</span><span className="text-xs text-cyan">Change</span></button> : <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -115,8 +135,9 @@ function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
     </Field>
     <Field label="Account number"><input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={acct} onChange={(e) => setAcct(e.target.value.replace(/\D/g, ""))} /></Field>
     {name ? <div className="rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">{name}</div> : lookup && <p role="status" className="text-xs text-muted-foreground">{lookup}</p>}
-    <Field label="Amount (NGN)"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /></Field>
+    <Field label="Amount (NGN)"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /><div className="mt-2 flex flex-wrap gap-2">{QUICK.map((v) => <button key={v} type="button" onClick={() => setAmount(String(v))} className="rounded-full border border-border px-3 py-1 text-xs font-bold text-foreground hover:border-primary">{naira(v)}</button>)}</div></Field>
     <Field label="Note (optional)"><input className="field" maxLength={60} value={narration} onChange={(e) => setNarration(e.target.value)} /></Field>
+    {dup && <p role="alert" className="rounded-lg bg-warning/15 px-3 py-2 text-xs font-semibold text-foreground">You sent this exact amount to this account a few minutes ago. Check before sending again.</p>}
     <Button variant="brand" className="h-11 w-full" disabled={!name || !(amt > 0)} onClick={review}>Review transfer</Button>
   </div>;
 }
