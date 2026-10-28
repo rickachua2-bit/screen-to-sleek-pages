@@ -32,6 +32,7 @@ function usePrefs(role: Role) {
   };
 }
 
+const TINT: Record<string, string> = { move: "tint-cobalt", paid: "tint-cyan", cards: "tint-magenta", bills: "tint-cyan", gov: "tint-cobalt", grow: "tint-cyan", travel: "tint-magenta", business: "tint-cobalt", dev: "tint-magenta" };
 const STATUS_STYLE: Record<ServiceStatus, string> = {
   available: "bg-chart-2/15 text-chart-2", sandbox: "bg-chart-4/20 text-chart-4", verify: "bg-magenta/15 text-magenta", business: "bg-muted text-muted-foreground",
 };
@@ -61,9 +62,9 @@ export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?
     return <div key={s.id} className="group hover-lift relative rounded-2xl border border-border bg-card/70 p-4 backdrop-blur transition-colors hover:border-cyan/50">
       <button type="button" onClick={() => toggleFav(s.id)} aria-label={fav ? `Remove ${s.label} from favourites` : `Add ${s.label} to favourites`} className="absolute right-3 top-3 text-muted-foreground hover:text-chart-4"><Star className={`h-4 w-4 ${fav ? "fill-chart-4 text-chart-4" : ""}`} /></button>
       <button type="button" onClick={() => launch(s)} className="flex w-full flex-col items-start gap-3 text-left">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-tri text-primary-foreground shadow-md">{st === "business" ? <Lock className="h-4 w-4" /> : <Icon name={s.icon} className="h-5 w-5" />}</span>
+        <span className={`flex h-11 w-11 items-center justify-center rounded-full ${TINT[s.category] ?? "tint-cobalt"}`}>{st === "business" ? <Lock className="h-4 w-4" /> : <Icon name={s.icon} className="h-5 w-5" />}</span>
         <span className="text-sm font-extrabold leading-tight">{s.label}</span>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]}</span>
+        <span className={`chip ${STATUS_STYLE[st]}`}>{STATUS_LABEL[st]}</span>
       </button>
     </div>;
   };

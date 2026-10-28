@@ -73,7 +73,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         const hasActive = items.some((i) => i.id === activeModule); const closed = !q && !hasActive && folded.includes(g.title);
         return <div key={g.title} className="mb-2">{g.title && <button type="button" onClick={() => toggleFold(g.title)} aria-expanded={!closed} className="flex w-full items-center justify-between px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80 hover:text-cyan"><span>{g.title}</span><ChevronDown className={`h-3.5 w-3.5 transition-transform ${closed ? "-rotate-90" : ""}`} /></button>}{!closed && items.map(({ label: rawLabel, icon: Icon, id }) => { const label = id === "golive" && banking?.mode === "live" ? "KYB" : rawLabel;
         const selected = activeModule ? activeModule === id : active === label;
-        const classes = `merchant-nav-item mb-1.5 flex h-auto min-h-11 w-full justify-start gap-3 whitespace-normal rounded-lg px-3 py-3 text-left text-sm leading-5 ${selected ? "bg-gradient-tri font-bold text-primary-foreground shadow-cobalt" : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`;
+        const classes = `merchant-nav-item mb-1.5 flex h-auto min-h-11 w-full justify-start gap-3 whitespace-normal rounded-lg px-3 py-3 text-left text-sm leading-5 ${selected ? "nav-pill-active" : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`;
         return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
       })}</div>; })}
     </nav>
@@ -89,7 +89,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate({ to: "/auth" }); }} className="mt-2 w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><LogOut />Sign Out</Button>
     </div>
   </aside>;
-  return <div className={`theme-flame relative flex min-h-screen bg-mesh ${isBiz ? "merchant-console" : ""}`}>
+  return <div className={"theme-flame merchant-console relative flex min-h-screen bg-mesh"}>
     <div className="sticky top-0 hidden h-screen shrink-0 lg:block">{sidebar}</div>
     {open && <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)}><div role="dialog" aria-modal="true" aria-label="Navigation menu" className="h-full w-[260px]" onClick={(e) => e.stopPropagation()}>{sidebar}</div></div>}
     <div className="min-w-0 flex-1">
