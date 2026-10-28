@@ -30,6 +30,10 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const [currencies, setCurrencies] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [menuQ, setMenuQ] = useState("");
+  const [folded, setFolded] = useState<string[]>([]);
+  useEffect(() => { try { setFolded(JSON.parse(localStorage.getItem("slik.menu.folded") ?? "[]")); } catch { /* ignore */ } }, []);
+  const toggleFold = (t: string) => setFolded((f) => { const next = f.includes(t) ? f.filter((x) => x !== t) : [...f, t]; try { localStorage.setItem("slik.menu.folded", JSON.stringify(next)); } catch { /* ignore */ } return next; });
   const doRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
@@ -63,12 +67,15 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       {isBiz ? <div className="flex items-center gap-2"><FlameMark className="h-9 w-9" /><div><div className="text-xl font-extrabold">SLIKPAY<span className="text-cyan">.</span></div><p className="text-[10px] text-muted-foreground">Business</p></div></div> : <Logo sub="Personal" />}
       <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Close menu" onClick={() => setOpen(false)}><X /></Button>
     </div>
+    {onModuleChange && <div className="shrink-0 px-3 pb-2"><label className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={menuQ} onChange={(e) => setMenuQ(e.target.value)} placeholder="Find a service" aria-label="Find a menu item" className="field h-10 pl-9 text-sm" /></label></div>}
     <nav aria-label="Main navigation" className="dropdown-list min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-      {groups.map((g) => <div key={g.title} className="mb-3">{g.title && <h2 className="px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80">{g.title}</h2>}{g.items.map(({ label: rawLabel, icon: Icon, id }) => { const label = id === "golive" && banking?.mode === "live" ? "KYB" : rawLabel;
+      {groups.map((g) => { const q = menuQ.trim().toLowerCase(); const items = q ? g.items.filter((i) => `${i.label} ${g.title}`.toLowerCase().includes(q)) : g.items; if (!items.length) return null;
+        const hasActive = items.some((i) => i.id === activeModule); const closed = !q && !hasActive && folded.includes(g.title);
+        return <div key={g.title} className="mb-2">{g.title && <button type="button" onClick={() => toggleFold(g.title)} aria-expanded={!closed} className="flex w-full items-center justify-between px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80 hover:text-cyan"><span>{g.title}</span><ChevronDown className={`h-3.5 w-3.5 transition-transform ${closed ? "-rotate-90" : ""}`} /></button>}{!closed && items.map(({ label: rawLabel, icon: Icon, id }) => { const label = id === "golive" && banking?.mode === "live" ? "KYB" : rawLabel;
         const selected = activeModule ? activeModule === id : active === label;
         const classes = `merchant-nav-item mb-1.5 flex h-auto min-h-11 w-full justify-start gap-3 whitespace-normal rounded-lg px-3 py-3 text-left text-sm leading-5 ${selected ? "bg-gradient-tri font-bold text-primary-foreground shadow-cobalt" : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`;
         return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
-      })}</div>)}
+      })}</div>; })}
     </nav>
     <div className="shrink-0 border-t border-border px-3 py-3">
       <Button variant="ghost" onClick={doRefresh} disabled={refreshing} aria-label={refreshing ? "Refreshing dashboard" : "Refresh dashboard"} className="flex h-10 w-full justify-between rounded-lg px-3 font-medium text-muted-foreground hover:bg-muted/60 hover:text-cyan">
