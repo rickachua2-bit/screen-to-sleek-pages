@@ -82,7 +82,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-bold text-foreground/85"><span className="text-xl">{def.flag}</span>{def.name} wallet{!live && <span className="rounded-full bg-chart-4/20 px-2 py-0.5 text-[10px] text-chart-4">Sandbox</span>}</p>
           <div className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/70">Available balance<PrivacyToggle className="h-7 w-7" /></div>
-          <div className="font-mono text-4xl font-bold tracking-tight md:text-5xl">{wallets ? mask(fmt(code, balance), hidden) : <Loader2 className="h-8 w-8 animate-spin" />}</div>
+          <div className="balance-figure">{wallets ? mask(fmt(code, balance), hidden) : <Loader2 className="h-8 w-8 animate-spin" />}</div>
           <p className="mt-1 text-xs font-semibold text-foreground/75">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· live rate</span></> : (pricing ? "Live rate unavailable right now" : "Loading live rate…"))}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
         </div>
         <div className="flex flex-col items-end gap-3">
@@ -170,7 +170,7 @@ function WalletActivity({ code, extras }: { code: string; extras: Extras | null 
   const label = (op: string) => op.startsWith("SWAP") ? `Swap ${op.slice(5).replace("->", " → ")}` : op.startsWith("WITHDRAW") ? "Withdrawal" : op.includes("payouts") ? "Transfer out" : "Payment";
   return <div className="panel p-5">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-extrabold">{code} activity</h3><div className="flex gap-1">{FILTERS.map((x) => <button key={x} aria-pressed={f === x} onClick={() => setF(x)} className={`rounded-full px-3 py-1 text-[11px] font-bold ${f === x ? "bg-gradient-tri text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{x}</button>)}</div></div>
-    {!extras ? <Loader2 className="mx-auto my-6 h-5 w-5 animate-spin text-muted-foreground" /> : rows.length === 0 ? <div className="py-8 text-center"><FileText className="mx-auto mb-2 h-6 w-6 text-muted-foreground" /><p className="text-xs text-muted-foreground">No {code} activity yet.</p></div> :
+    {!extras ? <div className="space-y-2 py-2" aria-label="Loading">{[0,1,2].map((i) => <div key={i} className="shimmer h-10" />)}</div> : rows.length === 0 ? <div className="py-8 text-center"><FileText className="mx-auto mb-2 h-6 w-6 text-muted-foreground" /><p className="text-xs text-muted-foreground">No {code} activity yet.</p></div> :
       <ul className="space-y-1">{rows.map((e, i) => <li key={e.reference} className="feed-in flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-muted/50" style={{ animationDelay: `${i * 50}ms` }}>
         <span className={`flex h-9 w-9 items-center justify-center rounded-full ${e.operation.startsWith("SWAP") ? "bg-cyan/15 text-cyan" : e.amount > 0 ? "bg-success-soft text-success" : "bg-magenta/15 text-magenta"}`}>{e.operation.startsWith("SWAP") ? <Repeat className="h-4 w-4" /> : e.amount > 0 ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}</span>
         <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{label(e.operation)}</p><p className="text-[11px] text-muted-foreground">{relativeTime(e.created_at)}{e.status === "held" ? " · Pending" : ""}</p></div>

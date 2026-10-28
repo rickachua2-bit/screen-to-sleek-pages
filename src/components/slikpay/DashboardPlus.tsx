@@ -43,7 +43,7 @@ export function DashboardHero({ name, business, balance, mode, txns, onOpenComma
         <p className="text-xs font-semibold text-foreground/80">{hour === null ? "Welcome back" : greetingFor(hour)}, {name.split(" ")[0]} 👋</p>
         <h2 className="mt-1 truncate text-sm font-bold text-foreground/90">{business ?? "Your business"}</h2>
         <div className="mt-5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/70">Settlement balance<PrivacyToggle className="h-7 w-7" /></div>
-        <div className="font-mono text-4xl font-bold tracking-tight text-foreground md:text-5xl" aria-live="polite">{mask(naira(shown), hidden)}</div>
+        <div className="balance-figure text-foreground" aria-live="polite">{mask(naira(shown), hidden)}</div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button onClick={live ? undefined : onGoLive} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${live ? "bg-success-soft text-success" : "bg-chart-4/20 text-chart-4"}`}><span className={`h-1.5 w-1.5 rounded-full motion-safe:animate-pulse ${live ? "bg-success" : "bg-chart-4"}`} />{live ? "Live mode" : "Sandbox · tap to go live"}</button>
           <button onClick={onOpenCommand} className="flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-[11px] font-semibold text-foreground/80 hover:text-foreground"><Search className="h-3 w-3" />Quick search<kbd className="rounded bg-muted px-1.5 font-mono text-[10px]">Ctrl K</kbd></button>
@@ -92,9 +92,9 @@ export function ActivityFeed({ txns, onViewAll }: { txns: Txn[]; onViewAll: () =
   return <section className="panel p-5">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-extrabold">Live activity</h3><div className="flex gap-1">{FILTERS.map((x) => <button key={x} onClick={() => setF(x)} aria-pressed={f === x} className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${f === x ? "bg-gradient-tri text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{x}</button>)}</div></div>
     {list.length === 0 ? <EmptyState icon={Inbox} title="Nothing here yet" text="New payments will appear here the moment they land." /> : <ul className="space-y-1">{list.map((t, idx) => { const credit = t.direction === "credit"; return <li key={t.id} className="feed-in flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-muted/50" style={{ animationDelay: `${idx * 60}ms` }}>
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${credit ? "bg-success-soft text-success" : "bg-magenta/15 text-magenta"}`}>{credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}</span>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${credit ? "tint-cyan" : "tint-cobalt"}`}>{credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}</span>
       <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{t.customer}</p><p className="text-[11px] text-muted-foreground">{t.channel} · {relativeTime(t.date)}</p></div>
-      <div className="text-right"><p className={`font-mono text-sm font-bold ${credit ? "text-success" : "text-foreground"}`}>{hidden ? "••••" : `${credit ? "+" : "−"}${naira(t.amount)}`}</p><p className={`text-[10px] font-bold ${t.status === "Successful" ? "text-muted-foreground" : t.status === "Pending" ? "text-chart-4" : "text-destructive"}`}>{t.status}</p></div>
+      <div className="text-right"><p className={`font-mono text-sm font-bold ${credit ? "text-cyan" : "text-foreground"}`}>{hidden ? "••••" : `${credit ? "+" : "−"}${naira(t.amount)}`}</p><p className={`text-[10px] font-bold ${t.status === "Successful" ? "text-muted-foreground" : t.status === "Pending" ? "text-chart-4" : "text-destructive"}`}>{t.status}</p></div>
     </li>; })}</ul>}
     <Button variant="ghost" size="sm" className="mt-3 w-full text-cyan" onClick={onViewAll}>View full ledger →</Button>
   </section>;
