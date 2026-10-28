@@ -368,26 +368,17 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
     <form onSubmit={submit} noValidate className="animate-in fade-in space-y-4" key={shake}>
       <div>
         <h2 className="text-xl font-black text-foreground">Welcome Back</h2>
-        <p className="text-sm font-medium text-body">Sign in to your Slikpay {isBiz ? "Business Console" : "Personal Wallet"}.</p>
+        <p className="text-sm font-medium text-body">Sign in and we'll take you straight to your account.</p>
       </div>
-      <Field label={isBiz ? "Work Email or Merchant ID" : "Phone Number or @SlikTag"} id="login-id" icon={isBiz ? Mail : AtSign} error={err["id"]} shake>
-        {isBiz ? (
-          <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="director@company.com" />
-        ) : (
-          <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">🇳🇬</span><span className="font-mono">+234</span></span>
-            <input id="login-id" autoComplete="username" className={`${inputCls(false)} flex-1`} value={id} onChange={(e) => setId(e.target.value)} placeholder="0803 000 0000 or @babatunde" />
-          </div>
-        )}
+      <Field label="Email, Phone or @SlikTag" id="login-id" icon={AtSign} error={err["id"]} shake>
+        <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="you@company.com, 0803 000 0000 or @babatunde" />
       </Field>
-      {!isBiz && (
-        <div className="flex justify-end">
-          <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline">
-            {pinMode ? "Use password instead" : "Use 4-digit Security PIN instead"}
-          </button>
-        </div>
-      )}
-      {pinMode && !isBiz ? (
+      <div className="flex justify-end">
+        <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline">
+          {pinMode ? "Use password instead" : "Use 4-digit Security PIN instead"}
+        </button>
+      </div>
+      {pinMode ? (
         <Field label="4-Digit Security PIN" id="login-pin" error={err["pw"]} shake>
           <div className="flex justify-center pt-1"><PinBoxes value={pin} onChange={setPin} autoFocus /></div>
         </Field>
@@ -403,13 +394,11 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         <button type="button" onClick={() => setForgot(true)} className="font-bold text-cobalt hover:underline">Forgot password?</button>
       </div>
       <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri text-base">
-        {busy && <Loader2 className="animate-spin" />} Sign In to {isBiz ? "Business Console" : "Personal Account"} →
+        {busy && <Loader2 className="animate-spin" />} Sign In →
       </Button>
-      {!isBiz && (
-        <button type="button" onClick={() => toast.info("Biometric sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
-          <Fingerprint className="h-4 w-4 text-magenta" /> Or sign in with Face ID / Fingerprint
-        </button>
-      )}
+      <button type="button" onClick={() => toast.info("Biometric sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
+        <Fingerprint className="h-4 w-4 text-magenta" /> Or sign in with Face ID / Fingerprint
+      </button>
       <SecurityPill />
     </form>
   );
