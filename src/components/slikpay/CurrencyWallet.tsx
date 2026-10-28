@@ -226,7 +226,7 @@ function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from:
       <Button variant="brand" className="w-full" disabled={!(amt(amount) > 0) || (live && amt(amount) > avail)} onClick={() => setStep("review")}>Review swap</Button>
     </div>}
     {step === "review" && <Review rows={[["You pay", fmt(from, amt(amount))], ["You receive", estimate !== null ? `≈ ${fmt(to, estimate)} (live rate)` : `${to} · rate set at confirmation`], ["Fee", swapFee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />}
-    {step === "done" && result && <Receipt rows={[["Paid", fmt(from, result.fromAmount)], ["Received", fmt(to, result.toAmount)], ["Rate", `1 ${from} = ${result.rate} ${to}`], ["Fee", `${result.fee} ${result.feeCurrency}`], ["Reference", result.reference ?? "—"]]} onClose={onClose} />}
+    {step === "done" && result && <Receipt rows={[["Paid", fmt(from, result.fromAmount)], ["Received", fmt(to, result.toAmount)], ["Rate", `1 ${from} = ${result.rate} ${to}`], ["Fee", result.fee === null ? "Not reported" : `${result.fee} ${result.feeCurrency}`], ["Reference", result.reference ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
 
