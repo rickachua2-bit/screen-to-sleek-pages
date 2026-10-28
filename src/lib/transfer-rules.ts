@@ -11,7 +11,7 @@ export function rememberRecipient(list: Recipient[], r: Recipient): Recipient[] 
   return [r, ...list.filter((x) => x.account !== r.account)].slice(0, 8);
 }
 
-export type BulkRow = { bankCode: string; account: string; amount: number; note?: string; error?: string };
+export type BulkRow = { bankCode: string; account: string; amount: number; note?: string | undefined; error?: string | undefined };
 /** CSV columns: bank_code, account_number, amount, note(optional). Header row optional. */
 export function parseBulkCsv(text: string): BulkRow[] {
   return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
