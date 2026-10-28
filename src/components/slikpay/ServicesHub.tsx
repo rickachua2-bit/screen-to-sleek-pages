@@ -36,14 +36,14 @@ const STATUS_STYLE: Record<ServiceStatus, string> = {
   available: "bg-chart-2/15 text-chart-2", sandbox: "bg-chart-4/20 text-chart-4", verify: "bg-magenta/15 text-magenta", business: "bg-muted text-muted-foreground",
 };
 
-export function ServicesHub({ role }: { role: Role }) {
+export function ServicesHub({ role, only, title }: { role: Role; only?: string[]; title?: string }) {
   const { profile } = useBankingProfile();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<ServiceDef | null>(null);
   const { prefs, toggleFav, addRecent } = usePrefs(role);
   const ctx = { role, mode: profile?.mode ?? "sandbox", review: profile?.review ?? "not_started" } as const;
-  const items = useMemo(() => SERVICES.filter((s) => role === "merchant" || !s.module || PERSONAL_MODULES[s.module]), [role]);
+  const items = useMemo(() => SERVICES.filter((s) => (role === "merchant" || !s.module || PERSONAL_MODULES[s.module]) && (!only || only.includes(s.id))), [role, only]);
   const results = searchServices(q, items);
 
   const launch = (s: ServiceDef) => {
@@ -73,7 +73,7 @@ export function ServicesHub({ role }: { role: Role }) {
     <div className="hero-surface p-6 md:p-8">
       <div className="relative">
         <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">All services</p>
-        <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">What would you like to do?</h2>
+        <h2 className="mt-1 text-2xl font-extrabold md:text-3xl">{title ?? "What would you like to do?"}</h2>
         <div className="relative mt-5 max-w-xl"><Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder='Try "pay electricity", "DStv" or "send to Ghana"' className="h-12 rounded-full bg-background/60 pl-11" aria-label="Search services" /></div>
         {!q && prefs.recent.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{prefs.recent.map((r) => { const s = SERVICES.find((x) => x.id === r.id); return s ? <button key={r.at} onClick={() => launch(s)} className="rounded-full border border-border bg-background/40 px-3 py-1.5 text-xs font-bold hover:border-cyan/60"><Icons.History className="mr-1 inline h-3 w-3" />{r.label}</button> : null; })}</div>}
       </div>
@@ -89,7 +89,7 @@ export function ServicesHub({ role }: { role: Role }) {
 
 type Step = "details" | "review" | "done";
 
-function GuidedService({ service, live, onClose, onDone }: { service: ServiceDef; live: boolean; onClose: () => void; onDone: (label: string) => void }) {
+export function GuidedService({ service, live, onClose, onDone }: { service: ServiceDef; live: boolean; onClose: () => void; onDone: (label: string) => void }) {
   const flow = service.flow!;
   const run = useServerFn(runPaddleOperation);
   const [values, setValues] = useState<Record<string, string>>({});
