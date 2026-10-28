@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { naira, PERSONAL_ACCOUNT, PERSONAL_SPEND, PERSONAL_TXNS, USD_CARD, usd, type Txn } from "@/lib/api";
+import { naira, USD_CARD, usd, type Txn } from "@/lib/api";
 import { AIRTIME_NETWORKS, CABLE_TV, ELECTRICITY_DISCOS, REWARD_TIERS, SAVINGS_POTS } from "@/lib/personal";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -61,8 +61,27 @@ export function ActivityList({ txns, limit }: { txns: Txn[]; limit?: number }) {
   );
 }
 
+function useLive() {
+  const { profile, txns } = useAuth();
+  return { balance: profile?.wallet_balance ?? 0, txns };
+}
+
+function spendBreakdown(txns: Txn[]) {
+  const debits = txns.filter((t) => t.direction === "debit" && t.status === "Successful");
+  const total = debits.reduce((a, t) => a + t.amount, 0);
+  const groups = [
+    { label: "Transfers & P2P", ch: ["NIP"], cls: "stroke-cobalt", dot: "bg-cobalt" },
+    { label: "Bills & Airtime", ch: ["Bills"], cls: "stroke-navy", dot: "bg-navy" },
+    { label: "Card spend", ch: ["Card"], cls: "stroke-magenta", dot: "bg-magenta" },
+    { label: "Other", ch: ["SoftPOS", "Treasury Sweep", "SlikTag"], cls: "stroke-cyan", dot: "bg-cyan" },
+  ];
+  return { total, data: groups.map((g) => ({ label: g.label, cls: g.cls, dot: g.dot, pct: total ? Math.round((debits.filter((t) => g.ch.includes(t.channel)).reduce((a, t) => a + t.amount, 0) / total) * 100) : 0 })) };
+}
+
 function HomeModule({ open }: { open: (k: ActionKind) => void }) {
   const [show, setShow] = useState(true);
+  const { balance, txns } = useLive();
+  const spend = spendBreakdown(txns);
   return (
     <>
       <div className="grid gap-5 lg:grid-cols-2">
@@ -74,15 +93,15 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
             </button>
           }
         >
-          <div className="text-3xl font-black tracking-tight text-foreground">{show ? naira(PERSONAL_ACCOUNT.balance) : "••••••••"}</div>
-          <p className="mt-1 text-sm font-semibold text-muted-foreground">Available balance · Interest accrued: <span className="font-bold text-success">+₦12,450</span> this month</p>
+          <div className="text-3xl font-black tracking-tight text-foreground">{show ? naira(balance) : "••••••••"}</div>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">Available balance</p>
           <div className="mt-5 flex gap-3 border-t-[1.5px] border-border pt-4">
             <Button variant="brand" onClick={() => open("add")}><Send className="rotate-45" /> Add Money</Button>
             <Button variant="crisp" onClick={() => open("send")}><Send /> Send Money</Button>
           </div>
         </Panel>
         <Panel title="Monthly Spending">
-          <DonutChart data={PERSONAL_SPEND} center={naira(184500).split(".")[0]!} sub="Total spent" />
+          {spend.total ? <DonutChart data={spend.data} center={naira(spend.total).split(".")[0]!} sub="Total spent" /> : <p className="py-10 text-center text-sm font-semibold text-muted-foreground">No spending yet. Your breakdown appears after your first payment.</p>}
         </Panel>
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
@@ -93,7 +112,7 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
         <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => open("swap")} />
       </div>
       <Panel title="Recent Activity">
-        <ActivityList txns={PERSONAL_TXNS} limit={5} />
+        <ActivityList txns={txns} limit={5} />
       </Panel>
     </>
   );
@@ -113,7 +132,7 @@ function SendModule({ open }: { open: (k: ActionKind) => void }) {
         <Button variant="crisp" className="mt-4 w-full" onClick={() => open("send")}>Start NIP transfer</Button>
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-border p-3 text-xs font-semibold text-muted-foreground"><QrCode className="h-4 w-4 text-cyan" /> Or scan a Slikpay QR code to pay instantly.</div>
       </Panel>
-      <Panel title="Recent Activity" className="lg:col-span-1"><ActivityList txns={PERSONAL_TXNS.filter((t) => t.channel === "NIP")} /></Panel>
+      <Panel title="Recent Activity" className="lg:col-span-1"><LiveActivity filter={((t) => t.channel === "NIP")} /></Panel>
     </div>
   );
 }
@@ -135,7 +154,7 @@ function AirtimeModule({ open }: { open: (k: ActionKind) => void }) {
         <label className="mt-4 block"><span className="mb-1.5 block text-sm font-bold text-foreground">Phone number</span><input className="field font-mono" inputMode="numeric" placeholder="0803 000 0000" /></label>
         <Button variant="brand" className="mt-4 w-full" onClick={() => open("airtime")}>Continue — {AIRTIME_NETWORKS.find((n) => n.id === net)?.name}</Button>
       </Panel>
-      <Panel title="Recent Top-ups"><ActivityList txns={PERSONAL_TXNS.filter((t) => t.channel === "Bills")} /></Panel>
+      <Panel title="Recent Top-ups"><LiveActivity filter={((t) => t.channel === "Bills")} /></Panel>
     </div>
   );
 }
@@ -158,7 +177,7 @@ function BillsModule({ open }: { open: (k: ActionKind) => void }) {
         <label className="mt-3 block"><span className="mb-1.5 block text-sm font-bold text-foreground">{tab === "power" ? "Meter number" : "Smartcard / IUC number"}</span><input className="field font-mono" inputMode="numeric" placeholder={tab === "power" ? "45012345678" : "7034567890"} /></label>
         <Button variant="brand" className="mt-4 w-full" onClick={() => open("bills")}><Zap /> Pay now</Button>
       </Panel>
-      <Panel title="Bill History"><ActivityList txns={PERSONAL_TXNS.filter((t) => t.channel === "Bills")} /></Panel>
+      <Panel title="Bill History"><LiveActivity filter={((t) => t.channel === "Bills")} /></Panel>
     </div>
   );
 }
