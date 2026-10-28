@@ -54,6 +54,7 @@ export function TransactionTable({ txns }: { txns: Txn[] }) {
 export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }) {
   const rows: [string, string][] = [
     ["Reference", txn.ref],
+    ...(txn.nipSessionId ? [["Central NIP Session ID", txn.nipSessionId] as [string, string]] : []),
     ["Date", fmt(txn.date)],
     ["Channel", txn.channel],
     [txn.direction === "credit" ? "From" : "To", txn.customer],
@@ -72,7 +73,7 @@ export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }
         </div>
         <dl className="space-y-3 border-t-[1.5px] border-dashed border-border pt-4 text-sm">
           {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4"><dt className="font-semibold text-muted-foreground">{k}</dt><dd className="text-right font-bold text-foreground">{v}</dd></div>
+            <div key={k} className="flex justify-between gap-4"><dt className="font-semibold text-muted-foreground">{k}</dt><dd className="min-w-0 break-all text-right font-bold text-foreground">{v}</dd></div>
           ))}
         </dl>
         <Button variant="brand" className="mt-6 w-full" onClick={() => window.print()}><Printer /> Print receipt</Button>

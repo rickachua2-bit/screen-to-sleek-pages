@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { api, naira, NG_BANKS, type Bank } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { BrandSelect } from "./BrandSelect";
+import { useServerFn } from "@tanstack/react-start";
+import { baasService } from "@/lib/baas.functions";
 
 export type ActionKind = "send" | "bills" | "airtime" | "fund" | "swap" | "add" | "softpos";
 
@@ -27,10 +29,12 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () => void }) {
+  const banking = useServerFn(baasService);
   const [banks, setBanks] = useState<Bank[]>(NG_BANKS);
   type Form = Partial<Record<"bank" | "acct" | "amount" | "narration" | "service" | "target" | "from" | "to", string>>;
   const [f, setF] = useState<Form>({ bank: "232", service: "power", from: "NGN", to: "USD" });
   const [acctName, setAcctName] = useState("");
+  const [lookupError, setLookupError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const set = (k: keyof Form) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -39,17 +43,22 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
     if (kind === "send") api.banks().then(setBanks);
   }, [kind]);
   useEffect(() => {
+    let active = true;
+    setAcctName(""); setLookupError("");
     if (kind !== "send" || (f.acct ?? "").length !== 10) {
-      setAcctName("");
       return;
     }
-    api.nameEnquiry(f.bank ?? "232", f.acct ?? "").then((r) => setAcctName(r.accountName));
-  }, [kind, f.bank, f.acct]);
+    banking({ data: { operation: "resolve-account", bankCode: f.bank ?? "232", accountNumber: f.acct ?? "" } })
+      .then((r) => { if (active) setAcctName(r.accountName); })
+      .catch((e) => { if (active) setLookupError(e instanceof Error ? e.message : "Account lookup failed."); });
+    return () => { active = false; };
+  }, [kind, f.bank, f.acct, banking]);
 
   const amount = Number(f.amount || 0);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (kind === "send") { toast.error("Live transfers are awaiting secure funding-account and PIN setup."); return; }
     if (kind !== "softpos" && kind !== "add" && !(amount > 0)) {
       toast.error("Enter a valid amount");
       return;
@@ -57,7 +66,6 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
     setBusy(true);
     try {
       let r: { message: string; ref: string } | undefined;
-      if (kind === "send") r = await api.transfer({ recipientBank: f.bank ?? "232", accountNumber: f.acct ?? "", amount, narration: f.narration ?? "" });
       if (kind === "bills" || kind === "airtime") r = await api.payBill({ service: kind === "airtime" ? "airtime" : (f.service as "power" | "cable"), amount, meterOrPhone: f.target ?? "" });
       if (kind === "fund") r = await api.fundCard("crd_1", amount);
       if (kind === "swap") r = await api.swap({ fromCurrency: f.from ?? "NGN", toCurrency: f.to ?? "USD", amount });
@@ -110,6 +118,8 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
                   <input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={f.acct ?? ""} onChange={set("acct")} />
                 </Field>
                 {acctName && <div className="rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">{acctName}</div>}
+                {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
+                <p className="text-sm text-muted-foreground">Live transfers are locked pending funding-account ownership and withdrawal PIN setup.</p>
               </>
             )}
             {kind === "bills" && (
@@ -134,8 +144,8 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
             {kind === "send" && (
               <Field label="Narration"><input className="field" placeholder="What's this for?" value={f.narration ?? ""} onChange={set("narration")} /></Field>
             )}
-            {kind === "send" && amount > 0 && <p className="text-xs font-semibold text-muted-foreground">You'll send {naira(amount)} + ₦10.75 fee</p>}
-            <Button variant="brand" type="submit" disabled={busy} className="h-11 w-full">
+            {kind === "send" && amount > 0 && <p className="text-xs font-semibold text-muted-foreground">Amount: {naira(amount)} · Fee not yet quoted</p>}
+            <Button variant="brand" type="submit" disabled={busy || kind === "send"} className="h-11 w-full">
               {busy && <Loader2 className="animate-spin" />} Continue
             </Button>
           </form>
