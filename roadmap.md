@@ -36,5 +36,6 @@
 - [ ] Personal wallet menu regrouping
 
 ## Dashboard button redesign (in progress)
+- [ ] Apply Composer Split to the bank transfer page and verify layout and existing controls
 - [x] Three full-dashboard design mockups (buttons styled differently in each) for the user to pick
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
