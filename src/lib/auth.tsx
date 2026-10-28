@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const signUp: AuthState["signUp"] = async (email, password, r, metadata) => {
+    if (r === "merchant") throw new Error("Merchant accounts require verified phone, email and business registration. Use the business sign-up steps.");
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: { emailRedirectTo: `${window.location.origin}/auth`, data: { ...metadata, role: r } },

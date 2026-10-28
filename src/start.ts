@@ -24,6 +24,14 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// External Slikpay auth owns sessions; send its token only to same-origin RPCs.
+const attachSlikpayAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  const { supabase } = await import("./lib/supabase");
+  const { data } = await supabase.auth.getSession();
+  return next({ headers: data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {} });
+});
+
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
+  functionMiddleware: [attachSlikpayAuth],
 }));
