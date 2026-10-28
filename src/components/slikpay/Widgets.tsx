@@ -67,7 +67,7 @@ export function NubanCard({ nuban = "7946436244", label = "Slikpay Business", ti
   );
 }
 
-export function UsdCardPanel({ balance = 0, label, onFund, note }: { balance?: number; label?: string; onFund: () => void; note?: string }) {
+export function UsdCardPanel({ balance = 0, label, onFund, note }: { balance?: number; label?: string; onFund: () => void; note?: string | undefined }) {
   return (
     <Panel>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
