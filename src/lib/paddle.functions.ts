@@ -5,14 +5,18 @@ import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scop
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
   const { bankingUser } = await import("./paddle.server");
   const { db, user, role, mode, review } = await bankingUser();
-  const [kyc, ledger, receipts] = await Promise.all([
+  const [kyc, ledger, receipts, resources] = await Promise.all([
     db.from("kyc_steps").select("step, status, summary, created_at").eq("user_id", user.id),
     db.from("ledger_entries").select("amount, currency, status").eq("user_id", user.id).eq("mode", mode).in("status", ["held", "posted"]),
     db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, session_id, created_at, mode").eq("user_id", user.id).order("created_at", { ascending: false }).limit(25),
+    db.from("paddle_resources").select("resource_id, operation").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: true }),
   ]);
+  const owned = resources.data ?? [];
+  const virtualAccount = owned.find((r) => r.operation === "POST /v1/accounts/virtual" && /^\d{10}$/.test(r.resource_id))?.resource_id ?? null;
+  const cardIssued = owned.some((r) => r.operation.startsWith("POST /v1/cards"));
   const balances: Record<string, number> = {};
   for (const e of ledger.data ?? []) balances[e.currency] = (balances[e.currency] ?? 0) + Number(e.amount);
-  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: receipts.data ?? [], sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
+  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: receipts.data ?? [], virtualAccount, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
 });
 
 const runSchema = z.object({

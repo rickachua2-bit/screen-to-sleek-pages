@@ -3,7 +3,7 @@ import { checkConnection, SUPABASE_URL, type Connection } from "@/lib/supabase";
 
 const LABEL: Record<Connection, string> = {
   checking: "Checking connection…",
-  connected: "Live · connected to Slikpay Cloud",
+  connected: "Connected to Slikpay Cloud",
   "schema-missing": "Connected · database tables not installed",
   offline: "Not connected",
 };
