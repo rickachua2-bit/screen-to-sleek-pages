@@ -766,3 +766,6 @@ html { scroll-behavior: smooth; }
 .receipt-head { background: radial-gradient(260px 140px at 50% 0%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 70%); }
 .receipt-ic-in { color: var(--success); background: color-mix(in oklab, var(--success) 15%, transparent); }
 .receipt-ic-out { color: var(--primary); background: color-mix(in oklab, var(--primary) 13%, transparent); }
+.ledger-chip { padding: 2px 9px; border-radius: 9999px; font-weight: 700; color: var(--primary); background: color-mix(in oklab, var(--primary) 10%, transparent); }
+.ledger-chip.is-text { color: var(--foreground); background: color-mix(in oklab, var(--foreground) 6%, transparent); }
+.ledger-chart { background: color-mix(in oklab, var(--primary) 3%, var(--card)); }
