@@ -106,6 +106,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
         onClick={() => setOpen((o) => !o)}
         className={`${inputCls(false)} flex items-center justify-between gap-2 rounded-xl px-3.5 text-left transition-all duration-200 ${open ? "border-cobalt ring-4 ring-cobalt/10" : "hover:border-cyan"}`}>
         <span className="flex min-w-0 items-center gap-2.5">
+          {picked?.icon && <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${picked.value === value ? "bg-gradient-brand text-primary-foreground" : "bg-cobalt/12 text-cobalt"}`}><picked.icon className="h-3.5 w-3.5" /></span>}
           {picked?.flag && <span className="text-lg leading-none">{picked.flag}</span>}
           <span className={`truncate ${picked ? "text-foreground" : "text-muted-foreground"}`}>{picked?.label ?? placeholder ?? "Select…"}</span>
           {picked?.hint && <span className="shrink-0 font-mono text-xs font-bold text-cobalt">{picked.hint}</span>}
@@ -139,6 +140,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
                     <button type="button" role="option" aria-selected={isSel} tabIndex={-1} data-active={isActive}
                       onClick={() => pick(o)} onMouseEnter={() => setActive(i)}
                       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${isSel ? "bg-cobalt/12 text-foreground ring-1 ring-cobalt/40" : "text-body hover:bg-cobalt/10 hover:text-foreground"}`}>
+                      {o.icon && <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${isSel ? "bg-gradient-brand text-primary-foreground" : "bg-cobalt/10 text-magenta group-hover:bg-cobalt/15"}`}><o.icon className="h-3.5 w-3.5" /></span>}
                       {o.flag && <span className="text-lg leading-none">{o.flag}</span>}
                       <span className="flex-1 truncate">{o.label}</span>
                       {o.hint && <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground">{o.hint}</span>}
