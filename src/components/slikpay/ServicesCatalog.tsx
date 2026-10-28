@@ -36,12 +36,13 @@ export function ServicesCatalog({ items, ctx, title, favourites, recent, launch,
   const serviceTile = (s: ServiceDef) => {
     const status = serviceStatus(s, ctx);
     const favourite = favourites.includes(s.id);
+    const categoryLabel = SERVICE_CATEGORIES.find((c) => c.id === s.category)?.label;
     return <article key={s.id} className={`services-item service-tone-${s.category}`}>
       <Button variant="ghost" size="icon" className="services-star" onClick={() => toggleFavourite(s.id)} aria-label={`${favourite ? "Remove" : "Add"} ${s.label} ${favourite ? "from" : "to"} favourites`} aria-pressed={favourite}><Star className={favourite ? "fill-current text-cobalt" : ""} /></Button>
       <Button variant="ghost" className="services-item-main" onClick={() => launch(s)}>
         <span className="services-category-icon"><ServiceIcon name={s.icon} className="h-5 w-5" /></span>
-        <span className="min-w-0 flex-1"><span className="block text-sm font-bold leading-5">{s.label}</span><span className={`services-status status-${status}`}>{STATUS_LABEL[status]}</span></span>
-        <ArrowRight className="text-muted-foreground" />
+        <span className="min-w-0 flex-1"><span className="services-item-category">{categoryLabel}</span><span className="block text-sm font-bold leading-5">{s.label}</span><span className={`services-status status-${status}`}>{STATUS_LABEL[status]}</span></span>
+        <span className="services-open"><ArrowRight /></span>
       </Button>
     </article>;
   };
@@ -67,9 +68,9 @@ export function ServicesCatalog({ items, ctx, title, favourites, recent, launch,
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{categories.filter((c) => !featured.some((f) => f.category === c.id)).map((c) => <article key={c.id} className={`services-category service-tone-${c.id}`}><span className="services-category-icon h-14 w-14 shrink-0"><ServiceIcon name={categoryIcons[c.id] ?? "Boxes"} className="h-7 w-7" /></span><div className="min-w-0"><h3 className="text-base font-extrabold">{c.label}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{c.blurb}</p><Button variant="link" className="mt-2 h-auto p-0 text-xs font-bold text-cobalt" onClick={() => setCategory(c.id)}>Explore {c.label.toLowerCase()}<ArrowRight /></Button></div></article>)}</div>
     </>}
 
-    <div className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-extrabold">{filtered ? "Matching services" : "Browse all services"}</h3>{filtered && <Button variant="ghost" size="sm" onClick={() => { setQuery(""); setCategory("all"); }}><X />Clear filters</Button>}</div>
-      <div className="flex flex-wrap gap-2" aria-label="Service categories"><Button variant={category === "all" ? "brand" : "outline"} size="sm" className="rounded-full" aria-pressed={category === "all"} onClick={() => setCategory("all")}>All</Button>{categories.map((c) => <Button key={c.id} variant={category === c.id ? "brand" : "outline"} size="sm" className="rounded-full" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}>{c.label}</Button>)}</div>
-      <div aria-live="polite">{results.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{results.map(serviceTile)}</div> : <div className="services-empty py-10 text-center"><Search className="mx-auto mb-3 h-6 w-6 text-cobalt" /><p className="font-bold">No matching services</p><p className="mt-1 text-sm text-muted-foreground">Try another service or clear your filters.</p></div>}</div>
+    <div className="services-browse space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="services-browse-symbol"><Icons.LayoutGrid className="h-5 w-5" /></span><h3 className="text-lg font-extrabold">{filtered ? "Matching services" : "Browse all services"}</h3><span className="services-count">{results.length}</span></div>{filtered && <Button variant="ghost" size="sm" onClick={() => { setQuery(""); setCategory("all"); }}><X />Clear filters</Button>}</div>
+      <div className="flex flex-wrap gap-2" aria-label="Service categories"><Button variant="ghost" size="sm" className="services-filter service-tone-move" aria-pressed={category === "all"} onClick={() => setCategory("all")}><Icons.LayoutGrid />All</Button>{categories.map((c) => <Button key={c.id} variant="ghost" size="sm" className={`services-filter service-tone-${c.id}`} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><ServiceIcon name={categoryIcons[c.id] ?? "Boxes"} />{c.label}</Button>)}</div>
+      <div aria-live="polite">{results.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{results.map(serviceTile)}</div> : <div className="services-empty py-10 text-center"><Search className="mx-auto mb-3 h-6 w-6 text-cobalt" /><p className="font-bold">No matching services</p><p className="mt-1 text-sm text-muted-foreground">Try another service or clear your filters.</p></div>}</div>
     </div>
   </section>;
 }
