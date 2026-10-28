@@ -6,10 +6,8 @@ import { AppShell } from "@/components/slikpay/AppShell";
 import { PersonalWorkspace } from "@/components/slikpay/PersonalWorkspace";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 
-const moduleSchema = z.enum(["home", "send", "airtime", "bills", "cards", "savings", "rewards", "profile"]).catch("home");
-
 export const Route = createFileRoute("/personal")({
-  validateSearch: (s: Record<string, unknown>) => ({ module: moduleSchema.parse(s.module) }),
+  validateSearch: (s: Record<string, unknown>) => ({ module: personalModule(s["module"]) }),
   head: () => ({
     meta: [
       { title: "Personal Wallet — Slikpay" },
