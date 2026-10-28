@@ -172,6 +172,11 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
     <Field label="Account number"><input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={acct} onChange={(e) => setAcct(e.target.value.replace(/\D/g, ""))} /></Field>
     {name ? <div className="transfer-verified" role="status"><CheckCircle2 className="h-4 w-4 shrink-0" /><span>{name}</span><span className="ml-auto text-xs">Verified</span></div> : lookup && <p role="status" className="text-xs text-muted-foreground">{lookup}</p>}
     <Field label="Amount (NGN)"><div className="transfer-amount-input"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /><span>NGN</span></div><div className="mt-2 flex flex-wrap gap-2">{QUICK.map((v) => <Button variant="outline" key={v} type="button" onClick={() => setAmount(String(v))} aria-pressed={amount === String(v)} className="transfer-quick-amount">{naira(v)}</Button>)}</div></Field>
+    <div className="transfer-fee-line" role="status">
+      {formFeeBusy ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /><span>Checking fee…</span></>
+        : formFee ? <><span className="transfer-fee-label">Fee</span><span className="transfer-fee-value">{naira(formFee.fee)}</span><span className="transfer-fee-note">{formFee.description || "Charged on every transfer"}</span><span className="transfer-fee-total">Total {naira(Number(amount) + formFee.fee)}</span></>
+        : <><span className="transfer-fee-label">Fee</span><span className="transfer-fee-note">Enter an amount to see the fee</span></>}
+    </div>
     <Field label="Note (optional)"><input className="field" maxLength={60} value={narration} onChange={(e) => setNarration(e.target.value)} /></Field>
     {balance !== undefined && <p className="text-xs text-muted-foreground">Available: <span className="font-bold text-foreground">{naira(balance)}</span></p>}
     {short && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">This is more than your available balance.</p>}
