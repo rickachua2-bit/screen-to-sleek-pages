@@ -6,7 +6,7 @@ import { ConnectionBadge } from "@/components/slikpay/ConnectionBadge";
 import { merchantModule, MERCHANT_NAV } from "@/lib/merchant";
 import { useAuth } from "@/lib/auth";
 import { AppShell } from "@/components/slikpay/AppShell";
-import { BalanceCard, NubanCard, Panel, UsdCardPanel } from "@/components/slikpay/Widgets";
+import { Panel, UsdCardPanel } from "@/components/slikpay/Widgets";
 import { BarChart, CHANNEL_STYLES, DonutChart } from "@/components/slikpay/Charts";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ import { MerchantLedger } from "@/components/slikpay/MerchantLedger";
 import { MerchantWorkspace } from "@/components/slikpay/MerchantWorkspace";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 import { Button } from "@/components/ui/button";
+import { ActivityFeed, CommandPalette, CustomiseButton, DashboardHero, EmptyState, FlipNubanCard, InsightsStrip, QuickActionFab, merchantQuickActions, useTiles } from "@/components/slikpay/DashboardPlus";
+import { ArrowRightLeft, BarChart3, LayoutDashboard, Rocket, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (search: Record<string, unknown>) => ({ module: merchantModule(search["module"]) }),
@@ -53,23 +55,32 @@ function Dashboard() {
   const connected = !!profile;
   const changeModule = (id: string) => { navigate({ to: "/dashboard", search: { module: id } }); };
   const current = MERCHANT_NAV.find((n) => n.id === module);
-  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch} onRefresh={authRefresh}>
+  const [cmd, setCmd] = useState(false);
+  const tiles = useTiles(user?.id);
+  const quick = merchantQuickActions(setModal, changeModule, () => { void Promise.all([refresh(), authRefresh()]).then(() => toast.success("Dashboard refreshed")); });
+  const bottomNav = [{ label: "Home", icon: LayoutDashboard, id: "overview" }, { label: "Ledger", icon: ArrowRightLeft, id: "transactions" }, { label: "Go Live", icon: Rocket, id: "golive" }, { label: "Settings", icon: Settings, id: "settings" }];
+  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch} onRefresh={authRefresh} bottomNav={bottomNav}>
     <div className="flex flex-wrap items-end justify-between gap-3">
-      <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1><p className="mt-2 text-xs text-muted-foreground">{module === "overview" ? `Welcome back, ${user?.name.split(" ")[0] ?? "there"}. Here’s your business at a glance.` : `${profile?.company_name ?? "Your business"} · Merchant workspace`}</p></div>
-      <ConnectionBadge />
+      <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1>{module !== "overview" && <p className="mt-2 text-xs text-muted-foreground">{profile?.company_name ?? "Your business"} · Merchant workspace</p>}</div>
+      <div className="flex items-center gap-2">{module === "overview" && <CustomiseButton tiles={tiles} />}<ConnectionBadge /></div>
     </div>
     {module === "overview" ? <>
+      <DashboardHero name={user?.name ?? "there"} business={profile?.company_name} balance={acct.balance} mode={banking?.mode} txns={txns} onOpenCommand={() => setCmd(true)} onGoLive={() => changeModule("golive")} />
       <GoLiveProgress role="merchant" onOpen={() => changeModule("golive")} />
+      {tiles.show("insights") && <InsightsStrip txns={txns} />}
       <div className="grid gap-4 xl:grid-cols-3">
-        <BalanceCard title="Settlement Balance" balance={acct.balance} sub={banking?.mode === "live" ? "Available for settlement" : "Sandbox test balance"} footer={<div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-base font-extrabold">{naira(acct.inflow30d)}</div><div className="mt-1 text-[10px] text-muted-foreground">Total inflow (30 days)</div></div><span className="flex items-center rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success"><ArrowUpRight className="h-3 w-3" />{txns.length} txns</span></div>} />
-        <Panel title="Inflow by Channel"><DonutChart data={donut} center={naira(inflow30d)} /></Panel>
-        <Panel title="Inflow 30-Day Trend"><BarChart days={days} /></Panel>
+        {tiles.show("charts") && <><Panel title="Inflow 30-Day Trend" className="hover-lift xl:col-span-2"><BarChart days={days} /></Panel>
+        <Panel title="Inflow by Channel" className="hover-lift">{donut.length ? <DonutChart data={donut} center={naira(inflow30d)} /> : <EmptyState icon={BarChart3} title="No inflow yet" text="Your channel mix shows up after your first payment." />}</Panel></>}
+        {tiles.show("activity") && <div className="xl:col-span-1 xl:row-span-2"><ActivityFeed txns={txns} onViewAll={() => changeModule("transactions")} /></div>}
+        {tiles.show("accounts") && <><div className="hover-lift rounded-2xl">{banking?.virtualAccount ? <FlipNubanCard nuban={banking.virtualAccount} sandbox={banking.mode !== "live"} accountName={banking.accountDetails?.accountName ?? profile?.company_name} bankName={banking.accountDetails?.bankName} status={banking.accountDetails?.status} /> : <Panel title="Dedicated Account Number"><p className="text-sm text-muted-foreground">You don't have an account number yet. Issue one to start receiving payments{banking?.mode === "sandbox" ? " (sandbox)" : ""}.</p><Button variant="brand" className="mt-4" disabled={issuing || !banking} onClick={issueAccount}>{issuing && <Loader2 className="animate-spin" />}Issue my account number</Button></Panel>}</div>
+        <div className="hover-lift rounded-2xl"><UsdCardPanel onFund={() => changeModule("services")} label="CORPORATE" note={banking?.cardIssued ? undefined : "No card issued yet — issue one in All Banking Services."} /></div></>}
       </div>
-      <div className="grid gap-4 xl:grid-cols-2"><div>{banking?.virtualAccount ? <NubanCard nuban={banking.virtualAccount} label={banking.mode === "live" ? "Slikpay Business" : "Sandbox account"} accountName={banking.accountDetails?.accountName ?? profile?.company_name} bankName={banking.accountDetails?.bankName} status={banking.accountDetails?.status} /> : <Panel title="Dedicated NUBAN Account"><p className="text-sm text-muted-foreground">You don't have an account number yet. Issue one to start receiving payments{banking?.mode === "sandbox" ? " (sandbox)" : ""}.</p><Button variant="brand" className="mt-4" disabled={issuing || !banking} onClick={issueAccount}>{issuing && <Loader2 className="animate-spin" />}Issue my account number</Button></Panel>}</div><UsdCardPanel onFund={() => changeModule("services")} label="CORPORATE" note={banking?.cardIssued ? undefined : "No card issued yet — issue one in All Banking Services."} /></div>
       <div className="flex flex-wrap gap-2">{[{ icon: Send, title: "Send Money", kind: "send" }, { icon: Receipt, title: "Pay Utilities", kind: "bills" }, { icon: CreditCard, title: "Virtual USD Card", kind: "fund" }, { icon: Smartphone, title: "SoftPOS", kind: "softpos" }, { icon: ArrowLeftRight, title: "Currency Swap", kind: "swap" }].map(({ icon: Icon, title, kind }) => <Button key={kind} variant="crisp" className="h-10 rounded-full px-4 text-xs" onClick={() => setModal(kind as ActionKind)}><Icon className="text-cyan" />{title}</Button>)}</div>
-      <MerchantLedger txns={txns} globalSearch={search} recent onViewAll={() => changeModule("transactions")} />
-      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Instant NIP settlement · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"}</p>
+      {tiles.show("ledger") && <MerchantLedger txns={txns} globalSearch={search} recent onViewAll={() => changeModule("transactions")} />}
+      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Instant NIP settlement · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"} · Balance <ArrowUpRight className="h-3 w-3" />{txns.length} txns</p>
     </> : module === "transactions" ? <MerchantLedger txns={txns} globalSearch={search} /> : <MerchantWorkspace key={module} module={module} account={acct} onAction={setModal} search={search} />}
     {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
+    <QuickActionFab items={quick} raised />
+    <CommandPalette open={cmd} onOpenChange={setCmd} actions={quick} go={changeModule} txns={txns} />
   </AppShell>;
 }

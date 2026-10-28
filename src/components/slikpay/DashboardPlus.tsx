@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowDownLeft, ArrowUpRight, Copy, CreditCard, Eye, EyeOff, Landmark, Link2, Plus, RefreshCw, Rocket, Search, Send, Settings2, Sparkles, TrendingDown, TrendingUp, UserPlus, Wallet, X, Clock, Inbox } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, Copy, CreditCard, Eye, EyeOff, Landmark, Link2, Plus, RefreshCw, Search, Send, Settings2, Sparkles, TrendingDown, TrendingUp, UserPlus, Wallet, X, Clock, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { naira, type Txn } from "@/lib/api";
 import { dailyInflow, greetingFor, insights, mask, relativeTime, setHideAmounts, useHideAmounts } from "@/lib/insights";
@@ -160,5 +160,3 @@ export function CustomiseButton({ tiles }: { tiles: ReturnType<typeof useTiles> 
   </div>;
 }
 
-export function GoLiveChip({ onOpen }: { onOpen: () => void }) { return <Button variant="ghost" size="sm" onClick={onOpen}><Rocket />Go Live</Button>; }
-export type { ReactNode };
