@@ -62,8 +62,8 @@ export const SERVICES: ServiceDef[] = [
   {
     id: "escrow", label: "Escrow", category: "paid", keywords: "escrow safe trade hold release milestone", icon: "ShieldCheck",
     flow: {
-      fields: [{ name: "title", label: "What is this deal for?", kind: "text", placeholder: "Supply of 200 bags of rice" }, { name: "buyer", label: "Buyer email", kind: "email" }, { name: "seller", label: "Seller email", kind: "email" }, { ...amount, name: "totalAmount", label: "Deal amount (₦)" }],
-      pay: { op: "post-escrow-create", verb: "Open escrow", body: (v) => ({ title: v["title"], totalAmount: n(v["totalAmount"] ?? ""), currency: "NGN", buyer: { email: v["buyer"] }, seller: { email: v["seller"] }, milestones: [{ title: "Full delivery", amount: n(v["totalAmount"] ?? "") }] }) },
+      fields: [{ name: "title", label: "What is this deal for?", kind: "text", placeholder: "Supply of 200 bags of rice" }, { name: "buyerName", label: "Buyer name", kind: "text" }, { name: "buyer", label: "Buyer email", kind: "email" }, { name: "sellerName", label: "Seller name", kind: "text" }, { name: "seller", label: "Seller email", kind: "email" }, { ...amount, name: "totalAmount", label: "Deal amount (₦)" }],
+      pay: { op: "post-escrow-create", verb: "Open escrow", body: (v) => ({ title: v["title"], totalAmount: n(v["totalAmount"] ?? ""), currency: "NGN", buyer: { name: v["buyerName"], email: v["buyer"] }, seller: { name: v["sellerName"], email: v["seller"] }, milestones: [{ title: "Full delivery", amount: n(v["totalAmount"] ?? "") }] }) },
       receipt: ["id", "escrowId", "status"],
     },
   },
@@ -139,7 +139,7 @@ export const SERVICES: ServiceDef[] = [
     id: "remita", label: "Remita (RRR)", category: "gov", keywords: "remita rrr government fees state revenue customs", icon: "FileText",
     flow: {
       fields: [{ name: "rrr", label: "Remita Retrieval Reference (RRR)", kind: "text", pattern: /^\d{12}$/, patternHint: "12 digits" }, amount],
-      validate: { op: "post-bills-remita-validate", show: ["payerName", "description", "amount"], body: (v) => ({ rrr: v["rrr"] }) },
+      validate: { op: "post-bills-remita-validate", show: ["beneficiaryName", "mdaName", "amount"], body: (v) => ({ rrr: v["rrr"] }) },
       pay: { op: "post-bills-remita-pay", verb: "Pay RRR", body: (v) => ({ rrr: v["rrr"], amount: n(v["amount"] ?? "") }) },
     },
   },
