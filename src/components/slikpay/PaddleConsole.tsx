@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BrandSelect } from "./BrandSelect";
 import { CATEGORIES, ENDPOINTS, accessFor, categoryOf, movesMoney, type PaddleEndpoint, type Role } from "@/lib/paddle-policy";
 import { progress, stepsFor, statusOf, type StepStatus } from "@/lib/go-live";
+import { progress, stepsFor, statusOf, type StepStatus } from "@/lib/go-live";
 import { getBankingProfile, runPaddleOperation, submitIdentityCheck } from "@/lib/paddle.functions";
 
 type Profile = Awaited<ReturnType<typeof getBankingProfile>>;
@@ -292,9 +293,7 @@ export function GoLive({ role }: { role: Role }) {
   const [msg, setMsg] = useState("");
   const stepId = role === "merchant" ? "director_bvn" : "personal_bvn";
   const bvnStep = profile?.kyc.find((k) => k.step === stepId);
-  const steps = role === "merchant"
-    ? [{ t: "Phone & email verified", done: true }, { t: "CAC business lookup", done: true }, { t: "Director verification (BVN)", done: bvnStep?.status === "verified" }, { t: "Further KYB steps", done: false, note: "Details coming soon" }, { t: "Slikpay compliance review", done: profile?.review === "approved" }]
-    : [{ t: "Identity verification (BVN)", done: bvnStep?.status === "verified" }, { t: "Slikpay review", done: profile?.review === "approved" }];
+  const steps = stepsFor(role).map((st) => ({ ...st, status: statusOf(st, profile?.kyc ?? [], profile?.review) }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -330,6 +329,23 @@ export function GoLive({ role }: { role: Role }) {
       </section>
     </div>
   </div>;
+}
+
+const STATUS_LABEL: Record<StepStatus, string> = { not_started: "Not started", submitted: "In review", verified: "Verified", rejected: "Rejected — resubmit" };
+const STATUS_TONE: Record<StepStatus, string> = { not_started: "text-muted-foreground", submitted: "text-magenta", verified: "text-cyan", rejected: "text-destructive" };
+
+export function GoLiveProgress({ role, onOpen }: { role: Role; onOpen: () => void }) {
+  const { profile } = useBankingProfile();
+  if (!profile || profile.mode === "live") return null;
+  const p = progress(role, profile.kyc, profile.review);
+  const next = stepsFor(role).find((st) => statusOf(st, profile.kyc, profile.review) !== "verified");
+  return <section className="relative overflow-hidden rounded-2xl border border-cyan/40 bg-gradient-to-r from-cobalt/25 via-card to-magenta/15 p-5">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div><p className="text-[11px] font-bold uppercase tracking-widest text-cyan">You're in sandbox</p><h2 className="mt-1 text-lg font-black">{p.done} of {p.total} steps complete to go live</h2>{next && <p className="mt-1 text-sm text-muted-foreground">Next: {next.title} — {next.detail}</p>}</div>
+      <Button variant="brand" className="shine bg-gradient-tri" onClick={onOpen}>Continue verification <ChevronRight /></Button>
+    </div>
+    <div className="mt-4 h-2 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-gradient-tri transition-all" style={{ width: `${(p.done / p.total) * 100}%` }} /></div>
+  </section>;
 }
 
 const STATUS_LABEL: Record<StepStatus, string> = { not_started: "Not started", submitted: "In review", verified: "Verified", rejected: "Rejected — resubmit" };
