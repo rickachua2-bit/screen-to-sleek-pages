@@ -5,7 +5,7 @@ import { PERSONAL_NAV, PERSONAL_TABS, personalModule } from "@/lib/personal";
 import { AppShell } from "@/components/slikpay/AppShell";
 import { PersonalWorkspace } from "@/components/slikpay/PersonalWorkspace";
 import { GoLiveProgress, useBankingProfile } from "@/components/slikpay/PaddleConsole";
-import { personalTier, TIER_LIMITS } from "@/lib/go-live";
+import { personalTier } from "@/lib/go-live";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 
 export const Route = createFileRoute("/personal")({
@@ -31,7 +31,7 @@ function Personal() {
   const first = (user?.name ?? "there").split(" ")[0];
   const { profile: banking } = useBankingProfile();
   const tier = personalTier(banking?.kyc ?? []);
-  const tierText = tier ? `Tier ${tier} Verified${TIER_LIMITS[tier] ? ` · ${TIER_LIMITS[tier]} limit` : ""}` : "Verification not started";
+  const tierText = tier ? `Tier ${tier} Verified` : "Verification not started";
   const setModule = (id: string) => navigate({ to: "/personal", search: { module: id } });
 
   return (

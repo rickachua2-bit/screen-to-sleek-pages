@@ -6,7 +6,10 @@ import { QRCodeSVG } from "qrcode.react";
 import { getWalletExtras, getWallets, issueCurrencyWallet, savePayoutAccount, swapCurrency, withdrawFunds, type PayoutAccount, type WalletView } from "@/lib/wallets.functions";
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { CURRENCIES, currencyDef, NOT_ACTIVE } from "@/lib/wallets";
-import { nairaValue, walletActions, type WalletAction } from "@/lib/wallet-actions";
+import { walletActions, type WalletAction } from "@/lib/wallet-actions";
+import { nairaValueLive, quoteSwap, railFor } from "@/lib/pricing";
+import { useLivePricing } from "@/lib/live-pricing";
+import { quoteFee } from "@/lib/pricing.functions";
 import { useHideAmounts, mask, relativeTime } from "@/lib/insights";
 import { naira } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -21,17 +24,6 @@ const dec = (code: string) => (currencyDef(code)?.kind === "crypto" ? 6 : 2);
 const LOCALE: Record<string, string> = { NGN: "en-NG", GHS: "en-GH", KES: "en-KE", ZAR: "en-ZA", USD: "en-US", EUR: "en-IE", GBP: "en-GB", USDT: "en-US", USDC: "en-US" };
 export const fmt = (code: string, n: number) => `${currencyDef(code)?.symbol ?? ""}${n.toLocaleString(LOCALE[code] ?? undefined, { minimumFractionDigits: 2, maximumFractionDigits: dec(code) })}`;
 const ICONS: Record<WalletAction, LucideIcon> = { receive: ArrowDownLeft, send: ArrowUpRight, withdraw: Banknote, swap: ArrowLeftRight, request: Link2, more: MoreHorizontal };
-const LIMITS: Record<string, { daily: string; fee: string; speed: string }> = {
-  NGN: { daily: "₦5,000,000", fee: "Free to your settlement account", speed: "Instant" },
-  GHS: { daily: "GH₵100,000", fee: "Shown before you confirm", speed: "Same day" },
-  KES: { daily: "KSh 1,000,000", fee: "Shown before you confirm", speed: "Same day" },
-  ZAR: { daily: "R150,000", fee: "Shown before you confirm", speed: "1 business day" },
-  USD: { daily: "$25,000", fee: "Shown before you confirm", speed: "1–2 business days" },
-  EUR: { daily: "€20,000", fee: "Shown before you confirm", speed: "Same day (SEPA)" },
-  GBP: { daily: "£20,000", fee: "Shown before you confirm", speed: "Minutes (Faster Payments)" },
-  USDT: { daily: "₮50,000 swaps", fee: "1.5% swap spread", speed: "Instant" },
-  USDC: { daily: "$50,000 swaps", fee: "1.5% swap spread", speed: "Instant" },
-};
 
 export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: string; mode?: string | undefined; onNavigate?: ((module: string) => void) | undefined; compact?: boolean }) {
   const def = currencyDef(code)!;
@@ -57,7 +49,8 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
   const balance = w?.balance ?? 0;
   const live = mode === "live";
   const actions = walletActions(code, w?.status ?? "not_issued", balance);
-  const ngnEq = extras ? nairaValue(code, balance, extras.rates) : null;
+  const pricing = useLivePricing();
+  const ngnEq = nairaValueLive(code, balance, pricing?.rates ?? null);
   const pending = extras?.pending[code] ?? 0;
 
   const doIssue = async () => {
@@ -90,7 +83,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
           <p className="flex items-center gap-2 text-xs font-bold text-foreground/85"><span className="text-xl">{def.flag}</span>{def.name} wallet{!live && <span className="rounded-full bg-chart-4/20 px-2 py-0.5 text-[10px] text-chart-4">Sandbox</span>}</p>
           <div className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/70">Available balance<PrivacyToggle className="h-7 w-7" /></div>
           <div className="font-mono text-4xl font-bold tracking-tight md:text-5xl">{wallets ? mask(fmt(code, balance), hidden) : <Loader2 className="h-8 w-8 animate-spin" />}</div>
-          <p className="mt-1 text-xs font-semibold text-foreground/75">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· last rate</span></> : "Naira value appears after your first swap")}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
+          <p className="mt-1 text-xs font-semibold text-foreground/75">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· live rate</span></> : (pricing ? "Live rate unavailable right now" : "Loading live rate…"))}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
         </div>
         <div className="flex flex-col items-end gap-3">
           <StatusPill status={w?.status} />
@@ -138,7 +131,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
       <div className="flex gap-2"><Button variant="brand" className="flex-1 rounded-full" onClick={copyAll}><Copy />Copy address</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="crisp" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
     </DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
-    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} rates={extras?.rates ?? {}} onClose={() => setDialog(null)} onDone={refresh} />}
+    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "send" && <SendDialog code={code} live={live} balance={balance} onClose={() => setDialog(null)} onDone={refresh} />}
   </section>;
@@ -149,8 +142,24 @@ function StatusPill({ status }: { status?: string | undefined }) {
   return <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${s[1]}`}>● {s[0]}</span>;
 }
 function LimitsList({ code }: { code: string }) {
-  const l = LIMITS[code]!;
-  return <dl className="grid grid-cols-3 gap-2 text-xs">{[["Daily limit", l.daily], ["Fees", l.fee], ["Speed", l.speed]].map(([k, v]) => <div key={k} className="rounded-lg bg-muted/50 p-2"><dt className="text-[10px] text-muted-foreground">{k}</dt><dd className="font-bold">{v}</dd></div>)}</dl>;
+  const pricing = useLivePricing(); const crypto = currencyDef(code)?.kind === "crypto";
+  const rows = (["receive", "send", "swap"] as const).map((a) => { const id = railFor(a, code, crypto); const r = id ? pricing?.rails[id] : undefined; return r ? [{ receive: "Receiving", send: "Sending out", swap: "Swapping" }[a], r.price, r.unit] as const : null; }).filter((x): x is readonly [string, string, string] => Boolean(x));
+  if (!pricing) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+  if (!rows.length) return <p className="text-[11px] text-muted-foreground">{pricing.error ? "Live pricing is unavailable right now." : "The exact fee is shown before you confirm."}</p>;
+  return <dl className="grid gap-2 text-xs sm:grid-cols-3">{rows.map(([k, v, u]) => <div key={k} className="rounded-lg bg-muted/50 p-2"><dt className="text-[10px] text-muted-foreground">{k}</dt><dd className="font-bold">{v}</dd><dd className="text-[10px] text-muted-foreground">{u}</dd></div>)}</dl>;
+}
+
+/** Exact fee from the provider calculator for this rail and amount. */
+function useFee(rail: string | null, amount: number) {
+  const calc = useServerFn(quoteFee);
+  const [fee, setFee] = useState<{ text: string; loading: boolean }>({ text: "", loading: false });
+  useEffect(() => {
+    if (!rail || !(amount > 0)) { setFee({ text: rail ? "" : "Shown on receipt", loading: false }); return; }
+    let on = true; setFee({ text: "", loading: true });
+    calc({ data: { rail, amount } }).then((r) => on && setFee({ text: r ? `${r.fee.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${r.currency} · ${r.description}` : "Shown on receipt", loading: false })).catch(() => on && setFee({ text: "Live fee unavailable · shown on receipt", loading: false }));
+    return () => { on = false; };
+  }, [rail, amount, calc]);
+  return fee.loading ? "Calculating…" : fee.text;
 }
 
 const FILTERS = ["All", "In", "Out", "Swaps"] as const;
@@ -184,7 +193,7 @@ function Receipt({ rows, onClose }: { rows: [string, string][]; onClose: () => v
 const amt = (s: string) => Number(s) || 0;
 const AmountInput = ({ code, value, onChange, max }: { code: string; value: string; onChange: (v: string) => void; max?: number }) => <label className="block text-xs font-bold">Amount ({code})<div className="relative mt-1"><input className="field h-11 pr-16 font-mono text-base" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.00" />{max !== undefined && max > 0 && <button type="button" onClick={() => onChange(String(max))} className="absolute right-2 top-2 rounded-md bg-muted px-2 py-1 text-[10px] font-bold text-cyan">MAX</button>}</div>{max !== undefined && <span className="mt-1 block font-normal text-muted-foreground">Available {fmt(code, max)}</span>}</label>;
 
-function SwapDialog({ from: initial, live, balanceOf, rates, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; rates: Record<string, number>; onClose: () => void; onDone: () => Promise<void> }) {
+function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; onClose: () => void; onDone: () => Promise<void> }) {
   const swap = useServerFn(swapCurrency);
   const [from, setFrom] = useState(initial);
   const [to, setTo] = useState(initial === "NGN" ? "USDT" : "NGN");
@@ -194,18 +203,20 @@ function SwapDialog({ from: initial, live, balanceOf, rates, onClose, onDone }: 
   const [result, setResult] = useState<Awaited<ReturnType<typeof swap>> | null>(null);
   const [key] = useState(uuid);
   const avail = balanceOf(from);
-  const fromN = from === "NGN" ? 1 : rates[from]; const toN = to === "NGN" ? 1 : rates[to];
-  const estimate = fromN && toN && amt(amount) > 0 ? (amt(amount) * fromN / toN) * 0.985 : null;
+  const pricing = useLivePricing();
+  const q = pricing?.rates ? quoteSwap(from, to, amt(amount), pricing.rates) : null;
+  const estimate = q?.amount ?? null;
+  const swapFee = useFee(railFor("swap", from, currencyDef(from)?.kind === "crypto" || currencyDef(to)?.kind === "crypto"), amt(amount));
   const confirm = async () => { setBusy(true); try { const r = await swap({ data: { from: from as "NGN", to: to as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } }); setResult(r); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Swap failed"); } finally { setBusy(false); } };
   const sel = (v: string, set: (c: string) => void, exclude: string) => <select className="field h-11" value={v} onChange={(e) => set(e.target.value)}>{CURRENCIES.filter((c) => c.code !== exclude).map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}</select>;
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Swap currencies</DialogTitle></DialogHeader>
     {step === "form" && <div className="space-y-3">
       <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You pay</p>{sel(from, setFrom, to)}<div className="mt-2"><AmountInput code={from} value={amount} onChange={setAmount} max={avail} /></div></div>
       <div className="flex justify-center"><Button variant="crisp" size="icon" className="rounded-full" aria-label="Flip currencies" onClick={() => { setFrom(to); setTo(from); }}><ArrowUpDown /></Button></div>
-      <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You receive</p>{sel(to, setTo, from)}{estimate !== null && <p className="mt-2 font-mono text-lg font-bold">≈ {fmt(to, estimate)}</p>}<p className="mt-2 text-[11px] text-muted-foreground">{estimate !== null ? "Estimate from your last rate after the 1.5% spread. Final amount can move ±2%. " : "No recent rate yet; the exact amount is set when you confirm. "}Held as your {to} balance, even if no {to} account is issued yet.</p></div>
+      <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You receive</p>{sel(to, setTo, from)}{estimate !== null && <p className="mt-2 font-mono text-lg font-bold">≈ {fmt(to, estimate)}</p>}<p className="mt-2 text-[11px] text-muted-foreground">{estimate !== null && q ? `Live rate 1 ${from} = ${q.rate.toLocaleString(undefined, { maximumSignificantDigits: 6 })} ${to}. Final amount is locked when you confirm. ` : pricing ? "Live rate unavailable for this pair; the exact amount is set when you confirm. " : "Loading live rate… "}Held as your {to} balance, even if no {to} account is issued yet.</p></div>
       <Button variant="brand" className="w-full" disabled={!(amt(amount) > 0) || (live && amt(amount) > avail)} onClick={() => setStep("review")}>Review swap</Button>
     </div>}
-    {step === "review" && <Review rows={[["You pay", fmt(from, amt(amount))], ["You receive", estimate !== null ? `≈ ${fmt(to, estimate)} (last rate)` : `${to} · rate set at confirmation`], ["Fee", "1.5% spread, shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />}
+    {step === "review" && <Review rows={[["You pay", fmt(from, amt(amount))], ["You receive", estimate !== null ? `≈ ${fmt(to, estimate)} (live rate)` : `${to} · rate set at confirmation`], ["Fee", swapFee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />}
     {step === "done" && result && <Receipt rows={[["Paid", fmt(from, result.fromAmount)], ["Received", fmt(to, result.toAmount)], ["Rate", `1 ${from} = ${result.rate} ${to}`], ["Fee", `${result.fee} ${result.feeCurrency}`], ["Reference", result.reference ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -215,6 +226,7 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
   const [acct, setAcct] = useState<PayoutAccount | null>(payout);
   const [form, setForm] = useState({ accountNumber: "", accountName: holder, bankName: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
+  const fee = useFee(railFor("withdraw", code, currencyDef(code)?.kind === "crypto"), amt(amount));
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<{ reference: string | null; to: string } | null>(null); const [key] = useState(uuid);
   const addAccount = async () => { setBusy(true); try { await save({ data: { currency: code as "GHS", ...form } }); setAcct(form); toast.success("Payout account saved"); } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save account"); } finally { setBusy(false); } };
   const confirm = async () => { setBusy(true); try { setRef(await withdraw({ data: { currency: code as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } })); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Withdrawal failed"); } finally { setBusy(false); } };
@@ -224,7 +236,7 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
         {(["accountName", "accountNumber", "bankName"] as const).map((f) => <label key={f} className="block text-xs font-bold">{{ accountName: "Account name", accountNumber: "Account number / IBAN", bankName: "Bank name" }[f]}<input className="field mt-1 h-10" value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} /></label>)}
         <Button variant="brand" className="w-full" disabled={busy || form.accountNumber.length < 4 || form.bankName.length < 2} onClick={addAccount}>{busy && <Loader2 className="animate-spin" />}Save payout account</Button></div>)
     : step === "form" ? <div className="space-y-3"><div className="rounded-xl border border-border p-3 text-xs"><p className="text-[10px] font-bold uppercase text-muted-foreground">To your account</p><p className="mt-1 font-bold">{acct.accountName}</p><p className="font-mono text-muted-foreground">{acct.bankName} · {acct.accountNumber}</p></div><AmountInput code={code} value={amount} onChange={setAmount} max={balance} /><Button variant="brand" className="w-full" disabled={!(amt(amount) > 0) || amt(amount) > balance} onClick={() => setStep("review")}>Review withdrawal</Button></div>
-    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["To", `${acct.accountName}`], ["Account", `${acct.bankName} · ${acct.accountNumber}`], ["Fee", LIMITS[code]!.fee], ["Arrives", LIMITS[code]!.speed]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
+    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["To", `${acct.accountName}`], ["Account", `${acct.bankName} · ${acct.accountNumber}`], ["Fee", fee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
     : ref && <Receipt rows={[["Amount", fmt(code, amt(amount))], ["To", ref.to], ["Reference", ref.reference ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -234,12 +246,13 @@ function SendDialog({ code, live, balance, onClose, onDone }: { code: string; li
   const def = currencyDef(code)!;
   const [v, setV] = useState({ accountName: "", accountNumber: "", bankName: "", narration: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
+  const fee = useFee(railFor("send", code, def.kind === "crypto"), amt(amount));
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<string | null>(null); const [key] = useState(uuid);
   const confirm = async () => { setBusy(true); try { const r = await run({ data: { id: "post-payouts-global", params: {}, body: { amount: amt(amount), currency: code, destinationCurrency: code, narration: v.narration || undefined, beneficiary: { accountNumber: v.accountNumber, accountName: v.accountName, bankName: v.bankName, country: def.country } }, idempotencyKey: key, currency: code, ...(pin ? { pin } : {}) } }); setRef(r.receipt?.reference ?? null); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Transfer failed"); } finally { setBusy(false); } };
   const ok = v.accountName.trim().length > 1 && v.accountNumber.trim().length > 3 && v.bankName.trim().length > 1 && amt(amount) > 0 && amt(amount) <= balance;
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Send {code}</DialogTitle></DialogHeader>
     {step === "form" ? <div className="space-y-3">{(["accountName", "accountNumber", "bankName", "narration"] as const).map((f) => <label key={f} className="block text-xs font-bold">{{ accountName: "Recipient name", accountNumber: "Account number / IBAN", bankName: "Bank name", narration: "Note (optional)" }[f]}<input className="field mt-1 h-10" value={v[f]} onChange={(e) => setV({ ...v, [f]: e.target.value })} /></label>)}<AmountInput code={code} value={amount} onChange={setAmount} max={balance} /><Button variant="brand" className="w-full" disabled={!ok} onClick={() => setStep("review")}>Review transfer</Button></div>
-    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Account", `${v.bankName} · ${v.accountNumber}`], ["Fee", LIMITS[code]!.fee], ["Arrives", LIMITS[code]!.speed]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
+    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Account", `${v.bankName} · ${v.accountNumber}`], ["Fee", fee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
     : <Receipt rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Reference", ref ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -252,15 +265,15 @@ export function DepositQr({ address, code, network, size = 168 }: { address: str
   </figure>;
 }
 
-/** Total across every wallet, shown in naira using the last known rates. */
+/** Total across every wallet, shown in naira at live rates. */
 export function PortfolioHeader() {
   const load = useServerFn(getWallets); const loadExtras = useServerFn(getWalletExtras);
-  const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts();
+  const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts(); const pricing = useLivePricing();
   const [data, setData] = useState<{ w: WalletView[]; x: Extras } | null>(null);
   useEffect(() => { let on = true; Promise.all([load(), loadExtras()]).then(([w, x]) => on && setData({ w: w.wallets, x })).catch(() => undefined); return () => { on = false; }; }, [load, loadExtras, banking]);
   if (!data) return null;
   const ngn = banking?.balances["NGN"] ?? data.x.ngnBalance;
-  const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValue(w.code, w.balance, data.x.rates) }));
+  const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValueLive(w.code, w.balance, pricing?.rates ?? null) }));
   const total = ngn + parts.reduce((a, p) => a + (p.n ?? 0), 0);
   const unpriced = parts.filter((p) => p.n === null).map((p) => p.code);
   return <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">

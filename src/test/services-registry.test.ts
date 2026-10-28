@@ -39,3 +39,24 @@ describe("search by intent", () => {
     for (const s of SERVICES) if (s.flow) expect(s.flow.pay.op).toMatch(/^post-/);
   });
 });
+
+import { parseFxRates, quoteSwap, railFor, nairaValueLive } from "@/lib/pricing";
+describe("live FX", () => {
+  const fx = parseFxRates({ USDT_NGN: 1362.2, NGN_USDT_PRICE: 1420.23, GBP_NGN: 1825.78, NGN_GBP_PRICE: 1855.78 });
+  it("values USDT holdings at the provider's sell rate", () => {
+    expect(nairaValueLive("USDT", 10, fx)).toBe(13622);
+  });
+  it("buys USDT with naira at the provider's buy price", () => {
+    expect(quoteSwap("NGN", "USDT", 142023, fx)?.amount).toBeCloseTo(100, 6);
+  });
+  it("crosses two currencies through naira", () => {
+    expect(quoteSwap("USDT", "GBP", 1, fx)?.amount).toBeCloseTo(1362.2 / 1855.78, 9);
+  });
+  it("has no rate for currencies the provider didn't quote", () => {
+    expect(quoteSwap("NGN", "ZAR", 100, fx)).toBeNull();
+  });
+  it("uses the NIP payout rail for naira sends and the crypto rail for coin swaps", () => {
+    expect(railFor("send", "NGN", false)).toBe("payouts");
+    expect(railFor("swap", "USDT", true)).toBe("crypto_swap");
+  });
+});
