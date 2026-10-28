@@ -64,7 +64,8 @@ declare proof public.merchant_verification_challenges;
 begin
   if coalesce(new.raw_user_meta_data->>'role', 'merchant') = 'merchant' then
     select * into proof from public.merchant_verification_challenges
-      where id::text = new.raw_app_meta_data->>'merchant_verification_id' for update;
+      -- Auth writes app metadata after insert, so read the id from user metadata too.
+      where id::text = coalesce(new.raw_app_meta_data->>'merchant_verification_id', new.raw_user_meta_data->>'merchant_verification_id') for update;
     if proof.id is null or not proof.consumed or not proof.email_verified or not proof.phone_verified
       or proof.expires_at <= now() or proof.email <> lower(new.email) or proof.company_name is null then
       raise exception 'Merchant phone, email and business verification required';
