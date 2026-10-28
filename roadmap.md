@@ -10,3 +10,10 @@ Live module operations are outside this presentation task: new workspaces show c
 - [x] Apply shared brand surfaces to dialogs, notifications and dropdowns.
 - [x] Replace native dropdowns with branded accessible selectors.
 - [x] Verify selections and pop-ups on desktop and phone; run existing tests.
+
+# Verified merchant sign-up and live banking
+- [ ] Confirm banking provider documentation, phone OTP/CAC contracts, supported countries, PIN validation and transfer ownership safeguards. Blocked on provider documentation.
+- [ ] Connect Resend and confirm a verified sending address for merchant email OTPs. Blocked on sender details and connection.
+- [ ] Implement server-enforced phone/email verification and country-aware registered-business lookup without mock success.
+- [ ] Implement authenticated banking proxy, live balance/name resolution, PIN-protected transfers and provider-backed NIP receipts.
+- [ ] Test verification gates and banking safeguards; verify connected journeys without initiating unapproved real transfers.
