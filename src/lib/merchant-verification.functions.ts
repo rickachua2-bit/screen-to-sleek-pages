@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { businessLookupSchema, contactDeliverySchema, contactSchema, merchantSignupSchema, proofSchema, providerVerified, verificationMatches } from "./verification";
 import { z } from "zod";
 
+// Codes must be entered within 10 minutes, but a verified contact stays valid long enough to finish sign-up at any pace.
+const VERIFIED_CONTACT_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const startMerchantVerification = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => contactDeliverySchema.parse(data))
   .handler(async ({ data }) => {
@@ -44,7 +47,7 @@ export const verifyMerchantContact = createServerFn({ method: "POST" })
       ? row.email_digest === await digest(`${data.challengeId}:${data.code}`)
       : providerVerified(await paddle("/otp/verify", { pinId: row.phone_pin_id, pin: data.code }));
     if (!verified) throw new Error("The verification code was not accepted.");
-    const update = await db.from("merchant_verification_challenges").update({ [`${data.channel}_verified`]: true }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString()).select("id").maybeSingle();
+    const update = await db.from("merchant_verification_challenges").update({ [`${data.channel}_verified`]: true, expires_at: new Date(Date.now() + VERIFIED_CONTACT_MS).toISOString() }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString()).select("id").maybeSingle();
     if (update.error || !update.data) throw new Error("Verification expired. Request new codes.");
     return { verified: true };
   });
