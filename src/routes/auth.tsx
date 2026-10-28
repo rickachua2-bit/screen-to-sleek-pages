@@ -28,7 +28,8 @@ function AuthPage() {
   const finish = (p: Pending, remember: boolean) => {
     signIn(p.token, p.user, p.role, remember);
     toast.success(`Welcome, ${p.user.name.split(" ")[0]}`);
-    navigate({ to: p.role === "merchant" ? "/dashboard" : "/personal" });
+    if (p.role === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } });
+    else navigate({ to: "/personal", search: { module: "home" } });
   };
 
   return (
