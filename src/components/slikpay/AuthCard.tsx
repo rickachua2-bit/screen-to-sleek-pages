@@ -561,6 +561,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
       email: isEmail(f.email) ? undefined : "Enter a valid work email",
       phone: f.phone.replace(/\D/g, "").length >= 10 ? undefined : "Enter a valid phone number",
       pw: f.pw.length >= 8 ? undefined : "Password must be at least 8 characters",
+      industry: f.industry ? undefined : "Select your business category",
     };
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
@@ -577,7 +578,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   function next2(e: React.FormEvent) {
     e.preventDefault();
     if (!cacVerified) return fail({ cac: "Verify your CAC number to continue" });
-    if (!f.industry) return fail({ industry: "Select your business category" });
 
     setErr({});
     setStep(3);
@@ -622,6 +622,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <Field label="Country of Incorporation" id="b-country">
           <CountrySelect id="b-country" value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
         </Field>
+        <CategoryPicker value={f.industry} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
         <Field label="Full Name of Director / Owner" id="b-director" icon={UserIcon} error={err["director"]} shake>
           <input id="b-director" className={inputCls()} value={f.director} onChange={set("director")} placeholder="e.g. Babatunde Adeleke" />
         </Field>
@@ -666,7 +667,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
             <p className="mt-0.5 text-xs font-semibold text-body">14 Marina Road, Lagos Island · <span className="text-success">ACTIVE</span> · Form CAC 1.1 Verified</p>
           </div>
         )}
-        <CategoryPicker value={f.industry} onChange={(v) => { setF((p) => ({ ...p, industry: v })); setErr((e) => ({ ...e, industry: undefined })); }} error={err["industry"]} shake />
         <div>
           <p className="mb-1.5 text-sm font-bold text-foreground">Expected Monthly Processing Volume</p>
           <div className="flex flex-wrap gap-2">
