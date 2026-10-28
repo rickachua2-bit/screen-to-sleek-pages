@@ -62,6 +62,8 @@ Sign up -> Sandbox (test money, business name shown, no real data)
 
 Each phase is tested in sandbox before it goes live.
 
+**Coverage rule:** every endpoint in Paddle's docs gets a working, brand-styled screen (Cobalt, Cyan and Magenta on the midnight flame theme). Each screen handles loading, empty, error and success states, and every money action shows a receipt. A screen appears as live only after Paddle confirms it works. Anything Paddle hasn't enabled for your key shows "Not enabled by Paddle" and never fakes success.
+
 ## Needed from you
 - A Paddle **sandbox key** (`sk_test_...`). The saved key will be treated as the live key.
 - Confirmation of Paddle's **webhook** (incoming payment notification) setup and signing secret
