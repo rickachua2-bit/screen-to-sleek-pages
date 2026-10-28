@@ -40,7 +40,7 @@ export async function paddle(path: "/otp/send" | "/otp/verify" | "/identity/cac"
   // Never log OTPs, keys, bank details or provider response bodies.
   if (!response.ok) {
     const payload: unknown = await response.json().catch(() => null);
-    throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After")));
+    throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After"), response.headers.get("X-RateLimit-Reset")));
   }
   const result = await response.json() as { success?: boolean; data?: Record<string, unknown> };
   if (result.success !== true || !result.data) throw new Error("Paddle did not confirm this request.");

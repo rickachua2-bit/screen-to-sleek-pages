@@ -20,3 +20,4 @@
 - `baasService` validates the external Slikpay bearer token, allowlists operations, and blocks payouts/platform balance reads until per-merchant ownership and PIN authorization are established; an authenticated user alone must not spend shared platform funds.
 - External Auth bearer attachment is registered as function middleware in `src/start.ts`, preserving CSRF middleware; server-only credentials live in handler-imported helpers, never browser code.
 - Inline contact controls request independent channel-specific OTP challenges; a server function binds both verified proofs to current contact values before business lookup, so editing either contact cannot reuse stale verification.
+- Paddle failure handling uses allowlisted safe messages and provider retry/reset headers; inline OTP controls suppress overlapping requests, preserve an existing challenge on failed resend, and never auto-retry paid delivery.
