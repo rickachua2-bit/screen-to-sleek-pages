@@ -36,6 +36,8 @@ Paddle uses one web address for both modes. A `sk_test_` key runs in sandbox, an
 | Bills and airtime | Optional | Yes |
 | Global accounts, crypto, investments | Yes | Yes (after KYC) |
 | Escrow, tuition payouts, pricing | Yes | Tuition only |
+| Storefronts, invoices, payment links | Yes | Payment links |
+| Flights | Yes | Yes |
 | Simulate incoming payment | Sandbox only | Sandbox only |
 
 ## Sandbox to live journey
@@ -54,8 +56,9 @@ Sign up -> Sandbox (test money, business name shown, no real data)
 2. **Collections:** virtual accounts, plus incoming-payment notifications from Paddle so balances update
 3. **Payouts:** name lookup, single and bulk transfers with PIN check, fees from Paddle pricing, and receipts
 4. **Cards and bills:** issuing, freezing and ordering cards; airtime, power, cable, betting and gift cards
-5. **Global accounts, investments, crypto and escrow**
-6. **KYC/KYB to go live:** director check (BVN) first; the remaining steps once you send them
+5. **Accepting payments:** checkout, payment links, invoices, storefronts, refunds and disputes
+6. **Flights**, global accounts, investments, crypto, escrow and treasury
+7. **KYC/KYB to go live:** director check (BVN) first; the remaining steps once you send them
 
 Each phase is tested in sandbox before it goes live.
 
