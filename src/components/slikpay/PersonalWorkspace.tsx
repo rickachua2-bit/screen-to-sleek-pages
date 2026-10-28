@@ -183,7 +183,7 @@ function CardsModule({ open }: { open: (k: ActionKind) => void }) {
               </button>
             </div>
           </div>
-          <CardGraphic label="PERSONAL" />
+          <CardGraphic label="PERSONAL" name="Slikpay Personal" last4={USD_CARD.last4} expiry={USD_CARD.expiry} />
         </div>
       </Panel>
       <Panel title="Dedicated Sterling NUBAN">
