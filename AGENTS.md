@@ -14,3 +14,5 @@
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
 - Unconnected merchant operations prepare explicitly labelled in-memory drafts only; never imply policies, verification, payments, device pairing or API secrets are live without a service response.
 - Slikpay overlays use shared global surface tokens and BrandSelect wraps the existing Radix Select; portal content carries its own theme so it remains branded outside page containers.
+- Accounts, profiles and ledger data come from the dedicated external Supabase project via `src/lib/supabase.ts`; schema lives in `supabase/slikpay_schema.sql` (run manually in its SQL editor) — the project is not Lovable Cloud, so migrations can't be applied from here.
+- Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
