@@ -36,6 +36,7 @@
 - [ ] Personal wallet menu regrouping
 
 ## Dashboard button redesign (in progress)
+- [ ] Fix recipient bank search and harden API transfer validation, fees and result handling; verify without moving live funds
 - [x] Apply Composer Split to the bank transfer page; desktop/mobile layout and quick-amount summary checked in isolation; signed-in payment flow remains unverified
 - [x] Three full-dashboard design mockups (buttons styled differently in each) for the user to pick
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
