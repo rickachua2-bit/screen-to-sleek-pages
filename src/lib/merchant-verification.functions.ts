@@ -17,7 +17,8 @@ export const startMerchantVerification = createServerFn({ method: "POST" })
     let emailDigest = "";
     let phonePinId = "";
     if (data.channel === "phone") {
-      const phone = await paddle("/otp/send", { to: data.phone, pinLength: 6, pinTimeToLiveMinutes: 10 });
+      // Paddle's documented format is digits only with country code (e.g. 2348012345678), no "+".
+      const phone = await paddle("/otp/send", { to: data.phone.replace(/^\+/, ""), pinLength: 6, pinTimeToLiveMinutes: 10 });
       if (typeof phone['pinId'] !== "string" || !phone['pinId']) throw new Error("Paddle did not return a phone verification reference.");
       phonePinId = phone['pinId'];
     } else {
