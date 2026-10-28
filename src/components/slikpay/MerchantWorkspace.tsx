@@ -7,6 +7,7 @@ import type { Account } from "@/lib/api";
 import type { ActionKind } from "./ActionModal";
 import { NubanCard, UsdCardPanel } from "./Widgets";
 import { GoLive, PaddleConsole } from "./PaddleConsole";
+import { ServicesHub } from "./ServicesHub";
 import { KybFlow } from "./KybFlow";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
@@ -31,7 +32,8 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   const [adding, setAdding] = useState(false);
   const [drafts, setDrafts] = useState<{ values: string[]; tab: number }[]>([]);
   if (!item) return null;
-  if (module === "services") return <PaddleConsole role="merchant" />;
+  if (module === "services") return <ServicesHub role="merchant" />;
+  if (module === "developer") return <PaddleConsole role="merchant" />;
   if (module === "golive") return <KybFlow />;
   if (module === "banking") return <div className="grid gap-5 xl:grid-cols-2"><NubanCard nuban={account.nuban} /><section className="rounded-lg border border-border bg-card p-6"><h2 className="font-bold">Bank settlement</h2><p className="mt-3 text-sm text-muted-foreground">Slikpay · NGN</p><div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => onAction("send")}>Bank transfer</Button><Button variant="crisp" onClick={() => onAction("add")}>Account details</Button></div><p className="mt-6 text-xs text-muted-foreground">Sub-wallets and settlement schedules await your banking service connection.</p></section></div>;
   if (module === "cards") return <><UsdCardPanel onFund={() => onAction("fund")} label="CORPORATE" /><section className="border-t border-border py-6"><h2 className="font-bold">Card controls</h2><p className="mt-2 text-sm text-muted-foreground">NGN issuance, card freeze and spending controls are not connected yet.</p></section></>;
