@@ -88,7 +88,7 @@ export const createVerifiedMerchant = createServerFn({ method: "POST" })
     const salt = crypto.randomUUID();
     const pinHash = await pinDigest(data.pin, salt);
     const created = await db.auth.admin.createUser({ email: data.email, password: data.password, email_confirm: true, app_metadata: { merchant_verification_id: data.challengeId }, user_metadata: { merchant_verification_id: data.challengeId, role: "merchant", full_name: data.fullName, phone: data.phone, company_name: row.company_name, cac_rc_number: data.rcNumber, category: data.category, country: data.country } });
-    if (created.error || !created.data.user) throw new Error("Account creation failed. Sign in if you already have an account; otherwise request fresh verification codes.");
+    if (created.error || !created.data.user) { await db.from("merchant_verification_challenges").update({ consumed: false }).eq("id", data.challengeId); throw new Error("Account creation failed. Sign in if you already have an account; otherwise try again — your verification is still saved."); }
     const security = await db.from("merchant_security").insert({ user_id: created.data.user.id, pin_digest: pinHash, pin_salt: salt, email_verified: true, phone_verified: true, country: data.country, rc_number: data.rcNumber, company_name: row.company_name });
     if (security.error) { await db.auth.admin.deleteUser(created.data.user.id); throw new Error("Could not save account security. Please request fresh verification codes."); }
     return { created: true };
