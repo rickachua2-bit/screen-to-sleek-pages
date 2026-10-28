@@ -75,7 +75,7 @@ export function HeroIntro() {
         <a href="#how" className="inline-flex items-center gap-2 rounded-xl border-2 border-border bg-background px-5 py-3 text-sm font-bold text-foreground transition-colors hover:border-cobalt">See how it works</a>
       </div>
       <dl className="mt-8 grid grid-cols-3 divide-x-[1.5px] divide-border rounded-2xl border-[1.5px] border-border bg-background/70 backdrop-blur">
-        {[["₦48B+", "Processed yearly"], ["45+", "Banks connected"], ["0.8s", "Avg. settlement"]].map(([v, l]) => (
+        {[["9", "Countries at sign-up"], ["650+", "Banks reachable"], ["24/7", "Instant transfers"]].map(([v, l]) => (
           <div key={l} className="px-4 py-3">
             <dt className="text-gradient-flame text-2xl font-black tracking-tight md:text-3xl">{v}</dt>
             <dd className="text-[11px] font-semibold text-muted-foreground">{l}</dd>
