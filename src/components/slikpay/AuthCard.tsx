@@ -37,7 +37,7 @@ const inputCls = (icon = true) => `field h-12 rounded-xl text-sm font-semibold f
 
 /* ---------- styled dropdown (custom listbox) ---------- */
 
-type Opt = { value: string; label: string; flag?: string; hint?: string; group?: string };
+type Opt = { value: string; label: string; flag?: string; hint?: string; group?: string; icon?: LucideIcon; search?: string };
 
 function SelectMenu({ id, value, options, onChange, placeholder, searchable = false }: {
   id: string;
@@ -57,7 +57,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
   const valRef = useRef(value); valRef.current = value;
   const picked = options.find((o) => o.value === value);
   const term = q.trim().toLowerCase();
-  const shown = term ? options.filter((o) => `${o.label} ${o.hint ?? ""} ${o.group ?? ""}`.toLowerCase().includes(term)) : options;
+  const shown = term ? options.filter((o) => `${o.label} ${o.hint ?? ""} ${o.group ?? ""} ${o.search ?? ""}`.toLowerCase().includes(term)) : options;
 
   useEffect(() => {
     if (!open) return;
