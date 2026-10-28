@@ -115,7 +115,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
 
     {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader>{def.kind === "crypto" && w.accountNumber && <DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} size={220} />}<p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
-    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} onClose={() => setDialog(null)} onDone={refresh} />}
+    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} rates={extras?.rates ?? {}} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "send" && <SendDialog code={code} live={live} balance={balance} onClose={() => setDialog(null)} onDone={refresh} />}
   </section>;
@@ -161,7 +161,7 @@ function Receipt({ rows, onClose }: { rows: [string, string][]; onClose: () => v
 const amt = (s: string) => Number(s) || 0;
 const AmountInput = ({ code, value, onChange, max }: { code: string; value: string; onChange: (v: string) => void; max?: number }) => <label className="block text-xs font-bold">Amount ({code})<div className="relative mt-1"><input className="field h-11 pr-16 font-mono text-base" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.00" />{max !== undefined && max > 0 && <button type="button" onClick={() => onChange(String(max))} className="absolute right-2 top-2 rounded-md bg-muted px-2 py-1 text-[10px] font-bold text-cyan">MAX</button>}</div>{max !== undefined && <span className="mt-1 block font-normal text-muted-foreground">Available {fmt(code, max)}</span>}</label>;
 
-function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; onClose: () => void; onDone: () => Promise<void> }) {
+function SwapDialog({ from: initial, live, balanceOf, rates, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; rates: Record<string, number>; onClose: () => void; onDone: () => Promise<void> }) {
   const swap = useServerFn(swapCurrency);
   const [from, setFrom] = useState(initial);
   const [to, setTo] = useState(initial === "NGN" ? "USDT" : "NGN");
@@ -171,16 +171,18 @@ function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from:
   const [result, setResult] = useState<Awaited<ReturnType<typeof swap>> | null>(null);
   const [key] = useState(uuid);
   const avail = balanceOf(from);
+  const fromN = from === "NGN" ? 1 : rates[from]; const toN = to === "NGN" ? 1 : rates[to];
+  const estimate = fromN && toN && amt(amount) > 0 ? (amt(amount) * fromN / toN) * 0.985 : null;
   const confirm = async () => { setBusy(true); try { const r = await swap({ data: { from: from as "NGN", to: to as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } }); setResult(r); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Swap failed"); } finally { setBusy(false); } };
   const sel = (v: string, set: (c: string) => void, exclude: string) => <select className="field h-11" value={v} onChange={(e) => set(e.target.value)}>{CURRENCIES.filter((c) => c.code !== exclude).map((c) => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}</select>;
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Swap currencies</DialogTitle></DialogHeader>
     {step === "form" && <div className="space-y-3">
       <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You pay</p>{sel(from, setFrom, to)}<div className="mt-2"><AmountInput code={from} value={amount} onChange={setAmount} max={avail} /></div></div>
       <div className="flex justify-center"><Button variant="crisp" size="icon" className="rounded-full" aria-label="Flip currencies" onClick={() => { setFrom(to); setTo(from); }}><ArrowUpDown /></Button></div>
-      <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You receive</p>{sel(to, setTo, from)}<p className="mt-2 text-[11px] text-muted-foreground">Held as your {to} balance, even if no {to} account is issued yet.</p></div>
+      <div className="rounded-xl border border-border p-3"><p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">You receive</p>{sel(to, setTo, from)}{estimate !== null && <p className="mt-2 font-mono text-lg font-bold">≈ {fmt(to, estimate)}</p>}<p className="mt-2 text-[11px] text-muted-foreground">{estimate !== null ? "Estimate from your last rate after the 1.5% spread. Final amount can move ±2%. " : "No recent rate yet; the exact amount is set when you confirm. "}Held as your {to} balance, even if no {to} account is issued yet.</p></div>
       <Button variant="brand" className="w-full" disabled={!(amt(amount) > 0) || (live && amt(amount) > avail)} onClick={() => setStep("review")}>Review swap</Button>
     </div>}
-    {step === "review" && <Review rows={[["You pay", fmt(from, amt(amount))], ["You receive", `${to} · rate set at confirmation`], ["Fee", "1.5% spread, shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />}
+    {step === "review" && <Review rows={[["You pay", fmt(from, amt(amount))], ["You receive", estimate !== null ? `≈ ${fmt(to, estimate)} (last rate)` : `${to} · rate set at confirmation`], ["Fee", "1.5% spread, shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />}
     {step === "done" && result && <Receipt rows={[["Paid", fmt(from, result.fromAmount)], ["Received", fmt(to, result.toAmount)], ["Rate", `1 ${from} = ${result.rate} ${to}`], ["Fee", `${result.fee} ${result.feeCurrency}`], ["Reference", result.reference ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -225,6 +227,24 @@ export function DepositQr({ address, code, network, size = 168 }: { address: str
     <div className="rounded-2xl bg-foreground p-3 text-background shadow-cobalt"><QRCodeSVG value={address} size={size} level="M" bgColor="transparent" fgColor="currentColor" marginSize={0} title={`${code} deposit address QR code`} /></div>
     <figcaption className="text-center text-[11px] font-semibold text-muted-foreground">Scan to send {code}{network ? ` on ${network}` : ""}</figcaption>
   </figure>;
+}
+
+/** Total across every wallet, shown in naira using the last known rates. */
+export function PortfolioHeader() {
+  const load = useServerFn(getWallets); const loadExtras = useServerFn(getWalletExtras);
+  const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts();
+  const [data, setData] = useState<{ w: WalletView[]; x: Extras } | null>(null);
+  useEffect(() => { let on = true; Promise.all([load(), loadExtras()]).then(([w, x]) => on && setData({ w: w.wallets, x })).catch(() => undefined); return () => { on = false; }; }, [load, loadExtras, banking]);
+  if (!data) return null;
+  const ngn = banking?.balances["NGN"] ?? data.x.ngnBalance;
+  const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValue(w.code, w.balance, data.x.rates) }));
+  const total = ngn + parts.reduce((a, p) => a + (p.n ?? 0), 0);
+  const unpriced = parts.filter((p) => p.n === null).map((p) => p.code);
+  return <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
+    <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Total across all wallets</p><p className="font-mono text-lg font-bold">{mask(naira(total), hidden)}</p></div>
+    <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-muted-foreground"><span className="rounded-full bg-muted px-2 py-1">🇳🇬 {mask(naira(ngn), hidden)}</span>{parts.map((p) => <span key={p.code} className="rounded-full bg-muted px-2 py-1">{currencyDef(p.code)?.flag} {mask(fmt(p.code, p.bal), hidden)}</span>)}</div>
+    {unpriced.length > 0 && <p className="text-[10px] text-muted-foreground">{unpriced.join(", ")} not in total until a swap sets a rate.</p>}
+  </div>;
 }
 
 /** Always-visible one-tap currency switcher shown at the top of every dashboard page. */

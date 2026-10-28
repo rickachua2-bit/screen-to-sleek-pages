@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { FlameMark, Logo } from "./Logo";
 import { ComplianceFooter } from "./ComplianceFooter";
 import { useBankingProfile } from "./PaddleConsole";
-import { CurrencyBar, CurrencyWallet } from "./CurrencyWallet";
+import { CurrencyBar, CurrencyWallet, PortfolioHeader } from "./CurrencyWallet";
+import { useLiveUpdates } from "@/lib/live-updates";
 import { setCurrency, useCurrency } from "@/lib/currency-store";
 import { CURRENCIES, currencyDef } from "@/lib/wallets";
 
@@ -41,6 +42,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     } finally { setRefreshing(false); }
   };
   const updatedLabel = updatedAt ? `Updated ${updatedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : "";
+  useLiveUpdates(user?.id, async () => { await Promise.all([bankingRefresh(), onRefresh?.() ?? Promise.resolve()]); setUpdatedAt(new Date()); });
   useEffect(() => { if (ready && !token) navigate({ to: "/auth" }); }, [ready, token, navigate]);
   useEffect(() => {
     if (!open) return;
@@ -96,6 +98,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       </header>
       {banking && environment === "Sandbox" && <div className="border-b border-magenta/30 bg-magenta/10 px-7 py-2 text-xs font-semibold text-foreground">Sandbox · test money only. Real transactions start after verification and approval.</div>}
       <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>
+        {onModuleChange && (!activeModule || activeModule === "overview" || activeModule === "home") && <PortfolioHeader />}
         {onModuleChange && <CurrencyBar current={currency} onPick={(c) => { setCurrency(c); if (activeModule !== (isBiz ? "overview" : "home")) onModuleChange(isBiz ? "overview" : "home"); }} />}
         {currency !== "NGN" && (!activeModule || activeModule === "overview" || activeModule === "home") && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} onNavigate={onModuleChange} />}
         {children}<ComplianceFooter /></main>

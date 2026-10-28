@@ -1,4 +1,5 @@
-import { GoLive, PaddleConsole } from "./PaddleConsole";
+import { GoLive, PaddleConsole, useBankingProfile } from "./PaddleConsole";
+import { personalTier, TIER_LIMITS } from "@/lib/go-live";
 import { useState } from "react";
 import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -297,9 +298,7 @@ function ProfileModule() {
           </div>
         </div>
         <div className="mt-5 rounded-xl border border-border p-4">
-          <p className="flex items-center gap-2 text-sm font-extrabold text-foreground"><BadgeCheck className="h-4 w-4 text-success" /> KYC Tier 2 Verified</p>
-          <p className="mt-1 text-xs font-semibold text-muted-foreground">Daily limit ₦5,000,000 · Upgrade to Tier 3 for unlimited transfers.</p>
-          <Button variant="crisp" size="sm" className="mt-3" onClick={() => toast.success("Tier 3 upgrade drafted", { description: "Document upload activates with the live service." })}>Upgrade to Tier 3</Button>
+<TierCard />
         </div>
       </Panel>
       <Panel title="Security">
@@ -335,4 +334,13 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "golive": return <GoLive role="personal" />;
     default: return <HomeModule open={open} />;
   }
+}
+
+function TierCard() {
+  const { profile } = useBankingProfile();
+  const tier = personalTier(profile?.kyc ?? []);
+  return <>
+    <p className="flex items-center gap-2 text-sm font-extrabold text-foreground"><BadgeCheck className={`h-4 w-4 ${tier ? "text-success" : "text-muted-foreground"}`} /> {tier ? `KYC Tier ${tier} Verified` : "KYC not verified yet"}</p>
+    <p className="mt-1 text-xs font-semibold text-muted-foreground">{tier && TIER_LIMITS[tier] ? `Daily limit ${TIER_LIMITS[tier]}. ` : ""}{tier < 3 ? `Complete Tier ${tier + 1} in Go Live to raise your limits.` : "Highest tier reached."}</p>
+  </>;
 }
