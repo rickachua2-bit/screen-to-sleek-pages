@@ -92,7 +92,16 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
           <div className="font-mono text-4xl font-bold tracking-tight md:text-5xl">{wallets ? mask(fmt(code, balance), hidden) : <Loader2 className="h-8 w-8 animate-spin" />}</div>
           <p className="mt-1 text-xs font-semibold text-foreground/75">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· last rate</span></> : "Naira value appears after your first swap")}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
         </div>
-        <StatusPill status={w?.status} />
+        <div className="flex flex-col items-end gap-3">
+          <StatusPill status={w?.status} />
+          {def.kind === "crypto" && w?.accountNumber && <button type="button" onClick={() => setDialog("receive")} title="Tap Receive to see the full address and QR code" className="group flex max-w-[16rem] items-center gap-3 rounded-2xl border border-border bg-background/40 px-3.5 py-2.5 text-left backdrop-blur-md transition-all hover:border-cyan/60 hover:bg-background/60">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-tri text-primary-foreground"><QrCode className="h-4 w-4" /></span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-foreground/70">Deposit address · {w.network ?? def.network}</span>
+              <span className="block truncate font-mono text-xs font-bold">{w.accountNumber.slice(0, 6)}…{w.accountNumber.slice(-6)}</span>
+            </span>
+          </button>}
+        </div>
       </div>
       {error && <p className="relative mt-3 text-xs font-semibold text-destructive">{error}</p>}
       {w && w.status !== "active" && code !== "NGN" && <div className="relative mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/40 p-3">
@@ -104,11 +113,16 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
 
     {!compact && <div className="grid gap-4 lg:grid-cols-5">
       <div className="panel p-5 lg:col-span-2">
-        <h3 className="mb-3 text-sm font-extrabold">{def.kind === "crypto" ? "Deposit address" : "Account details"}</h3>
-        {w?.accountNumber ? <>{def.kind === "crypto" && <div className="mb-4"><DepositQr address={w.accountNumber} code={code} network={w.network ?? def.network} /></div>}<dl className="space-y-3 text-sm">{[["Account name", w.accountName], ["Bank", w.bankName], [def.kind === "crypto" ? "Address" : "Account number", w.accountNumber], ["Routing / sort code", w.routing], ["Network", w.network]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="text-[10px] font-bold uppercase text-muted-foreground">{k}</dt><dd className="break-all font-mono text-sm font-bold">{v}</dd></div>)}</dl>
-          <div className="mt-4 flex gap-2"><Button variant="crisp" size="sm" className="rounded-full" onClick={copyAll}><Copy />Copy</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="ghost" size="sm" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
-          {def.kind === "crypto" && <p className="mt-3 text-[11px] text-chart-4">Send only {code} on the {w.network ?? def.network} network. Other coins or networks will be lost.</p>}</>
+        {def.kind === "crypto" ? <>
+          <h3 className="mb-2 text-sm font-extrabold">Receiving {code}</h3>
+          <p className="text-xs text-muted-foreground">{w?.accountNumber ? <>Your deposit address and QR code open when you tap <b className="text-foreground">Receive</b>.</> : w?.status === "not_active" ? NOT_ACTIVE : "Issue a wallet to get a deposit address."}</p>
+          {w?.accountNumber && <Button variant="brand" size="sm" className="mt-3 rounded-full" onClick={() => setDialog("receive")}><QrCode />Receive {code}</Button>}
+        </> : <>
+        <h3 className="mb-3 text-sm font-extrabold">Account details</h3>
+        {w?.accountNumber ? <><dl className="space-y-3 text-sm">{[["Account name", w.accountName], ["Bank", w.bankName], ["Account number", w.accountNumber], ["Routing / sort code", w.routing]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="text-[10px] font-bold uppercase text-muted-foreground">{k}</dt><dd className="break-all font-mono text-sm font-bold">{v}</dd></div>)}</dl>
+          <div className="mt-4 flex gap-2"><Button variant="crisp" size="sm" className="rounded-full" onClick={copyAll}><Copy />Copy</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="ghost" size="sm" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div></>
           : <p className="text-xs text-muted-foreground">{w?.status === "not_active" ? NOT_ACTIVE : "Issue an account to see details here."}</p>}
+        </>}
         <div className="mt-5 border-t border-border pt-4"><h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold"><Gauge className="h-3.5 w-3.5 text-cyan" />Limits & fees</h4><LimitsList code={code} /></div>
       </div>
       <div className="lg:col-span-3"><WalletActivity code={code} extras={extras} /></div>
