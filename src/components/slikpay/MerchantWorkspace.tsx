@@ -9,6 +9,7 @@ import { NubanCard, UsdCardPanel } from "./Widgets";
 import { GoLive, PaddleConsole } from "./PaddleConsole";
 import { ServicesHub } from "./ServicesHub";
 import { KybFlow } from "./KybFlow";
+import { TransferCenter } from "./TransferCenter";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
@@ -36,7 +37,8 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module.startsWith("svc-")) return <ServicesHub key={module} role="merchant" only={[module.slice(4)]} title={item.label} autoOpen />;
   if (module === "developer") return <PaddleConsole role="merchant" />;
   if (module === "golive") return <KybFlow />;
-  if (module === "banking") return <div className="grid gap-5 xl:grid-cols-2"><NubanCard nuban={account.nuban} /><section className="rounded-lg border border-border bg-card p-6"><h2 className="font-bold">Bank settlement</h2><p className="mt-3 text-sm text-muted-foreground">Slikpay · NGN</p><div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => onAction("send")}>Bank transfer</Button><Button variant="crisp" onClick={() => onAction("add")}>Account details</Button></div><p className="mt-6 text-xs text-muted-foreground">Sub-wallets and settlement schedules await your banking service connection.</p></section></div>;
+  if (module === "banking") return <TransferCenter key="single" />;
+  if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
   if (module === "cards") return <><UsdCardPanel onFund={() => onAction("fund")} label="CORPORATE" /><section className="border-t border-border py-6"><h2 className="font-bold">Card controls</h2><p className="mt-2 text-sm text-muted-foreground">NGN issuance, card freeze and spending controls are not connected yet.</p></section></>;
   if (module === "treasury") return <><div className="flex flex-wrap gap-3">{["NGN", "KES", "GHS", "ZAR", "USD", "EUR", "GBP", "USDT"].map((c) => <span key={c} className="rounded-lg border border-border bg-card px-5 py-4 font-mono font-bold">{c}</span>)}</div><section className="border-t border-border py-6"><h2 className="font-bold">Currency exchange</h2><p className="my-3 text-sm text-muted-foreground">Execute an exchange through your connected Slikpay service.</p><Button onClick={() => onAction("swap")}>Open currency swap</Button></section></>;
   if (!config) return null;

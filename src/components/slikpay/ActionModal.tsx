@@ -42,7 +42,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
           <h2 className="text-lg font-black text-foreground">{TITLES[kind]}</h2>
           <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="h-5 w-5" /></Button>
         </div>
-        {kind === "add" ? <AddMoney /> : kind === "send" ? <SendNip live={live} onClose={onClose} /> : kind === "softpos" ? (
+        {kind === "add" ? <AddMoney /> : kind === "send" ? <SendNip live={live} onClose={onClose} balance={profile?.balances?.["NGN"]} /> : kind === "softpos" ? (
           <div className="space-y-4 text-center">
             <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-4 border-dashed border-cyan text-sm font-bold text-body">Tap card here</div>
             <p className="text-sm font-semibold text-body">Card acceptance on this device turns on once your terminal is paired.</p>
@@ -76,7 +76,7 @@ function AddMoney() {
   </div>;
 }
 
-function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
+export function SendNip({ live, onClose, balance }: { live: boolean; onClose: () => void; balance?: number | undefined }) {
   const banksFn = useServerFn(listBanks); const resolve = useServerFn(baasService); const run = useServerFn(runPaddleOperation); const feeFn = useServerFn(quoteFee);
   const [banks, setBanks] = useState<{ code: string; name: string }[] | null>(null);
   const [q, setQ] = useState(""); const [bank, setBank] = useState<{ code: string; name: string } | null>(null);
@@ -123,6 +123,7 @@ function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
     {live && <input className="field text-center font-mono tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} placeholder="PIN" aria-label="Transaction PIN" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} />}
     <div className="flex gap-2"><Button variant="crisp" onClick={() => setStep("form")}>Edit</Button><Button variant="brand" className="flex-1" disabled={busy} onClick={send}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}Send {naira(amt)}</Button></div>
   </div>;
+  const short = balance !== undefined && amt > balance;
   const dup = name && amt > 0 && isDuplicate(recents, { account: acct, amount: amt });
   return <div className="space-y-4">
     {recents.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Recent recipients</p><div className="flex gap-3 overflow-x-auto pb-1">{recents.map((r) => <button key={r.account} type="button" onClick={() => pick(r)} className="flex w-16 shrink-0 flex-col items-center gap-1 text-center"><span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-primary to-cyan text-sm font-bold text-primary-foreground">{r.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}</span><span className="w-full truncate text-[11px] font-semibold text-foreground">{r.name.split(" ")[0]}</span></button>)}</div></div>}
@@ -137,7 +138,9 @@ function SendNip({ live, onClose }: { live: boolean; onClose: () => void }) {
     {name ? <div className="rounded-lg bg-success-soft px-3 py-2 text-sm font-bold text-success">{name}</div> : lookup && <p role="status" className="text-xs text-muted-foreground">{lookup}</p>}
     <Field label="Amount (NGN)"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /><div className="mt-2 flex flex-wrap gap-2">{QUICK.map((v) => <button key={v} type="button" onClick={() => setAmount(String(v))} className="rounded-full border border-border px-3 py-1 text-xs font-bold text-foreground hover:border-primary">{naira(v)}</button>)}</div></Field>
     <Field label="Note (optional)"><input className="field" maxLength={60} value={narration} onChange={(e) => setNarration(e.target.value)} /></Field>
+    {balance !== undefined && <p className="text-xs text-muted-foreground">Available: <span className="font-bold text-foreground">{naira(balance)}</span></p>}
+    {short && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">This is more than your available balance.</p>}
     {dup && <p role="alert" className="rounded-lg bg-warning/15 px-3 py-2 text-xs font-semibold text-foreground">You sent this exact amount to this account a few minutes ago. Check before sending again.</p>}
-    <Button variant="brand" className="h-11 w-full" disabled={!name || !(amt > 0)} onClick={review}>Review transfer</Button>
+    <Button variant="brand" className="h-11 w-full" disabled={!name || !(amt > 0) || short} onClick={review}>Review transfer</Button>
   </div>;
 }
