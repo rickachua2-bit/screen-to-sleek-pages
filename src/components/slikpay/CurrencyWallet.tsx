@@ -24,6 +24,7 @@ const dec = (code: string) => (currencyDef(code)?.kind === "crypto" ? 6 : 2);
 const LOCALE: Record<string, string> = { NGN: "en-NG", GHS: "en-GH", KES: "en-KE", ZAR: "en-ZA", USD: "en-US", EUR: "en-IE", GBP: "en-GB", USDT: "en-US", USDC: "en-US" };
 export const fmt = (code: string, n: number) => `${currencyDef(code)?.symbol ?? ""}${n.toLocaleString(LOCALE[code] ?? undefined, { minimumFractionDigits: 2, maximumFractionDigits: dec(code) })}`;
 const ICONS: Record<WalletAction, LucideIcon> = { receive: ArrowDownLeft, send: ArrowUpRight, withdraw: Banknote, swap: ArrowLeftRight, request: Link2, more: MoreHorizontal };
+const TINTS: Record<WalletAction, string> = { receive: "tint-cyan", send: "tint-cobalt", withdraw: "tint-magenta", swap: "tint-cobalt", request: "tint-cyan", more: "tint-cobalt" };
 
 export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: string; mode?: string | undefined; onNavigate?: ((module: string) => void) | undefined; compact?: boolean }) {
   const def = currencyDef(code)!;
@@ -71,7 +72,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
 
   const actionGrid = (
       <div className="relative mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-40"><span className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/50 text-foreground transition-all group-enabled:group-hover:scale-105 group-enabled:group-hover:bg-gradient-tri group-enabled:group-hover:text-primary-foreground">{a.enabled ? <Icon className="h-5 w-5" /> : <Lock className="h-4 w-4" />}</span><span className="text-[11px] font-bold">{a.label}</span></button>;
+        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"><span className={`wallet-action flex h-12 w-12 items-center justify-center rounded-full ${TINTS[a.id]} group-enabled:group-hover:scale-110 group-enabled:group-hover:border-cyan/60 group-enabled:group-hover:shadow-[0_10px_24px_-8px_color-mix(in_oklab,var(--cyan)_55%,transparent)]`}>{a.enabled ? <Icon className="h-5 w-5" strokeWidth={2.2} /> : <Lock className="h-4 w-4" />}</span><span className="text-[11px] font-bold text-body transition-colors group-enabled:group-hover:text-foreground">{a.label}</span></button>;
           return a.id === "more" ? <DropdownMenu key="more"><DropdownMenuTrigger asChild>{btn}</DropdownMenuTrigger><DropdownMenuContent align="end" className="theme-flame"><DropdownMenuItem onSelect={exportCsv}><Download />Download {code} statement</DropdownMenuItem><DropdownMenuItem onSelect={() => setDialog("limits")}><Gauge />Limits & fees</DropdownMenuItem><DropdownMenuItem disabled={!w?.accountNumber} onSelect={copyAll}><Copy />Copy all details</DropdownMenuItem></DropdownMenuContent></DropdownMenu> : btn; })}
       </div>
   );
