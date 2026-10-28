@@ -899,13 +899,12 @@ function TypeSelect({ onPick }: { onPick: (r: Role) => void }) {
 
 export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const [mode, setMode] = useState<Mode>("in");
-  const [role, setRole] = useState<Role>("merchant");
   const [picked, setPicked] = useState<Role | null>(null);
   const [success, setSuccess] = useState<Pending | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleDone = (p: Pending, remember: boolean) => {
-    if (p.needsConfirmation) { toast.success("Check your email to confirm your account, then sign in."); setMode("in"); setPicked(null); setRole(p.role); return; }
+    if (p.needsConfirmation) { toast.success("Check your email to confirm your account, then sign in."); setMode("in"); setPicked(null); return; }
     if (mode === "up") setSuccess(p);
     else onDone(p, remember);
   };
@@ -921,11 +920,10 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
           </button>
         ))}
       </div>
-      {mode === "in" && <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>}
       {mode === "in"
-        ? <SignIn key={`in-${role}`} role={role} onDone={handleDone} />
+        ? <SignIn key="in" onDone={handleDone} />
         : picked === null
-          ? <TypeSelect onPick={(r) => { setPicked(r); setRole(r); }} />
+          ? <TypeSelect onPick={setPicked} />
           : picked === "merchant"
             ? <BusinessSignUp key="up-biz" onDone={handleDone} onBack={() => setPicked(null)} />
             : <PersonalSignUp key="up-per" onDone={handleDone} onBack={() => setPicked(null)} />}
