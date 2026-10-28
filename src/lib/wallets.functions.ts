@@ -41,3 +41,89 @@ export const issueCurrencyWallet = createServerFn({ method: "POST" })
       throw e;
     }
   });
+
+const money = z.object({ amount: z.number().positive().max(1e12), pin: z.string().regex(/^\d{4}$/).optional() });
+const CODES = ["NGN", "GHS", "KES", "ZAR", "USD", "EUR", "GBP", "USDT", "USDC"] as const;
+export interface PayoutAccount { accountNumber: string; accountName: string; bankName: string; bankCode?: string | undefined }
+
+export const getWalletExtras = createServerFn({ method: "POST" }).handler(async () => {
+  const { bankingUser } = await import("./paddle.server");
+  const { readRecord, holderName } = await import("./wallets.server");
+  const { db, user, mode } = await bankingUser();
+  const [rates, payouts, settlement, receipts, ledger, name] = await Promise.all([
+    readRecord<Record<string, number>>(db, user.id, `fx_rates_${mode}`, {}),
+    readRecord<Record<string, PayoutAccount>>(db, user.id, `payout_accounts_${mode}`, {}),
+    readRecord<PayoutAccount | null>(db, user.id, "settlement_account", null),
+    db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, summary, created_at").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: false }).limit(100),
+    db.from("ledger_entries").select("amount, currency, status, operation, reference, created_at").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: false }).limit(200),
+    holderName(db, user),
+  ]);
+  const ngn = (ledger.data ?? []).filter((e) => e.currency === "NGN" && e.status !== "released").reduce((a, e) => a + Number(e.amount), 0);
+  const pending: Record<string, number> = {};
+  for (const e of ledger.data ?? []) if (e.status === "held") pending[e.currency] = (pending[e.currency] ?? 0) + Math.abs(Number(e.amount));
+  return { mode, holder: name, rates, payouts: { ...payouts, ...(settlement ? { NGN: settlement } : {}) }, ngnBalance: ngn, pending, receipts: receipts.data ?? [], ledger: (ledger.data ?? []).map((e) => ({ ...e, amount: Number(e.amount) })) };
+});
+
+export const swapCurrency = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => money.extend({ from: z.enum(CODES), to: z.enum(CODES), idempotencyKey: z.string().uuid() }).refine((x) => x.from !== x.to, "Pick two different currencies.").parse(d))
+  .handler(async ({ data }) => {
+    const { bankingUser, callPaddle } = await import("./paddle.server");
+    const { guardMoney, settleMoney, readRecord, writeRecord } = await import("./wallets.server");
+    const { learnRate } = await import("./wallet-actions");
+    const ctx = await bankingUser();
+    const op = `SWAP ${data.from}->${data.to}`;
+    await guardMoney(ctx, data.from, data.amount, data.pin, op, data.idempotencyKey);
+    try {
+      const r = await callPaddle(ctx.mode, "POST", "/v1/crypto/swap", { fromCurrency: data.from, toCurrency: data.to, amount: data.amount }, data.idempotencyKey);
+      const d = (r.data ?? {}) as Record<string, unknown>;
+      const toAmount = Number(d["toAmount"]); const rate = Number(d["rate"]); const fee = Number(d["platformFee"] ?? 0);
+      if (!(toAmount > 0)) throw new Error("The swap was not confirmed.");
+      const credited = Math.floor(toAmount * 100) / 100;
+      const reference = typeof d["reference"] === "string" ? d["reference"] : null;
+      await ctx.db.from("ledger_entries").insert({ user_id: ctx.user.id, mode: ctx.mode, currency: data.to, amount: credited, status: "posted", operation: op, reference: `${data.idempotencyKey}:in` });
+      await settleMoney(ctx, data.idempotencyKey, true, reference, { to: data.to, toAmount, rate, fee });
+      const key = `fx_rates_${ctx.mode}`;
+      await writeRecord(ctx.db, ctx.user.id, key, learnRate(await readRecord(ctx.db, ctx.user.id, key, {}), data.from, data.to, rate));
+      return { reference, fromAmount: data.amount, toAmount, credited, rate, fee, feeCurrency: data.to };
+    } catch (e) { await settleMoney(ctx, data.idempotencyKey, false, null); throw e; }
+  });
+
+export const savePayoutAccount = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ currency: z.enum(["GHS", "KES", "ZAR", "USD", "EUR", "GBP"]), accountNumber: z.string().trim().min(4).max(40), accountName: z.string().trim().min(2).max(120), bankName: z.string().trim().min(2).max(120) }).parse(d))
+  .handler(async ({ data }) => {
+    const { bankingUser } = await import("./paddle.server");
+    const { readRecord, writeRecord, holderName } = await import("./wallets.server");
+    const { isOwnPayoutAccount } = await import("./wallet-actions");
+    const { db, user, mode } = await bankingUser();
+    if (!isOwnPayoutAccount(await holderName(db, user), data.accountName)) throw new Error("Withdrawals can only go to an account in your verified business name.");
+    const key = `payout_accounts_${mode}`;
+    const cur = await readRecord<Record<string, PayoutAccount>>(db, user.id, key, {});
+    await writeRecord(db, user.id, key, { ...cur, [data.currency]: { accountNumber: data.accountNumber, accountName: data.accountName, bankName: data.bankName } });
+    return { ok: true };
+  });
+
+export const withdrawFunds = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => money.extend({ currency: z.enum(["NGN", "GHS", "KES", "ZAR", "USD", "EUR", "GBP"]), idempotencyKey: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { bankingUser, callPaddle } = await import("./paddle.server");
+    const { guardMoney, settleMoney, readRecord, holderName } = await import("./wallets.server");
+    const { isOwnPayoutAccount } = await import("./wallet-actions");
+    const { currencyDef } = await import("./wallets");
+    const ctx = await bankingUser();
+    const acct = data.currency === "NGN"
+      ? await readRecord<PayoutAccount | null>(ctx.db, ctx.user.id, "settlement_account", null)
+      : (await readRecord<Record<string, PayoutAccount>>(ctx.db, ctx.user.id, `payout_accounts_${ctx.mode}`, {}))[data.currency] ?? null;
+    if (!acct) throw new Error(data.currency === "NGN" ? "Verify your settlement account in KYB first." : "Add your payout account for this currency first.");
+    if (!isOwnPayoutAccount(await holderName(ctx.db, ctx.user), acct.accountName)) throw new Error("Payout account is not in your verified name.");
+    const op = `WITHDRAW ${data.currency}`;
+    await guardMoney(ctx, data.currency, data.amount, data.pin, op, data.idempotencyKey);
+    try {
+      const r = data.currency === "NGN"
+        ? await callPaddle(ctx.mode, "POST", "/v1/payouts/transfer", { amount: data.amount, destinationBankCode: acct.bankCode, destinationAccountNumber: acct.accountNumber, destinationAccountName: acct.accountName, narration: "Slikpay withdrawal", reference: data.idempotencyKey }, data.idempotencyKey)
+        : await callPaddle(ctx.mode, "POST", "/v1/payouts/global", { amount: data.amount, currency: data.currency, destinationCurrency: data.currency, beneficiary: { accountNumber: acct.accountNumber, accountName: acct.accountName, bankName: acct.bankName, country: currencyDef(data.currency)?.country } }, data.idempotencyKey);
+      const d = (r.data ?? {}) as Record<string, unknown>;
+      const reference = [d["reference"], d["transactionReference"], d["id"]].find((v) => typeof v === "string") as string | undefined;
+      await settleMoney(ctx, data.idempotencyKey, true, reference ?? null, { to: acct.accountNumber, bank: acct.bankName });
+      return { reference: reference ?? null, to: `${acct.accountName} · ${acct.bankName} · ${acct.accountNumber}` };
+    } catch (e) { await settleMoney(ctx, data.idempotencyKey, false, null); throw e; }
+  });

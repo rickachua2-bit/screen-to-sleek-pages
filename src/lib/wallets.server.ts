@@ -55,3 +55,36 @@ export async function ensureStablecoinWallets(db: Db, user: User, mode: Mode, ha
   for (const c of shouldAutoIssueStablecoins(mode, hasNairaAccount, owned)) { try { await issueWallet(db, user, mode, c); } catch { /* retried on next load */ } }
 }
 export { STABLECOINS };
+
+/* ---------- money guard shared by swap / withdraw ---------- */
+type Ctx = { db: Db; user: User; mode: Mode; review: string };
+export async function guardMoney(ctx: Ctx, currency: string, amount: number, pin: string | undefined, operation: string, reference: string) {
+  if (ctx.mode === "live") {
+    if (ctx.review !== "approved") throw new Error("Complete verification before moving money.");
+    if (!pin) throw new Error("Enter your 4-digit transaction PIN.");
+    const sec = await ctx.db.from("merchant_security").select("pin_digest, pin_salt").eq("user_id", ctx.user.id).maybeSingle();
+    const { pinDigest } = await import("./merchant-verification.server");
+    if (!sec.data || sec.data.pin_digest !== await pinDigest(pin, sec.data.pin_salt)) throw new Error("Incorrect transaction PIN.");
+    const held = await ctx.db.rpc("hold_funds", { p_user: ctx.user.id, p_mode: ctx.mode, p_currency: currency, p_amount: amount, p_operation: operation, p_reference: reference });
+    if (held.error) throw new Error("Could not reserve funds. Try again.");
+    if (held.data !== true) throw new Error("Insufficient balance for this transaction.");
+  } else {
+    // Sandbox: still record the debit so test balances move.
+    await ctx.db.from("ledger_entries").insert({ user_id: ctx.user.id, mode: ctx.mode, currency, amount: -amount, status: "held", operation, reference });
+  }
+  const r = await ctx.db.from("payment_receipts").insert({ user_id: ctx.user.id, mode: ctx.mode, operation, idempotency_key: reference, status: "pending", amount, currency });
+  if (r.error) throw new Error("This request was already submitted.");
+}
+export async function settleMoney(ctx: Ctx, reference: string, ok: boolean, providerRef: string | null, summary?: object) {
+  await ctx.db.from("payment_receipts").update({ status: ok ? "succeeded" : "failed", provider_reference: providerRef, ...(summary ? { summary } : {}) }).eq("idempotency_key", reference);
+  await ctx.db.from("ledger_entries").update({ status: ok ? "posted" : "released" }).eq("reference", reference);
+}
+
+/* ---------- small per-user JSON records (rates, payout accounts) ---------- */
+export async function readRecord<T>(db: Db, userId: string, step: string, fallback: T): Promise<T> {
+  const r = await db.from("kyc_steps").select("summary").eq("user_id", userId).eq("step", step).maybeSingle();
+  try { return r.data?.summary ? (JSON.parse(r.data.summary) as T) : fallback; } catch { return fallback; }
+}
+export async function writeRecord(db: Db, userId: string, step: string, value: unknown) {
+  await db.from("kyc_steps").upsert({ user_id: userId, step, status: "verified", summary: JSON.stringify(value) }, { onConflict: "user_id,step" });
+}
