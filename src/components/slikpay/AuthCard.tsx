@@ -619,7 +619,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 
   if (step === 1) {
     return (
-      <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b1-${shake}`}>
+      <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4">
         <StepBar n={1} labels={["Account Details", "Business", "Security"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
