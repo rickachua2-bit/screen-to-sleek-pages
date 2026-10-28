@@ -7,6 +7,6 @@
 Live module operations are outside this presentation task: new workspaces show connection status and temporary drafts, not submitted banking actions.
 
 # Pop-ups and dropdowns
-- [ ] Apply shared brand surfaces to dialogs, notifications and dropdowns.
-- [ ] Replace native dropdowns with branded accessible selectors.
-- [ ] Verify selections and pop-ups on desktop and phone; run existing tests.
+- [x] Apply shared brand surfaces to dialogs, notifications and dropdowns.
+- [x] Replace native dropdowns with branded accessible selectors.
+- [x] Verify selections and pop-ups on desktop and phone; run existing tests.
