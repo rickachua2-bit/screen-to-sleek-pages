@@ -70,18 +70,23 @@ export function FlipNubanCard({ nuban, accountName, bankName, status, sandbox }:
   const [flipped, setFlipped] = useState(false);
   const pretty = `${nuban.slice(0, 4)} ${nuban.slice(4, 8)} ${nuban.slice(8)}`;
   const share = [accountName, bankName, nuban].filter(Boolean).join(" · ");
-  const copy = async (e: React.MouseEvent) => { e.stopPropagation(); try { await navigator.clipboard.writeText(share); } catch { /* clipboard unavailable */ } toast.success("Account details copied", { description: share }); };
-  const face = "flip-face shine flex h-full min-h-[210px] flex-col justify-between rounded-2xl border border-border bg-gradient-tri p-6 text-primary-foreground shadow-cobalt";
-  return <div className="flip-scene"><div role="button" tabIndex={0} aria-label="Flip account card" onClick={() => setFlipped(!flipped)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFlipped(!flipped); } }} className={`flip-inner cursor-pointer ${flipped ? "is-flipped" : ""}`}>
-    <div className={face}>
-      <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold"><Landmark className="h-4 w-4" />{sandbox ? "Sandbox account" : "Business account"}</span>{status && <span className="rounded-full bg-background/25 px-2.5 py-1 text-[10px] font-bold">{status === "ACTIVE" ? "● Active" : status}</span>}</div>
-      <div><div className="font-mono text-3xl font-bold tracking-widest">{pretty}</div><p className="mt-2 text-[11px] font-semibold opacity-80">Tap card to see account name & bank</p></div>
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(share); toast.success("Account details copied"); }
+    catch { toast.error("Could not copy account details"); }
+  };
+  return <section className="receiving-account" aria-label={sandbox ? "Sandbox account" : "Business account"}>
+    <div className="relative flex min-h-[220px] flex-col justify-between gap-6 p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3"><span className="receiving-account-icon flex h-10 w-10 items-center justify-center rounded-lg"><Landmark className="h-5 w-5" /></span><div><p className="text-sm font-bold">{sandbox ? "Sandbox account" : "Business account"}</p><p className="mt-1 text-[11px] text-muted-foreground">NGN · Receiving account</p></div></div>
+        {status && <span className={`receiving-account-status inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${status.toUpperCase() === "ACTIVE" ? "is-active" : ""}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{status.toUpperCase() === "ACTIVE" ? "Active" : status}</span>}
+      </div>
+      <div className="min-w-0"><p className="mb-2 text-[10px] font-semibold uppercase text-muted-foreground">Account number</p><div className="flex items-center justify-between gap-2"><p className="receiving-account-number font-mono text-2xl font-semibold sm:text-3xl">{pretty}</p><Button variant="ghost" size="icon" className="receiving-account-copy shrink-0" onClick={copy} aria-label="Copy account details" title="Copy account details"><Copy /></Button></div><p className="mt-3 break-words text-xs font-semibold leading-relaxed">{accountName ?? "Account name unavailable"}</p></div>
     </div>
-    <div className={`${face} flip-back`}>
-      <dl className="space-y-3 text-sm"><div><dt className="text-[10px] font-bold uppercase opacity-75">Account name</dt><dd className="font-bold">{accountName ?? "—"}</dd></div><div><dt className="text-[10px] font-bold uppercase opacity-75">Bank</dt><dd className="font-bold">{bankName ?? "—"}</dd></div><div><dt className="text-[10px] font-bold uppercase opacity-75">Account number</dt><dd className="font-mono font-bold">{nuban}</dd></div></dl>
-      <Button variant="crisp" size="sm" className="self-start rounded-full" onClick={copy}><Copy />Copy details</Button>
+    <div className="receiving-account-footer relative flex min-h-14 flex-wrap items-center justify-between gap-2 px-5 py-3 sm:px-6">
+      <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"><Landmark className="h-3.5 w-3.5 shrink-0" /><span className="break-words">{flipped ? bankName ?? "Bank details unavailable" : "Bank details"}</span></p>
+      <Button variant="ghost" size="sm" className="receiving-account-details h-7 px-2 text-[11px]" aria-expanded={flipped} onClick={() => setFlipped(!flipped)}>{flipped ? <EyeOff /> : <Eye />}{flipped ? "Hide" : "View"}</Button>
     </div>
-  </div></div>;
+  </section>;
 }
 
 const FILTERS = ["All", "In", "Out", "Pending"] as const;
