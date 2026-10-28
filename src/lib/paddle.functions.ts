@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { exactPayoutFee, payoutBody, payoutStatus } from "./transfer-validation";
+import { slikpayTransferFee, payoutBody, payoutStatus } from "./transfer-validation";
 import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scopeOf } from "./paddle-policy";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
@@ -61,8 +61,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
       const accountName = (resolved.data as Record<string, unknown> | null)?.["accountName"];
       if (typeof accountName !== "string" || !accountName.trim()) throw new Error("The bank did not confirm the recipient. Check the account details.");
       data.body["destinationAccountName"] = accountName.trim();
-      const quoted = await callPaddle(mode, "POST", "/v1/pricing/calculate", { rail: "payouts", amount: data.body["amount"] });
-      transferFee = exactPayoutFee(quoted.data);
+      transferFee = slikpayTransferFee(Number(data.body["amount"]));
     }
     const path = fillPath(endpoint.path, data.params);
 

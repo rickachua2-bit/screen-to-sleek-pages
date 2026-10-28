@@ -26,3 +26,10 @@ export function payoutStatus(value: unknown): "succeeded" | "failed" | "pending"
   if (["failed", "rejected", "declined", "reversed"].includes(status)) return "failed";
   return "pending";
 }
+/** Slikpay's NGN bank-transfer fee: 1% of the amount, never more than ₦80. */
+export const TRANSFER_FEE_RATE = 0.01;
+export const TRANSFER_FEE_CAP = 80;
+export function slikpayTransferFee(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a valid amount.");
+  return Math.min(Math.round(amount * TRANSFER_FEE_RATE * 100) / 100, TRANSFER_FEE_CAP);
+}

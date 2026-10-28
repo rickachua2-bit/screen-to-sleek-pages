@@ -7,3 +7,8 @@ describe("API bank transfers", () => {
   it("requires an exact provider fee rather than inventing zero", () => { expect(exactPayoutFee({ rail: "payouts", fee: "10.50", currency: "NGN" })).toBe(10.5); expect(() => exactPayoutFee({ rail: "payouts" })).toThrow(); expect(() => exactPayoutFee({ rail: "collections", fee: 0 })).toThrow(); });
   it("only confirms completed payouts, not HTTP acceptance", () => { expect(payoutStatus({ status: "successful" })).toBe("succeeded"); expect(payoutStatus({ status: "failed" })).toBe("failed"); expect(payoutStatus({ status: "processing" })).toBe("pending"); expect(payoutStatus({ reference: "bank-ref" })).toBe("pending"); });
 });
+import { slikpayTransferFee } from "@/lib/transfer-validation";
+describe("Transfer fee 1% capped at ₦80", () => {
+  it("charges 1% below the cap", () => { expect(slikpayTransferFee(100)).toBe(1); expect(slikpayTransferFee(5000)).toBe(50); });
+  it("never exceeds ₦80", () => { expect(slikpayTransferFee(8000)).toBe(80); expect(slikpayTransferFee(1_000_000)).toBe(80); });
+});
