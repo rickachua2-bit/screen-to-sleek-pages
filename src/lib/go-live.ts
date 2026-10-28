@@ -59,4 +59,4 @@ export function personalTier(kyc: KycRow[]) {
   return tier;
 }
 /** Daily limits known from the brief; other tiers are set at approval. */
-export const TIER_LIMITS: Record<number, string> = { 2: "₦5,000,000/day" };
+

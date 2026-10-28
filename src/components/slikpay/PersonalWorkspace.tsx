@@ -1,14 +1,13 @@
 import { GoLive, PaddleConsole, useBankingProfile } from "./PaddleConsole";
 import { ServicesHub } from "./ServicesHub";
-import { personalTier, TIER_LIMITS } from "@/lib/go-live";
+import { personalTier } from "@/lib/go-live";
 import { useState } from "react";
 import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { naira, USD_CARD, usd, type Txn } from "@/lib/api";
-import { AIRTIME_NETWORKS, CABLE_TV, ELECTRICITY_DISCOS, REWARD_TIERS, SAVINGS_POTS } from "@/lib/personal";
+import { naira, type Txn } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Panel, QuickAction } from "./Widgets";
+import { NubanCard, Panel, QuickAction } from "./Widgets";
 import { DonutChart } from "./Charts";
 import { ModalReceipt, StatusBadge } from "./TransactionTable";
 import { CardGraphic } from "./CardGraphic";
@@ -114,7 +113,7 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         <QuickAction icon={Send} title="Send Money" sub="To bank or @SlikTag" tone="bg-cobalt" onClick={() => open("send")} />
-        <QuickAction icon={Smartphone} title="Airtime & Data" sub="Instant 2% cashback" tone="bg-gradient-brand" onClick={() => open("airtime")} />
+        <QuickAction icon={Smartphone} title="Airtime & Data" sub="MTN, Airtel, Glo, 9mobile" tone="bg-gradient-brand" onClick={() => open("airtime")} />
         <QuickAction icon={Zap} title="Pay Utilities" sub="Electricity & Cable TV" tone="bg-magenta/80" onClick={() => open("bills")} />
         <QuickAction icon={CreditCard} title="USD Virtual Card" sub="Top up in dollars" tone="bg-magenta" onClick={() => open("fund")} />
         <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => open("swap")} />
@@ -136,7 +135,7 @@ function SendModule({ open }: { open: (k: ActionKind) => void }) {
         <Button variant="brand" className="mt-4 w-full" onClick={() => open("send")}><Send /> Send free</Button>
       </Panel>
       <Panel title="Bank Transfer (NIP)" className="lg:col-span-1">
-        <p className="text-sm font-semibold text-body">Send to any Nigerian bank account with 0.8s settlement.</p>
+        <p className="text-sm font-semibold text-body">Send to any Nigerian bank account, checked by name before you pay.</p>
         <Button variant="crisp" className="mt-4 w-full" onClick={() => open("send")}>Start NIP transfer</Button>
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-border p-3 text-xs font-semibold text-muted-foreground"><QrCode className="h-4 w-4 text-cyan" /> Or scan a Slikpay QR code to pay instantly.</div>
       </Panel>
@@ -145,141 +144,47 @@ function SendModule({ open }: { open: (k: ActionKind) => void }) {
   );
 }
 
-function AirtimeModule({ open }: { open: (k: ActionKind) => void }) {
-  const [net, setNet] = useState("mtn");
-  return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <Panel title="Buy Airtime or Data">
-        <p className="text-sm font-semibold text-body">Instant VTU top-up with 2% cashback on every recharge.</p>
-        <div className="mt-4 grid grid-cols-4 gap-2">
-          {AIRTIME_NETWORKS.map((n) => (
-            <button key={n.id} onClick={() => setNet(n.id)} aria-pressed={net === n.id} className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-xs font-bold transition-all ${net === n.id ? "border-cyan bg-cyan/10 text-foreground" : "border-border text-muted-foreground hover:border-cyan/50"}`}>
-              <span className={`h-8 w-8 rounded-full ${n.color}`} />
-              {n.name}
-            </button>
-          ))}
-        </div>
-        <label className="mt-4 block"><span className="mb-1.5 block text-sm font-bold text-foreground">Phone number</span><input className="field font-mono" inputMode="numeric" placeholder="0803 000 0000" /></label>
-        <Button variant="brand" className="mt-4 w-full" onClick={() => open("airtime")}>Continue — {AIRTIME_NETWORKS.find((n) => n.id === net)?.name}</Button>
-      </Panel>
-      <Panel title="Recent Top-ups"><LiveActivity filter={((t) => t.channel === "Bills")} /></Panel>
-    </div>
-  );
+function AirtimeModule() {
+  return <ServicesHub role="personal" only={["airtime", "data"]} title="Airtime & data" />;
 }
 
-function BillsModule({ open }: { open: (k: ActionKind) => void }) {
-  const [tab, setTab] = useState<"power" | "cable">("power");
-  const [provider, setProvider] = useState("");
-  const providers = tab === "power" ? ELECTRICITY_DISCOS : CABLE_TV;
-  return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <Panel title="Pay a Bill">
-        <div className="flex gap-2">
-          {(["power", "cable"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} aria-pressed={tab === t} className={`flex-1 rounded-full border-2 px-4 py-2 text-sm font-bold ${tab === t ? "border-cyan bg-cyan/10 text-foreground" : "border-border text-muted-foreground"}`}>{t === "power" ? "Electricity" : "Cable TV"}</button>
-          ))}
-        </div>
-        <label className="mt-4 block"><span className="mb-1.5 block text-sm font-bold text-foreground">{tab === "power" ? "Disco" : "Provider"}</span>
-          <BrandSelect label={tab === "power" ? "Disco" : "Provider"} value={providers.includes(provider) ? provider : (providers[0] ?? "")} onChange={setProvider} options={providers.map((d) => ({ value: d, label: d }))} />
-        </label>
-        <label className="mt-3 block"><span className="mb-1.5 block text-sm font-bold text-foreground">{tab === "power" ? "Meter number" : "Smartcard / IUC number"}</span><input className="field font-mono" inputMode="numeric" placeholder={tab === "power" ? "45012345678" : "7034567890"} /></label>
-        <Button variant="brand" className="mt-4 w-full" onClick={() => open("bills")}><Zap /> Pay now</Button>
-      </Panel>
-      <Panel title="Bill History"><LiveActivity filter={((t) => t.channel === "Bills")} /></Panel>
-    </div>
-  );
+function BillsModule() {
+  return <ServicesHub role="personal" only={["power", "tv", "internet", "betting", "education"]} title="Pay a bill" />;
 }
 
-function CardsModule({ open }: { open: (k: ActionKind) => void }) {
-  const [frozen, setFrozen] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+function CardsModule() {
+  const { profile } = useBankingProfile();
   return (
     <div className="grid gap-5 lg:grid-cols-2">
-      <Panel title="USD Virtual Mastercard">
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-          <div>
-            <div className="text-3xl font-black text-foreground">{usd(USD_CARD.balance)}</div>
-            <p className="text-sm font-semibold text-muted-foreground">Available balance</p>
-            <button className="mt-3 flex items-center gap-2 font-mono text-sm font-bold text-foreground" onClick={() => setRevealed(!revealed)}>
-              {revealed ? "5399 8204 9182 8492" : "•••• •••• •••• " + USD_CARD.last4}
-              {revealed ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-            </button>
-            <p className="mt-1 text-xs font-semibold text-muted-foreground">{USD_CARD.holder} · Expires {USD_CARD.expiry}</p>
-            <p className="mt-2 max-w-[220px] text-xs font-semibold text-body">Accepted worldwide for Netflix, Apple, AWS, OpenAI, and Amazon.</p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Button variant="brand" onClick={() => open("fund")}>+ Fund in Dollars</Button>
-              <button onClick={() => { setFrozen(!frozen); toast.success(frozen ? "Card unfrozen" : "Card frozen"); }} aria-pressed={frozen} className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold ${frozen ? "border-cyan bg-cyan/10 text-cyan" : "border-border text-muted-foreground"}`}>
-                <Snowflake className="h-4 w-4" /> {frozen ? "Frozen" : "Freeze Card"}
-              </button>
-            </div>
-          </div>
-          <CardGraphic label="PERSONAL" name="Slikpay Personal" last4={USD_CARD.last4} expiry={USD_CARD.expiry} />
+      <Panel title="Virtual card">
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground"><CreditCard className="h-6 w-6" /></span>
+          <p className="text-sm font-extrabold text-foreground">{profile?.cardIssued ? "Your card is issued" : "No card yet"}</p>
+          <p className="max-w-xs text-xs font-semibold text-muted-foreground">{profile?.cardIssued ? "Card details and controls appear here once your card service is connected." : "Cards are issued after your identity is verified in Go Live."}</p>
         </div>
       </Panel>
-      <Panel title="Dedicated NUBAN">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt"><Landmark className="h-5 w-5" /></span>
-          <div><p className="text-sm font-extrabold text-foreground">Slikpay Personal</p><p className="text-xs font-semibold text-muted-foreground">Beneficiary: {USD_CARD.holder}</p></div>
-        </div>
-        <div className="mt-5 font-mono text-3xl font-bold tracking-wider text-foreground">8204 918 234</div>
-        <p className="mt-1 text-xs font-semibold text-muted-foreground">Receive instant interbank transfers with 0.8s settlement.</p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button variant="crisp" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText("8204918234"); } catch { /* clipboard unavailable */ } toast.success("Account number copied", { description: "8204 918 234" }); }}><Copy /> Copy Account</Button>
-          <Button variant="ghost" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText("PATRICK OTU · Slikpay · 8204918234"); } catch { /* clipboard unavailable */ } toast.success("Account details copied — share anywhere"); }}><Share2 /> Share details</Button>
-        </div>
-      </Panel>
+      <NubanCard title="Your account number" nuban={profile?.virtualAccount ?? ""} accountName={profile?.accountDetails?.accountName} bankName={profile?.accountDetails?.bankName} status={profile?.accountDetails?.status} />
     </div>
   );
 }
 
 function SavingsModule() {
   return (
-    <div className="grid gap-5 lg:grid-cols-3">
-      {SAVINGS_POTS.map((p) => {
-        const pct = Math.round((p.saved / p.target) * 100);
-        return (
-          <Panel key={p.name} title={p.name}>
-            <div className="flex items-baseline justify-between"><span className="text-2xl font-black text-foreground">{naira(p.saved)}</span><span className="text-xs font-bold text-cyan">{p.rate}</span></div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-brand" style={{ width: `${pct}%` }} /></div>
-            <p className="mt-2 text-xs font-semibold text-muted-foreground">{pct}% of {naira(p.target)} target · interest accrues daily</p>
-          </Panel>
-        );
-      })}
-      <Panel className="flex flex-col items-center justify-center text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground"><PiggyBank className="h-6 w-6" /></span>
-        <p className="mt-3 text-sm font-extrabold text-foreground">Start a new target or Ajo circle</p>
-        <p className="mt-1 text-xs font-semibold text-muted-foreground">Lock funds, earn daily interest, or rotate savings with friends.</p>
-        <Button variant="brand" className="mt-4" onClick={() => toast.success("Savings plan drafted", { description: "Connect the live service to activate locks and circles." })}>Create plan</Button>
-      </Panel>
-    </div>
+    <Panel className="flex flex-col items-center justify-center py-10 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground"><PiggyBank className="h-6 w-6" /></span>
+      <p className="mt-3 text-sm font-extrabold text-foreground">No savings plans yet</p>
+      <p className="mt-1 max-w-sm text-xs font-semibold text-muted-foreground">Savings targets and Ajo circles open here when the savings service is switched on for your account.</p>
+    </Panel>
   );
 }
 
 function RewardsModule() {
-  const { user } = useAuth();
-  const tag = "@" + (user?.name ?? "patrick").split(" ")[0]!.toLowerCase();
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <Panel title="Invite & Earn">
-        <div className="flex items-center gap-3"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-magenta/15 text-magenta"><Gift className="h-6 w-6" /></span><div><p className="text-sm font-extrabold text-foreground">Earn ₦1,000 per invited friend</p><p className="text-xs font-semibold text-muted-foreground">Paid instantly when they complete KYC Tier 1.</p></div></div>
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-border p-3">
-          <code className="flex-1 truncate font-mono text-sm font-bold text-foreground">slikpay.ng/r/{tag.slice(1)}</code>
-          <Button variant="crisp" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(`https://slikpay.ng/r/${tag.slice(1)}`); } catch { /* clipboard unavailable */ } toast.success("Referral link copied"); }}><Copy /> Copy</Button>
-        </div>
-        <p className="mt-3 text-xs font-semibold text-muted-foreground"><Users className="mr-1 inline h-3.5 w-3.5" /> 3 friends joined so far · ₦3,000 earned</p>
-      </Panel>
-      <Panel title="Milestone Tiers">
-        <ul className="space-y-3">
-          {REWARD_TIERS.map((t) => (
-            <li key={t.name} className={`flex items-center gap-3 rounded-xl border-2 p-3 ${t.active ? "border-cyan bg-cyan/5" : "border-border"}`}>
-              <span className={`flex h-9 w-9 items-center justify-center rounded-full ${t.active ? "bg-gradient-brand text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Gift className="h-4 w-4" /></span>
-              <div className="flex-1"><p className="text-sm font-extrabold text-foreground">{t.name} {t.active && <span className="ml-1 rounded-full bg-cyan/15 px-2 py-0.5 text-[10px] font-bold text-cyan">Current</span>}</p><p className="text-xs font-semibold text-muted-foreground">{t.need}</p></div>
-              <p className="text-right text-xs font-bold text-foreground">{t.perk}</p>
-            </li>
-          ))}
-        </ul>
-      </Panel>
-    </div>
+    <Panel className="flex flex-col items-center justify-center py-10 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-magenta/15 text-magenta"><Gift className="h-6 w-6" /></span>
+      <p className="mt-3 text-sm font-extrabold text-foreground">Rewards are coming</p>
+      <p className="mt-1 max-w-sm text-xs font-semibold text-muted-foreground">Referral rewards and milestones will show here, with your real earnings, once the programme launches.</p>
+    </Panel>
   );
 }
 
@@ -312,10 +217,6 @@ function ProfileModule() {
             <span className="flex items-center gap-3 text-sm font-bold text-foreground"><Lock className="h-5 w-5 text-magenta" /> 4-digit transaction PIN</span>
             <Button variant="crisp" size="sm" onClick={() => toast.success("PIN reset link drafted", { description: "PIN changes activate with the live service." })}>Change PIN</Button>
           </li>
-          <li className="flex items-center justify-between rounded-xl border border-border p-3">
-            <span className="flex items-center gap-3 text-sm font-bold text-foreground"><CheckCircle2 className="h-5 w-5 text-success" /> Devices & sessions</span>
-            <Button variant="ghost" size="sm" onClick={() => toast.info("1 active session", { description: "This device · Lagos, Nigeria" })}>Review</Button>
-          </li>
         </ul>
       </Panel>
     </div>
@@ -325,9 +226,9 @@ function ProfileModule() {
 export function PersonalWorkspace({ module, open }: { module: string; open: (k: ActionKind) => void }) {
   switch (module) {
     case "send": return <SendModule open={open} />;
-    case "airtime": return <AirtimeModule open={open} />;
-    case "bills": return <BillsModule open={open} />;
-    case "cards": return <CardsModule open={open} />;
+    case "airtime": return <AirtimeModule />;
+    case "bills": return <BillsModule />;
+    case "cards": return <CardsModule />;
     case "savings": return <SavingsModule />;
     case "rewards": return <RewardsModule />;
     case "profile": return <ProfileModule />;
@@ -342,6 +243,6 @@ function TierCard() {
   const tier = personalTier(profile?.kyc ?? []);
   return <>
     <p className="flex items-center gap-2 text-sm font-extrabold text-foreground"><BadgeCheck className={`h-4 w-4 ${tier ? "text-success" : "text-muted-foreground"}`} /> {tier ? `KYC Tier ${tier} Verified` : "KYC not verified yet"}</p>
-    <p className="mt-1 text-xs font-semibold text-muted-foreground">{tier && TIER_LIMITS[tier] ? `Daily limit ${TIER_LIMITS[tier]}. ` : ""}{tier < 3 ? `Complete Tier ${tier + 1} in Go Live to raise your limits.` : "Highest tier reached."}</p>
+    <p className="mt-1 text-xs font-semibold text-muted-foreground">{tier < 3 ? `Complete Tier ${tier + 1} in Go Live to raise your limits.` : "Highest tier reached."}</p>
   </>;
 }
