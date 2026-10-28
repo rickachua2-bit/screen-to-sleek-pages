@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { exactPayoutFee } from "./transfer-validation";
-import { parseFxRates, railPrice, type FxRates, type Rail } from "./pricing";
+import { feeIsFlat, parseFxRates, railPrice, type FxRates, type Rail } from "./pricing";
 
 /** Live FX rates and fee rails for the signed-in user's plan and mode. */
 export const getLivePricing = createServerFn({ method: "POST" }).handler(async () => {
