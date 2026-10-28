@@ -11,3 +11,5 @@
 
 - All Slikpay API calls go through `src/lib/api.ts` `request()`, which falls back to mock data when the API is unreachable — keeps the UI working offline.
 - Auth state lives in `src/lib/auth.tsx` (React context backed by localStorage/sessionStorage); the backend is external, not Lovable Cloud.
+- Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
+- Unconnected merchant operations prepare explicitly labelled in-memory drafts only; never imply policies, verification, payments, device pairing or API secrets are live without a service response.

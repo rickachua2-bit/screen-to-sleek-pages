@@ -17,6 +17,8 @@ export const Route = createFileRoute("/personal")({
       { name: "description", content: "Your Slikpay wallet: send money, buy airtime, pay bills and shop globally with a USD virtual card." },
       { property: "og:title", content: "Personal Wallet — Slikpay" },
       { property: "og:description", content: "Everyday banking and instant payments with Slikpay Personal." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Personal,

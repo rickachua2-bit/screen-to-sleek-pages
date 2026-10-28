@@ -332,3 +332,20 @@ html { scroll-behavior: smooth; }
 .dropdown-list::-webkit-scrollbar-track { background: transparent; }
 .dropdown-list::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in oklab, var(--cobalt) 45%, transparent); }
 .theme-flame .dropdown-list { background: oklch(0.19 0.05 268 / 97%); }
+
+/* Merchant console surfaces reuse the flame palette without decorative patterns. */
+.merchant-console {
+  --sidebar: oklch(0.14 0.025 268 / 95%);
+  --popover: oklch(0.18 0.04 268);
+  --gradient-mesh: radial-gradient(65% 70% at 90% 0%, color-mix(in oklab, var(--cobalt) 14%, transparent), transparent 70%), var(--background);
+  --radius: 0.5rem;
+}
+.merchant-console .merchant-sidebar { background: var(--sidebar); }
+.merchant-console .merchant-popover { background: var(--popover); }
+.merchant-console .panel { border-radius: 8px; }
+.merchant-console .panel:hover { box-shadow: none; border-color: var(--border); }
+.merchant-console .merchant-nav-item { letter-spacing: 0; }
+.merchant-console input[type="date"] { min-width: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .merchant-console *, .merchant-console *::before, .merchant-console *::after { animation: none !important; scroll-behavior: auto !important; }
+}
