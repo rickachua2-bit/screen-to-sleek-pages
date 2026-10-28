@@ -17,7 +17,6 @@ import { MerchantLedger } from "@/components/slikpay/MerchantLedger";
 import { MerchantWorkspace } from "@/components/slikpay/MerchantWorkspace";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 import { Button } from "@/components/ui/button";
-import { CurrencyWallet } from "@/components/slikpay/CurrencyWallet";
 import { useCurrency } from "@/lib/currency-store";
 import { ActivityFeed, CommandPalette, CustomiseButton, DashboardHero, EmptyState, FlipNubanCard, InsightsStrip, QuickActionFab, merchantQuickActions, useTiles } from "@/components/slikpay/DashboardPlus";
 import { ArrowRightLeft, BarChart3, LayoutDashboard, Rocket, Settings } from "lucide-react";
@@ -68,7 +67,7 @@ function Dashboard() {
       <div className="flex items-center gap-2">{module === "overview" && <CustomiseButton tiles={tiles} />}<ConnectionBadge /></div>
     </div>
     {module === "overview" ? <>
-      {currency !== "NGN" ? <CurrencyWallet key={currency} code={currency} mode={banking?.mode} /> : <DashboardHero name={user?.name ?? "there"} business={profile?.company_name} balance={acct.balance} mode={banking?.mode} txns={txns} onOpenCommand={() => setCmd(true)} onGoLive={() => changeModule("golive")} />}
+      {currency === "NGN" && <DashboardHero name={user?.name ?? "there"} business={profile?.company_name} balance={acct.balance} mode={banking?.mode} txns={txns} onOpenCommand={() => setCmd(true)} onGoLive={() => changeModule("golive")} />}
       <GoLiveProgress role="merchant" onOpen={() => changeModule("golive")} />
       {tiles.show("insights") && <InsightsStrip txns={txns} />}
       <div className="grid gap-4 xl:grid-cols-3">
