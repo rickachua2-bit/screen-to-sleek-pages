@@ -320,6 +320,49 @@ html { scroll-behavior: smooth; }
 .theme-flame ::selection { background: var(--magenta); color: white; }
 .theme-flame .font-mono.text-cobalt { color: var(--cyan); }
 
+/* OTP verification panel: high-visibility branded surface with tri-colour edge */
+.otp-panel {
+  border: 1px solid color-mix(in oklab, var(--cyan) 45%, transparent);
+  background: linear-gradient(165deg, color-mix(in oklab, var(--cobalt) 32%, oklch(0.2 0.05 268 / 94%)), oklch(0.17 0.05 275 / 96%));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--cyan) 14%, transparent), 0 18px 45px -18px color-mix(in oklab, var(--cobalt) 65%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.otp-panel::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--cobalt), var(--magenta), var(--cyan));
+  opacity: .9;
+}
+.otp-panel::after {
+  content: ""; position: absolute; width: 220px; height: 220px; top: -120px; right: -60px; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--magenta) 30%, transparent), transparent);
+  filter: blur(10px);
+}
+.otp-slot {
+  width: 2.6rem; height: 3.1rem;
+  border-radius: 0.7rem;
+  border: 2px solid color-mix(in oklab, var(--cobalt) 70%, transparent);
+  background: oklch(0.12 0.04 268 / 78%);
+  box-shadow: inset 0 2px 6px oklch(0 0 0 / 35%);
+  color: var(--foreground);
+  font-size: 1.35rem; font-weight: 700;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.otp-slot[data-filled="true"] {
+  border-color: color-mix(in oklab, var(--magenta) 70%, transparent);
+  color: oklch(1 0 0);
+  box-shadow: inset 0 2px 6px oklch(0 0 0 / 35%), 0 0 12px color-mix(in oklab, var(--magenta) 35%, transparent);
+}
+.otp-slot[data-active="true"] {
+  border-color: var(--cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cyan) 22%, transparent), 0 0 20px color-mix(in oklab, var(--cyan) 50%, transparent);
+}
+.otp-slot:disabled { opacity: .55; }
+.otp-caret { background: var(--cyan) !important; width: 2px !important; box-shadow: 0 0 8px var(--cyan); }
+
+
 /* Auth micro-interactions: error shake + success confetti */
 @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @utility animate-shake { animation: shake .45s ease-in-out; }
