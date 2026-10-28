@@ -1,0 +1,72 @@
+import { createServerFn } from "@tanstack/react-start";
+import { businessLookupSchema, contactSchema, merchantSignupSchema, proofSchema, providerVerified, verificationMatches } from "./verification";
+
+export const startMerchantVerification = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => contactSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { accountAdmin, digest, paddle, sixDigits } = await import("./merchant-verification.server");
+    const db = accountAdmin();
+    // Verify storage before requesting paid SMS/email delivery.
+    const check = await db.from("merchant_verification_challenges").select("id").limit(0);
+    if (check.error) throw new Error("Merchant verification is awaiting the account service setup script.");
+    const resendKey = process.env['RESEND_API_KEY'];
+    if (!resendKey) throw new Error("Email verification is not connected yet.");
+    const challengeId = crypto.randomUUID();
+    const code = sixDigits();
+    const phone = await paddle("/otp/send", { to: data.phone, pinLength: 6, pinTimeToLiveMinutes: 10 });
+    if (typeof phone['pinId'] !== "string" || !phone['pinId']) throw new Error("Paddle did not return a phone verification reference.");
+    const email = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json", "Idempotency-Key": challengeId }, body: JSON.stringify({ from: "Slikpay <info@globalline.io>", to: [data.email], subject: "Your Slikpay verification code", text: `Your Slikpay email verification code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.` }), signal: AbortSignal.timeout(20000) });
+    if (!email.ok) throw new Error(`Email code delivery failed (HTTP ${email.status}).`);
+    const delivery = await email.json() as { id?: string };
+    if (!delivery.id) throw new Error("Email delivery was not confirmed.");
+    const saved = await db.from("merchant_verification_challenges").insert({ id: challengeId, ...data, email_digest: await digest(`${challengeId}:${code}`), phone_pin_id: phone['pinId'], expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() });
+    if (saved.error) throw new Error("Could not save verification. Please request new codes.");
+    return { challengeId };
+  });
+
+export const verifyMerchantContact = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => proofSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { challenge, digest, paddle } = await import("./merchant-verification.server");
+    const { db, row } = await challenge(data.challengeId);
+    const claimed = await db.rpc("claim_merchant_verification_attempt", { challenge: data.challengeId, channel: data.channel });
+    if (claimed.error || claimed.data !== true) throw new Error("Verification attempt limit reached. Request new codes.");
+    const verified = data.channel === "email"
+      ? row.email_digest === await digest(`${data.challengeId}:${data.code}`)
+      : providerVerified(await paddle("/otp/verify", { pinId: row.phone_pin_id, pin: data.code }));
+    if (!verified) throw new Error("The verification code was not accepted.");
+    const update = await db.from("merchant_verification_challenges").update({ [`${data.channel}_verified`]: true }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString()).select("id").maybeSingle();
+    if (update.error || !update.data) throw new Error("Verification expired. Request new codes.");
+    return { verified: true };
+  });
+
+export const lookupMerchantBusiness = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => businessLookupSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { challenge, paddle } = await import("./merchant-verification.server");
+    const { db, row } = await challenge(data.challengeId);
+    if (!row.phone_verified || !row.email_verified) throw new Error("Verify your phone and email first.");
+    if (data.country !== "NG") throw new Error("Registration lookup for this country is awaiting Paddle's country-specific verification endpoint.");
+    const result = await paddle("/identity/cac", { rcNumber: data.rcNumber });
+    if (typeof result['companyName'] !== "string" || !result['companyName'].trim() || result['status'] !== "ACTIVE") throw new Error("Paddle did not confirm an active registered business.");
+    const update = await db.from("merchant_verification_challenges").update({ country: data.country, rc_number: data.rcNumber, company_name: result['companyName'] }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString());
+    if (update.error) throw new Error("Could not save business verification.");
+    return { companyName: result['companyName'], status: "ACTIVE" };
+  });
+
+export const createVerifiedMerchant = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => merchantSignupSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { challenge, pinDigest } = await import("./merchant-verification.server");
+    const { db, row } = await challenge(data.challengeId);
+    if (!verificationMatches(row, data)) throw new Error("Complete phone, email and business verification before creating your account.");
+    const claimed = await db.from("merchant_verification_challenges").update({ consumed: true }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString()).select("id").maybeSingle();
+    if (claimed.error || !claimed.data) throw new Error("This verification has already been used or expired.");
+    const salt = crypto.randomUUID();
+    const pinHash = await pinDigest(data.pin, salt);
+    const created = await db.auth.admin.createUser({ email: data.email, password: data.password, email_confirm: true, app_metadata: { merchant_verification_id: data.challengeId }, user_metadata: { role: "merchant", full_name: data.fullName, phone: data.phone, company_name: row.company_name, cac_rc_number: data.rcNumber, category: data.category, country: data.country } });
+    if (created.error || !created.data.user) throw new Error("Account creation failed. Sign in if you already have an account; otherwise request fresh verification codes.");
+    const security = await db.from("merchant_security").insert({ user_id: created.data.user.id, pin_digest: pinHash, pin_salt: salt, email_verified: true, phone_verified: true, country: data.country, rc_number: data.rcNumber, company_name: row.company_name });
+    if (security.error) { await db.auth.admin.deleteUser(created.data.user.id); throw new Error("Could not save account security. Please request fresh verification codes."); }
+    return { created: true };
+  });
