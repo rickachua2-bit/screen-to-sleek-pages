@@ -10,3 +10,14 @@
 - [ ] Team roles & approval limits — next build step (large)
 - [ ] French language — next build step
 - [ ] Signed-in end-to-end checks — blocked: test login
+
+## Services hub (plan approved 28 Oct)
+- [x] Services hub: categories, intent search, status badges, favourites, recents; raw console moved to Developers
+- [x] Guided bills: airtime, data, electricity (token), cable TV, internet, betting, exam PINs
+- [x] Government: FIRS tax and Remita with validate step
+- [x] Escrow: create deal
+- [ ] Escrow fund / release / dispute timeline
+- [ ] Guided investments and flights screens (currently open the advanced console)
+- [ ] Saved billers, pay again, scheduled payments (needs new table + SQL run manually)
+- [ ] Link left-menu Cards/Treasury/Disputes/Approvals to live service screens
+- [ ] Real fees per service (waiting on user; provider fee shown where the quote includes it)
