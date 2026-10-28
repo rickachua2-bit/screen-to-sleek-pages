@@ -114,6 +114,18 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   }, [bank, acct, resolve]);
   const amt = Number(amount);
   useEffect(() => { onPreviewChange?.({ amount: Number.isFinite(amt) ? amt : 0, name, bank: bank?.name ?? "", account: acct, fee, step }); }, [amt, name, bank, acct, fee, step, onPreviewChange]);
+  useEffect(() => {
+    let on = true;
+    const t = setTimeout(() => {
+      if (!validTransferAmount(amount)) { setFormFee(null); setFormFeeBusy(false); return; }
+      setFormFeeBusy(true);
+      feeFn({ data: { rail: "payouts", amount: Number(amount) } })
+        .then((r) => { if (on) setFormFee(r && Number.isFinite(r.fee) ? { fee: r.fee, description: String(r.description ?? "") } : null); })
+        .catch(() => { if (on) setFormFee(null); })
+        .finally(() => { if (on) setFormFeeBusy(false); });
+    }, 400);
+    return () => { on = false; clearTimeout(t); };
+  }, [amount, feeFn]);
   const review = async () => {
     if (!bank || !name || !validTransferAmount(amount)) return;
     setStep("review"); setFeeBusy(true);
