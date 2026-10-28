@@ -883,6 +883,11 @@ html { scroll-behavior: smooth; }
 .transfer-amount-input > span { position: absolute; right: 12px; top: 20px; font-size: 11px; font-weight: 700; color: var(--cobalt); }
 .transfer-quick-amount { flex: 1; height: 30px; padding: 0 8px; font-size: 10px; border-radius: 999px; background: var(--transfer-soft); }
 .transfer-quick-amount[aria-pressed="true"] { border-color: var(--cobalt); color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 8%, var(--transfer-paper)); }
+.transfer-fee-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-radius: 12px; background: var(--transfer-soft); border: 1px solid color-mix(in oklab, var(--cobalt) 14%, transparent); font-size: 12px; }
+.transfer-fee-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cobalt); }
+.transfer-fee-value { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--foreground); }
+.transfer-fee-note { color: var(--muted-foreground); font-size: 11px; min-width: 0; overflow-wrap: anywhere; }
+.transfer-fee-total { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--cobalt); }
 .transfer-submit { background-image: linear-gradient(105deg, var(--magenta), var(--cobalt) 65%); box-shadow: var(--shadow-cobalt); border-radius: 8px; }
 .transfer-secure { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 10px; color: var(--muted-foreground); }
 .transfer-center, .transfer-center .font-mono { letter-spacing: 0; }
