@@ -817,4 +817,15 @@ html { scroll-behavior: smooth; }
 .services-filter:hover { background: color-mix(in oklab, var(--service-tone) 12%, var(--card)); }
 .services-filter[aria-pressed="true"] { color: var(--service-icon-foreground); background: linear-gradient(120deg, var(--service-tone), color-mix(in oklab, var(--service-tone) 75%, var(--cobalt))); border-color: var(--service-tone); box-shadow: 0 5px 12px -7px var(--service-tone); }
 .services-filter[aria-pressed="true"] svg { color: inherit; }
+/* Browse services: colourful category groups of four. */
+.services-group + .services-group { margin-top: 26px; }
+.services-group-head { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 6px 14px 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .01em; color: color-mix(in oklab, var(--service-tone) 80%, var(--foreground)); background: color-mix(in oklab, var(--service-tone) 9%, var(--card)); border: 1px solid color-mix(in oklab, var(--service-tone) 30%, var(--border)); }
+.services-group-dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(140deg, var(--service-tone), color-mix(in oklab, var(--service-tone) 40%, var(--cyan))); box-shadow: 0 0 8px color-mix(in oklab, var(--service-tone) 70%, transparent); }
+.services-group-head h4 { font-size: 12px; font-weight: 800; color: var(--foreground); }
+.services-group-count { padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; color: var(--service-icon-foreground); background: linear-gradient(120deg, var(--service-tone), color-mix(in oklab, var(--service-tone) 70%, var(--cyan))); }
+.services-grid-4 .services-item-main { height: 116px; padding: 14px; padding-right: 32px; gap: 11px; }
+.services-grid-4 .services-category-icon { height: 42px; width: 42px; }
+.services-grid-4 .services-category-icon svg { height: 20px; width: 20px; }
+.services-grid-4 .services-item { background: linear-gradient(135deg, color-mix(in oklab, var(--service-tone) 14%, var(--card)), color-mix(in oklab, var(--service-tone) 3%, var(--card)) 65%); }
+.services-grid-4 .services-item::before { width: 4px; background: linear-gradient(180deg, var(--service-tone), color-mix(in oklab, var(--service-tone) 30%, var(--magenta))); }
 @media (prefers-reduced-motion: reduce) { .services-item, .services-item-main .services-category-icon { transition: none; transform: none; } .services-item:hover { transform: none; } }
