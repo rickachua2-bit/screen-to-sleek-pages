@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { paddleFailure } from "./provider-errors";
 
 const ACCOUNT_URL = "https://gqbgdqkmdyvzgovugjku.supabase.co";
 export function accountAdmin() {
@@ -37,7 +38,10 @@ export async function paddle(path: "/otp/send" | "/otp/verify" | "/identity/cac"
   if (base.replace(/\/$/, "") !== "https://api.getpaddle.online/v1") throw new Error("Paddle service URL must match the approved provider.");
   const response = await fetch(`${base.replace(/\/$/, "")}${path}`, { method: "POST", headers: { "Content-Type": "application/json", "X-API-Key": key }, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) });
   // Never log OTPs, keys, bank details or provider response bodies.
-  if (!response.ok) throw new Error(`Paddle verification failed (HTTP ${response.status}).`);
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After"), response.headers.get("X-RateLimit-Reset")));
+  }
   const result = await response.json() as { success?: boolean; data?: Record<string, unknown> };
   if (result.success !== true || !result.data) throw new Error("Paddle did not confirm this request.");
   return result.data;
