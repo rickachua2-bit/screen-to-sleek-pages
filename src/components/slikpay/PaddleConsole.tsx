@@ -56,7 +56,7 @@ function ResultView({ value, depth = 0 }: { value: unknown; depth?: number }) {
       const cols = [...new Set(rows.flatMap((r) => Object.keys(r as object)))].slice(0, 7);
       return <div className="overflow-x-auto rounded-xl border border-border"><table className="w-full text-left text-xs"><thead className="bg-cobalt/10 text-muted-foreground"><tr>{cols.map((c) => <th key={c} className="p-2 font-bold">{c}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i} className="border-t border-border">{cols.map((c) => <td key={c} className="p-2 align-top">{depth < 2 ? <ResultView value={(r as Record<string, unknown>)[c]} depth={depth + 1} /> : "…"}</td>)}</tr>)}</tbody></table>{value.length > 50 && <p className="p-2 text-xs text-muted-foreground">Showing 50 of {value.length}</p>}</div>;
     }
-    return <span className="font-mono text-xs">{rows.map((r) => (typeof r === "object" ? JSON.stringify(r) : String(r))).join(", ")}</span>;
+    return <span className="font-mono text-xs">{rows.map((r: unknown) => (typeof r === "object" ? JSON.stringify(r) : String(r))).join(", ")}</span>;
   }
   return <dl className="grid gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(120px,auto)_1fr]">{Object.entries(value as Record<string, unknown>).map(([k, v]) => <div key={k} className="contents"><dt className="text-xs font-bold text-muted-foreground">{k}</dt><dd>{depth < 3 ? <ResultView value={v} depth={depth + 1} /> : "…"}</dd></div>)}</dl>;
 }
@@ -128,7 +128,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
           <dl className="mt-2 grid grid-cols-2 gap-2 text-xs"><dt className="text-muted-foreground">Amount</dt><dd className="font-mono font-bold">{out.receipt.currency} {out.receipt.amount?.toLocaleString()}</dd><dt className="text-muted-foreground">Paddle reference</dt><dd className="break-all font-mono">{out.receipt.reference ?? "Not returned"}</dd><dt className="text-muted-foreground">NIP session ID</dt><dd className="break-all font-mono">{out.receipt.sessionId ?? "Not returned"}</dd></dl>
         </div>}
         {out.message && <p className="text-sm font-semibold text-body">{out.message}</p>}
-        <div className="rounded-2xl border border-border bg-background/50 p-4"><ResultView value={out.result} /></div>
+        <div className="rounded-2xl border border-border bg-background/50 p-4"><ResultView value={JSON.parse(out.resultJson) as unknown} /></div>
       </div>}
     </div>
   </div>;

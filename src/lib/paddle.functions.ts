@@ -77,7 +77,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         if (mode === "live") await db.from("ledger_entries").update({ status: "posted" }).eq("reference", data.idempotencyKey);
         receipt = { reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
       }
-      return { mode, message: result.message ?? null, result: JSON.parse(JSON.stringify(result.data ?? null)) as unknown, receipt };
+      return { mode, message: result.message ?? null, resultJson: JSON.stringify(result.data ?? null).slice(0, 200000), receipt };
     } catch (e) {
       if (money) {
         await db.from("payment_receipts").update({ status: "failed" }).eq("idempotency_key", data.idempotencyKey);
