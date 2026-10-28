@@ -1,93 +1,61 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import {
-  ArrowLeftRight, ArrowUpRight, BarChart3, CreditCard, Download, FileText, Globe, HandCoins, LayoutDashboard,
-  Receipt, Send, Settings, Smartphone, Users, Wallet,
-} from "lucide-react";
-import { api, exportTransactionsCsv, MOCK_ACCOUNT, MOCK_TXNS, naira, type Account, type Txn } from "@/lib/api";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowLeftRight, ArrowUpRight, CreditCard, FileText, Receipt, Send, Smartphone } from "lucide-react";
+import { api, MOCK_ACCOUNT, MOCK_TXNS, naira, type Account, type Txn } from "@/lib/api";
+import { merchantModule, MERCHANT_NAV } from "@/lib/merchant";
+import { useAuth } from "@/lib/auth";
 import { AppShell } from "@/components/slikpay/AppShell";
-import { BalanceCard, NubanCard, Panel, QuickAction, UsdCardPanel } from "@/components/slikpay/Widgets";
+import { BalanceCard, NubanCard, Panel, UsdCardPanel } from "@/components/slikpay/Widgets";
 import { BarChart, DonutChart } from "@/components/slikpay/Charts";
-import { TransactionTable } from "@/components/slikpay/TransactionTable";
+import { MerchantLedger } from "@/components/slikpay/MerchantLedger";
+import { MerchantWorkspace } from "@/components/slikpay/MerchantWorkspace";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({
-    meta: [
-      { title: "Business Console — Slikpay" },
-      { name: "description", content: "Settlement balance, inflows, dedicated NUBAN, USD treasury card and transaction ledger for Slikpay merchants." },
-      { property: "og:title", content: "Business Console — Slikpay" },
-      { property: "og:description", content: "Institutional banking console for Slikpay Business merchants." },
-    ],
-  }),
+  validateSearch: (search: Record<string, unknown>) => ({ module: merchantModule(search["module"]) }),
+  head: ({ match }) => {
+    const label = MERCHANT_NAV.find((n) => n.id === match.search.module)?.label ?? "Business Console";
+    const title = `${label} — Slikpay Business`;
+    const description = "Slikpay merchant console for collections, commercial banking, treasury and business operations.";
+    return { meta: [{ title }, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] };
+  },
   component: Dashboard,
 });
-
-const NAV = [
-  { label: "Dashboard", icon: LayoutDashboard }, { label: "Transactions", icon: ArrowLeftRight },
-  { label: "Payments", icon: Send }, { label: "Receivables", icon: HandCoins }, { label: "Cards", icon: CreditCard },
-  { label: "POS & Devices", icon: Smartphone }, { label: "Forex & Treasury", icon: Globe }, { label: "Reports", icon: BarChart3 },
-  { label: "Beneficiaries", icon: Users }, { label: "Settings", icon: Settings },
-];
-
 function Dashboard() {
+  const { module } = Route.useSearch();
+  const navigate = useNavigate();
+  const { user, token } = useAuth();
   const [acct, setAcct] = useState<Account>(MOCK_ACCOUNT);
   const [txns, setTxns] = useState<Txn[]>(MOCK_TXNS);
   const [modal, setModal] = useState<ActionKind | null>(null);
-
+  const [search, setSearch] = useState("");
+  const [connected, setConnected] = useState(false);
   useEffect(() => {
-    api.accounts().then(setAcct);
-    api.transactions(20, 1).then(setTxns);
-  }, []);
-
-  return (
-    <AppShell mode="merchant" nav={NAV}>
-      <div className="grid gap-5 lg:grid-cols-3">
-        <BalanceCard
-          title="Settlement Balance"
-          balance={acct.balance}
-          sub="Available for settlement"
-          footer={
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-base font-extrabold text-foreground">{naira(acct.inflow30d)}</div>
-                <div className="text-xs font-semibold text-muted-foreground">Total inflow (30 days)</div>
-              </div>
-              <span className="flex items-center gap-0.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success"><ArrowUpRight className="h-3 w-3" />+{acct.inflowChange}%</span>
-            </div>
-          }
-        />
+    if (!token) return;
+    let cancelled = false;
+    api.accounts().then((result) => { if (!cancelled) { setAcct(result); setConnected(result !== MOCK_ACCOUNT); } });
+    api.transactions(100, 1).then((result) => { if (!cancelled) setTxns(result); });
+    return () => { cancelled = true; };
+  }, [token]);
+  const changeModule = (id: string) => { navigate({ to: "/dashboard", search: { module: id } }); };
+  const current = MERCHANT_NAV.find((n) => n.id === module);
+  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch}>
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1><p className="mt-2 text-xs text-muted-foreground">{module === "overview" ? `Welcome back, ${user?.name.split(" ")[0] ?? "Patrick"}. Here’s your business at a glance.` : "Acme Logistics Ltd · Merchant workspace"}</p></div>
+      <span className={`rounded-full border border-border px-3 py-1.5 text-[10px] font-semibold ${connected ? "text-success" : "text-cyan"}`}>{connected ? "Connected account" : "Sample account data"}</span>
+    </div>
+    {module === "overview" ? <>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <BalanceCard title="Settlement Balance" balance={acct.balance} sub="Available for settlement" footer={<div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-base font-extrabold">{naira(acct.inflow30d)}</div><div className="mt-1 text-[10px] text-muted-foreground">Total inflow (30 days)</div></div><span className="flex items-center rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success"><ArrowUpRight className="h-3 w-3" />+{acct.inflowChange}%</span></div>} />
         <Panel title="Inflow by Channel"><DonutChart /></Panel>
-        <Panel title="Inflow Trend"><BarChart /></Panel>
+        <Panel title="Inflow 30-Day Trend"><BarChart /></Panel>
       </div>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <NubanCard nuban={acct.nuban} />
-        <UsdCardPanel onFund={() => setModal("fund")} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <QuickAction icon={Send} title="Send Money" sub="To beneficiaries" tone="bg-cobalt" onClick={() => setModal("send")} />
-        <QuickAction icon={Receipt} title="Pay Utilities" sub="Bills and services" tone="bg-magenta/80" onClick={() => setModal("bills")} />
-        <QuickAction icon={CreditCard} title="Virtual Dollar Card" sub="Shop and pay globally" tone="bg-magenta" onClick={() => setModal("fund")} />
-        <QuickAction icon={Smartphone} title="SoftPOS" sub="Accept payments" tone="bg-gradient-brand" onClick={() => setModal("softpos")} />
-        <QuickAction icon={ArrowLeftRight} title="Currency Swap" sub="Convert currencies" tone="bg-gradient-tri" onClick={() => setModal("swap")} />
-      </div>
-
-      <Panel
-        title="Recent Transactions"
-        action={
-          <div className="flex items-center gap-3">
-            <Button variant="crisp" size="sm" onClick={() => exportTransactionsCsv(txns)}><Download /> Export CSV</Button>
-            <span className="text-sm font-bold text-cobalt">View all →</span>
-          </div>
-        }
-      >
-        <TransactionTable txns={txns} />
-      </Panel>
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><FileText className="h-3.5 w-3.5" /><Wallet className="h-3.5 w-3.5" /> Settled via Sterling Bank NIP rails. Licensed by the CBN.</p>
-      {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
-    </AppShell>
-  );
+      <div className="grid gap-4 xl:grid-cols-2"><div><NubanCard nuban={acct.nuban} /><p className="mt-2 text-[10px] text-muted-foreground">Account status: {connected ? "available" : "sample — not a verified live account"}</p></div><UsdCardPanel onFund={() => setModal("fund")} label="CORPORATE" /></div>
+      <div className="flex flex-wrap gap-2">{[{ icon: Send, title: "Send Money", kind: "send" }, { icon: Receipt, title: "Pay Utilities", kind: "bills" }, { icon: CreditCard, title: "Virtual USD Card", kind: "fund" }, { icon: Smartphone, title: "SoftPOS", kind: "softpos" }, { icon: ArrowLeftRight, title: "Currency Swap", kind: "swap" }].map(({ icon: Icon, title, kind }) => <Button key={kind} variant="crisp" className="h-10 rounded-full px-4 text-xs" onClick={() => setModal(kind as ActionKind)}><Icon className="text-cyan" />{title}</Button>)}</div>
+      <MerchantLedger txns={txns} globalSearch={search} recent onViewAll={() => changeModule("transactions")} />
+      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Sterling Bank NIP settlement rails · {connected ? "Account data from Slikpay" : "Preview data; no live settlement confirmed"}</p>
+    </> : module === "transactions" ? <MerchantLedger txns={txns} globalSearch={search} /> : <MerchantWorkspace key={module} module={module} account={acct} onAction={setModal} search={search} />}
+    {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
+  </AppShell>;
 }
