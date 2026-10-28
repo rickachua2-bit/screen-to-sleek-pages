@@ -485,48 +485,19 @@ const CAT_KEYWORDS: Record<string, string> = {
 };
 
 
+const CAT_OPTS: Opt[] = ALL_CATS.map((c) => ({ value: c.value, label: c.label, group: c.group, icon: c.icon, search: CAT_KEYWORDS[c.value] ?? "" }));
+
 function CategoryPicker({ value, onChange, error, shake }: { value: string; onChange: (v: string) => void; error?: string | undefined; shake?: boolean }) {
-  const [q, setQ] = useState("");
-  const term = q.trim().toLowerCase();
-  const groups = CATEGORY_GROUPS
-    .map((g) => ({ ...g, items: term ? g.items.filter((i) => `${i.label} ${CAT_KEYWORDS[i.value] ?? ""}`.toLowerCase().includes(term)) : g.items }))
-    .filter((g) => g.items.length > 0);
   const picked = ALL_CATS.find((c) => c.value === value);
 
   return (
     <div className={shake && error ? "animate-shake" : undefined}>
       <div className="mb-1.5 flex items-end justify-between gap-2">
-        <label htmlFor="b-cat-search" className="text-sm font-bold text-foreground">Business Category</label>
+        <label htmlFor="b-cat" className="text-sm font-bold text-foreground">Business Category</label>
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{ALL_CATS.length} categories</span>
       </div>
-      <div className="rounded-2xl border-2 border-border bg-card/60 p-2 transition-colors focus-within:border-cobalt">
-        <div className="relative px-0.5 pb-2">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input id="b-cat-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search categories — e.g. agro, logistics, fintech" aria-label="Search business categories"
-            className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
-        </div>
-        <div className="dropdown-list max-h-56 space-y-3 overflow-auto px-0.5 pb-2 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-26px),transparent)]">
-          {groups.length === 0 && <p className="px-2 py-5 text-center text-xs font-bold text-muted-foreground">No category matches "{q}"</p>}
-          {groups.map((g) => (
-            <div key={g.group}>
-              <p className="mb-1.5 px-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt">{g.group}</p>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                {g.items.map((c) => {
-                  const sel = c.value === value;
-                  const Icon = c.icon;
-                  return (
-                    <button key={c.value} type="button" onClick={() => onChange(c.value)} aria-pressed={sel}
-                      className={`flex items-center gap-1.5 rounded-xl border px-2 py-2 text-left text-[11px] font-bold leading-tight transition-all duration-200 ${sel ? "border-transparent bg-gradient-brand text-primary-foreground shadow-cobalt" : "border-border text-body hover:-translate-y-0.5 hover:border-cyan hover:text-foreground"}`}>
-                      <Icon className={`h-3.5 w-3.5 shrink-0 ${sel ? "text-primary-foreground" : "text-magenta"}`} />
-                      <span className="line-clamp-2">{c.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <SelectMenu id="b-cat" value={value} options={CAT_OPTS} onChange={onChange} searchable
+        placeholder="Select your business category" searchPlaceholder="Search categories — e.g. agro, logistics, fintech" />
       {picked ? (
         <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-success"><Check className="h-3.5 w-3.5" strokeWidth={3} /> {picked.label} selected</p>
       ) : (
