@@ -131,7 +131,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
       <div className="flex gap-2"><Button variant="brand" className="flex-1 rounded-full" onClick={copyAll}><Copy />Copy address</Button>{typeof navigator !== "undefined" && "share" in navigator && <Button variant="crisp" className="rounded-full" onClick={() => navigator.share({ title: `My ${code} details`, text: share }).catch(() => undefined)}><Share2 />Share</Button>}</div>
     </DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
-    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} rates={extras?.rates ?? {}} onClose={() => setDialog(null)} onDone={refresh} />}
+    {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "send" && <SendDialog code={code} live={live} balance={balance} onClose={() => setDialog(null)} onDone={refresh} />}
   </section>;
@@ -193,7 +193,7 @@ function Receipt({ rows, onClose }: { rows: [string, string][]; onClose: () => v
 const amt = (s: string) => Number(s) || 0;
 const AmountInput = ({ code, value, onChange, max }: { code: string; value: string; onChange: (v: string) => void; max?: number }) => <label className="block text-xs font-bold">Amount ({code})<div className="relative mt-1"><input className="field h-11 pr-16 font-mono text-base" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.00" />{max !== undefined && max > 0 && <button type="button" onClick={() => onChange(String(max))} className="absolute right-2 top-2 rounded-md bg-muted px-2 py-1 text-[10px] font-bold text-cyan">MAX</button>}</div>{max !== undefined && <span className="mt-1 block font-normal text-muted-foreground">Available {fmt(code, max)}</span>}</label>;
 
-function SwapDialog({ from: initial, live, balanceOf, rates, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; rates: Record<string, number>; onClose: () => void; onDone: () => Promise<void> }) {
+function SwapDialog({ from: initial, live, balanceOf, onClose, onDone }: { from: string; live: boolean; balanceOf: (c: string) => number; onClose: () => void; onDone: () => Promise<void> }) {
   const swap = useServerFn(swapCurrency);
   const [from, setFrom] = useState(initial);
   const [to, setTo] = useState(initial === "NGN" ? "USDT" : "NGN");
@@ -223,6 +223,7 @@ function SwapDialog({ from: initial, live, balanceOf, rates, onClose, onDone }: 
 
 function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClose, onDone }: { code: string; live: boolean; balance: number; payout: PayoutAccount | null; holder: string; onNavigate?: ((m: string) => void) | undefined; onClose: () => void; onDone: () => Promise<void> }) {
   const withdraw = useServerFn(withdrawFunds); const save = useServerFn(savePayoutAccount);
+  const [amountW, setAmountW] = useState(""); const fee = useFee(railFor("withdraw", code, currencyDef(code)?.kind === "crypto"), amt(amountW));
   const [acct, setAcct] = useState<PayoutAccount | null>(payout);
   const [form, setForm] = useState({ accountNumber: "", accountName: holder, bankName: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
@@ -235,7 +236,7 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
         {(["accountName", "accountNumber", "bankName"] as const).map((f) => <label key={f} className="block text-xs font-bold">{{ accountName: "Account name", accountNumber: "Account number / IBAN", bankName: "Bank name" }[f]}<input className="field mt-1 h-10" value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} /></label>)}
         <Button variant="brand" className="w-full" disabled={busy || form.accountNumber.length < 4 || form.bankName.length < 2} onClick={addAccount}>{busy && <Loader2 className="animate-spin" />}Save payout account</Button></div>)
     : step === "form" ? <div className="space-y-3"><div className="rounded-xl border border-border p-3 text-xs"><p className="text-[10px] font-bold uppercase text-muted-foreground">To your account</p><p className="mt-1 font-bold">{acct.accountName}</p><p className="font-mono text-muted-foreground">{acct.bankName} · {acct.accountNumber}</p></div><AmountInput code={code} value={amount} onChange={setAmount} max={balance} /><Button variant="brand" className="w-full" disabled={!(amt(amount) > 0) || amt(amount) > balance} onClick={() => setStep("review")}>Review withdrawal</Button></div>
-    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["To", `${acct.accountName}`], ["Account", `${acct.bankName} · ${acct.accountNumber}`], ["Fee", LIMITS[code]!.fee], ["Arrives", LIMITS[code]!.speed]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
+    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["To", `${acct.accountName}`], ["Account", `${acct.bankName} · ${acct.accountNumber}`], ["Fee", fee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
     : ref && <Receipt rows={[["Amount", fmt(code, amt(amount))], ["To", ref.to], ["Reference", ref.reference ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -243,6 +244,7 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
 function SendDialog({ code, live, balance, onClose, onDone }: { code: string; live: boolean; balance: number; onClose: () => void; onDone: () => Promise<void> }) {
   const run = useServerFn(runPaddleOperation);
   const def = currencyDef(code)!;
+  const [amountS, setAmountS] = useState(""); const fee = useFee(railFor("send", code, def.kind === "crypto"), amt(amountS));
   const [v, setV] = useState({ accountName: "", accountNumber: "", bankName: "", narration: "" });
   const [amount, setAmount] = useState(""); const [step, setStep] = useState<"form" | "review" | "done">("form");
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<string | null>(null); const [key] = useState(uuid);
@@ -250,7 +252,7 @@ function SendDialog({ code, live, balance, onClose, onDone }: { code: string; li
   const ok = v.accountName.trim().length > 1 && v.accountNumber.trim().length > 3 && v.bankName.trim().length > 1 && amt(amount) > 0 && amt(amount) <= balance;
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Send {code}</DialogTitle></DialogHeader>
     {step === "form" ? <div className="space-y-3">{(["accountName", "accountNumber", "bankName", "narration"] as const).map((f) => <label key={f} className="block text-xs font-bold">{{ accountName: "Recipient name", accountNumber: "Account number / IBAN", bankName: "Bank name", narration: "Note (optional)" }[f]}<input className="field mt-1 h-10" value={v[f]} onChange={(e) => setV({ ...v, [f]: e.target.value })} /></label>)}<AmountInput code={code} value={amount} onChange={setAmount} max={balance} /><Button variant="brand" className="w-full" disabled={!ok} onClick={() => setStep("review")}>Review transfer</Button></div>
-    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Account", `${v.bankName} · ${v.accountNumber}`], ["Fee", LIMITS[code]!.fee], ["Arrives", LIMITS[code]!.speed]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
+    : step === "review" ? <Review rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Account", `${v.bankName} · ${v.accountNumber}`], ["Fee", fee || "Shown on receipt"]]} live={live} pin={pin} setPin={setPin} busy={busy} onBack={() => setStep("form")} onConfirm={confirm} />
     : <Receipt rows={[["Amount", fmt(code, amt(amount))], ["Recipient", v.accountName], ["Reference", ref ?? "—"]]} onClose={onClose} />}
   </DialogContent></Dialog>;
 }
@@ -263,7 +265,7 @@ export function DepositQr({ address, code, network, size = 168 }: { address: str
   </figure>;
 }
 
-/** Total across every wallet, shown in naira using the last known rates. */
+/** Total across every wallet, shown in naira at live rates. */
 export function PortfolioHeader() {
   const load = useServerFn(getWallets); const loadExtras = useServerFn(getWalletExtras);
   const { profile: banking } = useBankingProfile(); const hidden = useHideAmounts();
@@ -271,7 +273,7 @@ export function PortfolioHeader() {
   useEffect(() => { let on = true; Promise.all([load(), loadExtras()]).then(([w, x]) => on && setData({ w: w.wallets, x })).catch(() => undefined); return () => { on = false; }; }, [load, loadExtras, banking]);
   if (!data) return null;
   const ngn = banking?.balances["NGN"] ?? data.x.ngnBalance;
-  const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValue(w.code, w.balance, data.x.rates) }));
+  const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValueLive(w.code, w.balance, pricing?.rates ?? null) }));
   const total = ngn + parts.reduce((a, p) => a + (p.n ?? 0), 0);
   const unpriced = parts.filter((p) => p.n === null).map((p) => p.code);
   return <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
