@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpDown, ArrowUpRight, Banknote, Copy, Download, FileText, Gauge, Link2, Loader2, Lock, MoreHorizontal, Plus, QrCode, Repeat, Share2, Wallet, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";

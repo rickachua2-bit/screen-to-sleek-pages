@@ -111,8 +111,11 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   useEffect(() => { onPreviewChange?.({ amount: Number.isFinite(amt) ? amt : 0, name, bank: bank?.name ?? "", account: acct, fee, step }); }, [amt, name, bank, acct, fee, step, onPreviewChange]);
   const review = async () => {
     if (!bank || !name || !validTransferAmount(amount)) return;
-    setStep("review"); setFee("Calculating…"); setFeeValue(null); setFeeBusy(true);
-    try { const r = await feeFn({ data: { rail: "payouts", amount: amt } }); if (!r || !Number.isFinite(r.fee) || r.fee < 0) throw new Error(); setFee(naira(r.fee)); setFeeValue(r.fee); }
+    setStep("review"); setFeeBusy(true);
+    // The provider prices NIP payouts flat per transfer, so one confirmed quote stays good for any amount.
+    if (flatFee.current !== null) { setFee(naira(flatFee.current)); setFeeValue(flatFee.current); setFeeBusy(false); return; }
+    setFee("Calculating…"); setFeeValue(null);
+    try { const r = await feeFn({ data: { rail: "payouts", amount: amt } }); if (!r || !Number.isFinite(r.fee) || r.fee < 0) throw new Error(); if (r.flat) flatFee.current = r.fee; setFee(naira(r.fee)); setFeeValue(r.fee); }
     catch { setFee("Unavailable — retry before sending"); } finally { setFeeBusy(false); }
   };
   const send = async () => {
