@@ -1,15 +1,19 @@
-import { ArrowLeftRight, Boxes, Rocket, BadgeCheck, Code2, CreditCard, FileText, Globe, LayoutDashboard, Link2, QrCode, Repeat, Scale, Settings, ShieldCheck, Smartphone, UserCheck, Users, Wallet } from "lucide-react";
+import { ArrowLeftRight, Boxes, Rocket, BadgeCheck, Code2, CreditCard, FileText, Globe, GraduationCap, Landmark, LayoutDashboard, Link2, Lock, Phone, QrCode, Repeat, Router, Scale, Send, Settings, ShieldCheck, Smartphone, Trophy, Tv, UserCheck, Users, Wifi, Zap } from "lucide-react";
 import type { Txn } from "./api";
 
+/** Sidebar groups mirror the Services hub categories. `svc-<id>` modules open that guided service directly. */
 export const MERCHANT_GROUPS = [
-  { title: "Core & Overview", items: [{ id: "overview", label: "Dashboard", icon: LayoutDashboard }, { id: "transactions", label: "Transactions & Ledger", icon: ArrowLeftRight }, { id: "services", label: "All Banking Services", icon: Boxes }, { id: "golive", label: "Go Live (KYB)", icon: Rocket }] },
-  { title: "Collections & Acceptance", items: [{ id: "softpos", label: "SoftPOS Terminals", icon: Smartphone }, { id: "smarttag", label: "SmartTag & QR Hardware", icon: QrCode }, { id: "links", label: "Payment Links & Invoices", icon: Link2 }, { id: "mandates", label: "Direct Mandates & Debits", icon: Repeat }] },
-  { title: "Disbursements & Cards", items: [{ id: "banking", label: "Commercial Banking", icon: Wallet }, { id: "payroll", label: "Bulk Payroll & Payouts", icon: Users }, { id: "cards", label: "Virtual Corporate Cards", icon: CreditCard }] },
-  { title: "Operations & Governance", items: [{ id: "shifts", label: "Shift & Loss Prevention", icon: ShieldCheck }, { id: "disputes", label: "Disputes & Chargebacks", icon: Scale }, { id: "approvals", label: "Maker-Checker Approvals", icon: UserCheck }] },
-  { title: "Treasury & Compliance", items: [{ id: "treasury", label: "Forex & Treasury", icon: Globe }, { id: "compliance", label: "KYB & CAC Compliance", icon: BadgeCheck }, { id: "statements", label: "Audits & Account Statements", icon: FileText }] },
-  { title: "Developer & Settings", items: [{ id: "developer", label: "Developer APIs & Webhooks", icon: Code2 }, { id: "settings", label: "Settings & Team Security", icon: Settings }] },
+  { title: "Overview", items: [{ id: "overview", label: "Dashboard", icon: LayoutDashboard }, { id: "transactions", label: "Transactions & Ledger", icon: ArrowLeftRight }, { id: "services", label: "All Banking Services", icon: Boxes }, { id: "golive", label: "Go Live (KYB)", icon: Rocket }] },
+  { title: "Move money", items: [{ id: "banking", label: "Bank transfer", icon: Send }, { id: "payroll", label: "Bulk payouts", icon: Users }, { id: "treasury", label: "International & swap", icon: Globe }] },
+  { title: "Get paid", items: [{ id: "links", label: "Payment links & invoices", icon: Link2 }, { id: "smarttag", label: "QR & SmartTag", icon: QrCode }, { id: "softpos", label: "SoftPOS", icon: Smartphone }, { id: "mandates", label: "Direct debits", icon: Repeat }, { id: "svc-escrow", label: "Escrow", icon: Lock }] },
+  { title: "Cards", items: [{ id: "cards", label: "Virtual cards", icon: CreditCard }] },
+  { title: "Pay bills", items: [{ id: "svc-airtime", label: "Airtime", icon: Phone }, { id: "svc-data", label: "Mobile data", icon: Wifi }, { id: "svc-power", label: "Electricity", icon: Zap }, { id: "svc-tv", label: "Cable TV", icon: Tv }, { id: "svc-internet", label: "Home internet", icon: Router }, { id: "svc-betting", label: "Betting wallet", icon: Trophy }, { id: "svc-education", label: "Exam PINs", icon: GraduationCap }] },
+  { title: "Government & tax", items: [{ id: "svc-firs", label: "Federal tax (FIRS)", icon: Landmark }, { id: "svc-remita", label: "Remita (RRR)", icon: FileText }] },
+  { title: "Business tools", items: [{ id: "approvals", label: "Approvals", icon: UserCheck }, { id: "statements", label: "Statements", icon: FileText }, { id: "disputes", label: "Disputes", icon: Scale }, { id: "shifts", label: "Shift & loss prevention", icon: ShieldCheck }, { id: "compliance", label: "KYB & CAC compliance", icon: BadgeCheck }, { id: "settings", label: "Team & security", icon: Settings }] },
+  { title: "Developers", items: [{ id: "developer", label: "API console & webhooks", icon: Code2 }] },
 ];
 export const MERCHANT_NAV = MERCHANT_GROUPS.flatMap((g) => g.items);
+export const serviceModuleId = (module: string) => (module.startsWith("svc-") ? module.slice(4) : null);
 export function merchantModule(value: unknown): string {
   return typeof value === "string" && MERCHANT_NAV.some((n) => n.id === value) ? value : "overview";
 }
