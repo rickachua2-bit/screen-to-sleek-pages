@@ -721,3 +721,11 @@ html { scroll-behavior: smooth; }
 .topbar-midnight .mode-switch.is-sandbox .mode-thumb { background: linear-gradient(135deg, oklch(0.75 0.17 60), oklch(0.65 0.24 340)); box-shadow: 0 0 16px -3px oklch(0.7 0.2 40 / .8); }
 .topbar-midnight .mode-switch.is-sandbox button[aria-checked="true"] .mode-dot { background: oklch(1 0 0); }
 @media (prefers-reduced-motion: reduce) { .topbar-midnight::after, .topbar-midnight .topbar-search { animation: none; } }
+
+/* Midnight Bar — beat the light workspace header rule */
+.light-workspace header.topbar-midnight { background: radial-gradient(600px 120px at 15% -40%, oklch(0.55 0.2 260 / .5), transparent 70%), radial-gradient(500px 120px at 90% -50%, oklch(0.6 0.25 340 / .32), transparent 70%), linear-gradient(180deg, oklch(0.21 0.08 266), oklch(0.15 0.06 268)); }
+.light-workspace header.topbar-midnight .topbar-icon { color: oklch(1 0 0); background: oklch(1 0 0 / .06); border: 1px solid oklch(0.85 0.15 205 / .35); height: 38px; width: 38px; }
+.light-workspace header.topbar-midnight .topbar-icon svg { color: oklch(1 0 0); }
+.light-workspace header.topbar-midnight .topbar-icon:hover { background: oklch(0.85 0.15 205 / .16); }
+.light-workspace header.topbar-midnight .topbar-icon:hover svg { color: oklch(0.9 0.14 205); }
+.light-workspace header.topbar-midnight .mode-switch { box-shadow: 0 0 16px -6px oklch(0.82 0.15 205 / .6); }
