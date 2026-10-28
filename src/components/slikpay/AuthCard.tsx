@@ -3,7 +3,7 @@ import {
   AtSign, Bitcoin, Briefcase, Building, Building2, Check, ChevronDown, Copy, Eye, EyeOff, Fingerprint, Fuel, Info, Landmark, Laptop, Loader2, Lock, Mail, Plus, Search, ShieldCheck, Ship, ShoppingCart, Smartphone, Stethoscope, Store, Tractor, Truck, User as UserIcon, UtensilsCrossed, X, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { NG_BANKS, type Role } from "@/lib/api";
+import { type Role } from "@/lib/api";
 import { useAuth, type AuthResult } from "@/lib/auth";
 import { isEmail, isPin, passwordStrength } from "@/lib/password";
 import { Button } from "@/components/ui/button";
@@ -434,7 +434,6 @@ const COUNTRIES = [
 
 const COUNTRY_OPTS: Opt[] = COUNTRIES.map((c) => ({ value: c.code, label: c.name, flag: c.flag, hint: c.dial, group: c.group }));
 const COMPANY_OPTS: Opt[] = COMPANY_TYPES.map((c) => ({ value: c, label: c }));
-const BANK_OPTS: Opt[] = NG_BANKS.map((b) => ({ value: b.name, label: b.name, hint: b.code }));
 
 function CountrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
   return <SelectMenu id={id} value={value} options={COUNTRY_OPTS} onChange={onChange} searchable placeholder="Select your country" />;
@@ -545,7 +544,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   const [challengeId, setChallengeId] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", industryOther: "", bank: "", nuban: "" });
+  const [f, setF] = useState({ country: "NG", director: "", email: "", phone: "", pw: "", cac: "", companyType: COMPANY_TYPES[0]!, industry: "", industryOther: "" });
   const [volume, setVolume] = useState(VOLUMES[0]!);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusy, setCacBusy] = useState(false);
@@ -591,6 +590,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   function next2(e: React.FormEvent) {
     e.preventDefault();
     if (!cacVerified) return fail({ cac: "Verify your CAC number to continue" });
+    if (!terms) return fail({ terms: "Please accept the agreements to continue" });
 
     setErr({});
     setStep(3);
@@ -599,11 +599,8 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   async function launch(e: React.FormEvent) {
     e.preventDefault();
     const er = {
-      bank: f.bank ? undefined : "Choose your settlement bank",
-      nuban: f.nuban.replace(/\D/g, "").length === 10 ? undefined : "Enter the 10-digit NUBAN",
       pin: isPin(pin) ? undefined : "PIN must be exactly 4 digits",
       pin2: pin === pin2 && isPin(pin2) ? undefined : "PINs don't match",
-      terms: terms ? undefined : "Please accept the agreements to launch",
     };
     if (Object.values(er).some(Boolean)) return fail(er);
     setErr({});
@@ -620,7 +617,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   if (step === 1) {
     return (
       <form onSubmit={next1} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4">
-        <StepBar n={1} labels={["Account Details", "Business", "Security"]} />
+        <StepBar n={1} labels={["Account Details", "Business", "PIN"]} />
         <h2 className="text-xl font-black text-foreground">Account Details</h2>
         <p className="-mt-2 text-sm font-medium text-body">Director / Administrator information.</p>
         <Field label="Country of Incorporation" id="b-country">
@@ -655,7 +652,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
   if (step === 2) {
     return (
       <form onSubmit={next2} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b2-${shake}`}>
-        <StepBar n={2} labels={["Account Details", "Business", "Security"]} />
+        <StepBar n={2} labels={["Account Details", "Business", "PIN"]} />
         <h2 className="text-xl font-black text-foreground">Business &amp; CAC Regulatory Lookup</h2>
         <Field label="Company Type" id="b-ctype">
           <SelectMenu id="b-ctype" value={f.companyType} options={COMPANY_OPTS} onChange={(v) => setF((p) => ({ ...p, companyType: v }))} placeholder="Select company type" />
@@ -685,9 +682,16 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
             ))}
           </div>
         </div>
+        <div>
+          <label className="flex items-start gap-2 text-sm font-semibold text-body">
+            <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cobalt" />
+            I agree to Slikpay's Merchant Terms of Service, AML/CFT Regulatory Policy, and Sterling Bank BaaS Settlement Agreement.
+          </label>
+          <ErrorPill msg={err["terms"]} />
+        </div>
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="h-12 flex-1" onClick={() => setStep(1)}>← Back</Button>
-          <Button variant="brand" type="submit" className="h-12 flex-[2]">Continue to Settlement &amp; PIN →</Button>
+          <Button variant="brand" type="submit" className="h-12 flex-[2]">Continue to Transaction PIN →</Button>
         </div>
       </form>
     );
@@ -695,15 +699,8 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
 
   return (
     <form onSubmit={launch} noValidate className="animate-in fade-in slide-in-from-right-4 space-y-4" key={`b3-${shake}`}>
-      <StepBar n={3} labels={["Account Details", "Business", "Security"]} />
-      <h2 className="text-xl font-black text-foreground">Settlement Bank &amp; Security PIN</h2>
-      <Field label="Settlement Bank" id="b-bank" error={err["bank"]} shake>
-        <SelectMenu id="b-bank" value={f.bank} options={BANK_OPTS} onChange={(v) => setF((p) => ({ ...p, bank: v }))} searchable placeholder="Select a licensed Nigerian bank" />
-      </Field>
-      <Field label="10-Digit Settlement NUBAN Account Number" id="b-nuban" error={err["nuban"]} shake>
-        <input id="b-nuban" inputMode="numeric" maxLength={10} className={`${inputCls(false)} font-mono tracking-widest`} value={f.nuban} onChange={(e) => setF((p) => ({ ...p, nuban: e.target.value.replace(/\D/g, "") }))} placeholder="0123456789" />
-        <p className="mt-1 text-xs text-muted-foreground">Settlement activation and bank-account verification are pending.</p>
-      </Field>
+      <StepBar n={3} labels={["Account Details", "Business", "PIN"]} />
+      <h2 className="text-xl font-black text-foreground">Create Transaction PIN</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Create 4-Digit Transaction PIN" id="b-pin" error={err["pin"]} shake>
           <div className="pt-1"><PinBoxes value={pin} onChange={setPin} /></div>
@@ -711,13 +708,6 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <Field label="Confirm PIN" id="b-pin2" error={err["pin2"]} shake>
           <div className="pt-1"><PinBoxes value={pin2} onChange={setPin2} /></div>
         </Field>
-      </div>
-      <div>
-        <label className="flex items-start gap-2 text-sm font-semibold text-body">
-          <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cobalt" />
-          I agree to Slikpay's Merchant Terms of Service, AML/CFT Regulatory Policy, and Sterling Bank BaaS Settlement Agreement.
-        </label>
-        <ErrorPill msg={err["terms"]} />
       </div>
       <div className="flex gap-3">
         <Button type="button" variant="outline" className="h-12 flex-1" onClick={() => setStep(2)}>← Back</Button>
