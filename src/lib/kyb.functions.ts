@@ -158,3 +158,15 @@ export const completeGoLive = createServerFn({ method: "POST" }).handler(async (
     return { live: true, accountNumber: null, accountName: biz.name, issueError: e instanceof Error ? e.message : "Account number could not be issued yet." };
   }
 });
+
+// Sandbox is always allowed; live only after the account has been approved through go-live.
+export const switchAccountMode = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ mode: z.enum(["sandbox", "live"]) }).parse(d))
+  .handler(async ({ data }) => {
+    const { bankingUser } = await import("./paddle.server");
+    const ctx = await bankingUser();
+    if (data.mode === "live" && ctx.review !== "approved") throw new Error("Complete verification to switch to live.");
+    const up = await ctx.db.from("account_modes").update({ mode: data.mode }).eq("user_id", ctx.user.id);
+    if (up.error) throw new Error("Could not switch mode. Try again.");
+    return { mode: data.mode };
+  });
