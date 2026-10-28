@@ -18,6 +18,10 @@ export interface Txn {
   direction: "credit" | "debit";
   status: "Successful" | "Pending" | "Failed";
   nipSessionId?: string;
+  currency?: string;
+  fee?: number;
+  net?: number;
+  note?: string;
 }
 export interface Account {
   balance: number;
@@ -179,5 +183,11 @@ export function exportTransactionsCsv(txns: Txn[]) {
   URL.revokeObjectURL(a.href);
 }
 
+export const money = (n: number, currency = "NGN") => {
+  const crypto = /^(USDT|USDC|BTC|ETH)$/.test(currency);
+  const sym: Record<string, string> = { NGN: "₦", USD: "$", GBP: "£", EUR: "€", GHS: "GH₵", KES: "KSh ", ZAR: "R", XOF: "CFA ", XAF: "FCFA ", RWF: "RF ", UGX: "USh ", TZS: "TSh " };
+  const v = n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: crypto ? 8 : 2 });
+  return crypto ? `${v} ${currency}` : `${sym[currency] ?? currency + " "}${v}`;
+};
 export const naira = (n: number) => "₦" + n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

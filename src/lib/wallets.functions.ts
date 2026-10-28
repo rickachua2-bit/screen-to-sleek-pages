@@ -123,7 +123,9 @@ export const withdrawFunds = createServerFn({ method: "POST" })
         : await callPaddle(ctx.mode, "POST", "/v1/payouts/global", { amount: data.amount, currency: data.currency, destinationCurrency: data.currency, beneficiary: { accountNumber: acct.accountNumber, accountName: acct.accountName, bankName: acct.bankName, country: currencyDef(data.currency)?.country } }, data.idempotencyKey);
       const d = (r.data ?? {}) as Record<string, unknown>;
       const reference = [d["reference"], d["transactionReference"], d["id"]].find((v) => typeof v === "string") as string | undefined;
-      await settleMoney(ctx, data.idempotencyKey, true, reference ?? null, { to: acct.accountNumber, bank: acct.bankName });
+      const { providerFee } = await import("./ledger-history");
+      const fee = providerFee(d);
+      await settleMoney(ctx, data.idempotencyKey, true, reference ?? null, { recipient: acct.accountName, to: acct.accountNumber, bank: acct.bankName, ...(fee !== undefined ? { fee } : {}) });
       return { reference: reference ?? null, to: `${acct.accountName} · ${acct.bankName} · ${acct.accountNumber}` };
     } catch (e) { await settleMoney(ctx, data.idempotencyKey, false, null); throw e; }
   });
