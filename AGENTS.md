@@ -27,3 +27,4 @@
 - Incoming transfers are captured idempotently (reference col:<provider ref>) by both the webhook and a 30s/refresh pull sync in src/lib/collections.server.ts; unrecorded 10-digit receiving accounts are auto-linked only when their name matches the user's verified business name, since the provider key can see every customer's collections.
 - The Services hub is driven by src/lib/services-registry.ts (product tiles → catalog op ids, per-service guided flow configs); money still flows only through runPaddleOperation so PIN, holds and receipts stay in one place.
 - ServicesCatalog owns the shared visual banking/business catalog; ServicesHub retains account context, navigation and guided operations so design changes never duplicate payment logic.
+- TransferComposerLayout owns the split transfer presentation; SendNip retains bank lookup, review and payment execution and publishes display-only preview state so the page and modal share one payment flow.
