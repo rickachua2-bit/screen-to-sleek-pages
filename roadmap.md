@@ -29,7 +29,7 @@
 - [ ] Virtual cards full lifecycle (create, fund, freeze, limits, terminate)
 - [ ] Payment links & invoices live screen
 - [ ] Escrow fund/release/dispute timeline
-- [ ] Bulk payouts CSV with per-row results
+- [x] Bulk payouts CSV with per-row results and stable saved references implemented — activation requires payment reliability SQL in external account service
 - [ ] Mandates, QR/SmartTag, SoftPOS live screens
 - [ ] Stocks, treasury, flights screens
 - [ ] Disputes, statements, approvals, team on provider records
@@ -44,6 +44,10 @@
 
 ## Bulk payments and fiat/crypto transfers
 - [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
-- [ ] Add fiat/crypto choices to bank transfers, including USDT/USDC conversion to NGN and bank payout, only through verified supported rails
+- [x] Add Fiat/Crypto choices and gated USDT/USDC-to-NGN bank funding preview; no execution enabled without verified rails
+- [x] CSV quoted-cell parsing, duplicates, numeric checks, fee-inclusive totals, template and results downloads; saved batch restore uses original receipts
+- [ ] Activate saved batches and atomic wallet settlement — blocked: `supabase/slikpay_payment_reliability.sql` must be applied manually to the external account service
+- [ ] Enable crypto conversion plus bank payout with a durable cash-out record — blocked: provider documentation omits supported pairs, firm quote/fees, swap status and reconciliation contracts
+- [ ] Reconcile pending outbound payments and allow confirmed-failure retries — blocked: authoritative provider reference/status contract
 - [ ] Verify quote, fee, balance reservation, conversion and payout status end-to-end — blocked: external authenticated test access and confirmed conversion/payout contract
-- [ ] Harden swap/withdrawal idempotency and ambiguous-result handling before exposing bank cash-out
+- [x] Swap/withdrawal now fail closed, retain uncertain holds and require transactional reservation/settlement; RPC boundary tests pass, deployed SQL remains unverified

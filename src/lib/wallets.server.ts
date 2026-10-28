@@ -65,19 +65,14 @@ export async function guardMoney(ctx: Ctx, currency: string, amount: number, pin
     const sec = await ctx.db.from("merchant_security").select("pin_digest, pin_salt").eq("user_id", ctx.user.id).maybeSingle();
     const { pinDigest } = await import("./merchant-verification.server");
     if (!sec.data || sec.data.pin_digest !== await pinDigest(pin, sec.data.pin_salt)) throw new Error("Incorrect transaction PIN.");
-    const held = await ctx.db.rpc("hold_funds", { p_user: ctx.user.id, p_mode: ctx.mode, p_currency: currency, p_amount: amount, p_operation: operation, p_reference: reference });
-    if (held.error) throw new Error("Could not reserve funds. Try again.");
-    if (held.data !== true) throw new Error("Insufficient balance for this transaction.");
-  } else {
-    // Sandbox: still record the debit so test balances move.
-    await ctx.db.from("ledger_entries").insert({ user_id: ctx.user.id, mode: ctx.mode, currency, amount: -amount, status: "held", operation, reference });
   }
-  const r = await ctx.db.from("payment_receipts").insert({ user_id: ctx.user.id, mode: ctx.mode, operation, idempotency_key: reference, status: "pending", amount, currency });
-  if (r.error) throw new Error("This request was already submitted.");
+  const r = await ctx.db.rpc("begin_wallet_payment", { p_user: ctx.user.id, p_mode: ctx.mode, p_currency: currency, p_amount: amount, p_operation: operation, p_reference: reference });
+  if (r.error) throw new Error("Payment could not be prepared. Check your ledger; the payment reliability setup may be required.");
+  if (r.data !== true) throw new Error("Insufficient balance including fees.");
 }
-export async function settleMoney(ctx: Ctx, reference: string, ok: boolean, providerRef: string | null, summary?: object) {
-  await ctx.db.from("payment_receipts").update({ status: ok ? "succeeded" : "failed", provider_reference: providerRef, ...(summary ? { summary } : {}) }).eq("idempotency_key", reference);
-  await ctx.db.from("ledger_entries").update({ status: ok ? "posted" : "released" }).eq("reference", reference);
+export async function settleMoney(ctx: Ctx, reference: string, status: "pending" | "succeeded" | "failed", providerRef: string | null, summary?: object, credit?: { currency: string; amount: number }) {
+  const r = await ctx.db.rpc("finish_wallet_payment", { p_user: ctx.user.id, p_mode: ctx.mode, p_reference: reference, p_status: status, p_provider_ref: providerRef, p_summary: summary ?? {}, p_credit_currency: credit?.currency ?? null, p_credit_amount: credit?.amount ?? null });
+  if (r.error || r.data !== true) throw new Error("Payment requires reconciliation. Do not send again.");
 }
 
 /* ---------- small per-user JSON records (rates, payout accounts) ---------- */
