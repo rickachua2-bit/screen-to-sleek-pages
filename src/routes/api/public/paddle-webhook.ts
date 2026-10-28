@@ -30,12 +30,16 @@ export const Route = createFileRoute("/api/public/paddle-webhook")({
         const db = accountAdmin();
         const fresh = await db.from("webhook_events").insert({ id: eventId, event_type: type, payload: ev });
         if (fresh.error) return new Response("ok"); // duplicate delivery
-        // Credit the owner of the virtual account that received money.
-        const account = d["accountNumber"] ?? d["virtualAccountNumber"];
-        const amount = Number(d["amount"]);
-        if (typeof account === "string" && Number.isFinite(amount) && amount > 0 && /credit|inbound|payment\.succeeded|collection/i.test(type)) {
+        // Credit the owner of the virtual account that received money (same idempotent path as the pull sync).
+        const meta = (d["metadata"] ?? {}) as Record<string, unknown>;
+        const account = String(meta["recipientAccountNumber"] ?? d["accountNumber"] ?? d["virtualAccountNumber"] ?? "");
+        if (account && /credit|inbound|payment|collection|transfer|transaction/i.test(type)) {
           const owner = await db.from("paddle_resources").select("user_id, mode").eq("resource_id", account).maybeSingle();
-          if (owner.data) await db.from("ledger_entries").insert({ user_id: owner.data.user_id, mode: owner.data.mode, currency: typeof d["currency"] === "string" ? d["currency"] : "NGN", amount, status: "posted", operation: type, reference: `wh:${eventId}` });
+          if (owner.data) {
+            const { inboundCredit, postCredit } = await import("@/lib/collections.server");
+            const c = inboundCredit({ status: "successful", ...d } as never, new Set([account]));
+            if (c) await postCredit(db, owner.data.user_id, owner.data.mode, c);
+          }
         }
         await db.from("webhook_events").update({ processed: true }).eq("id", eventId);
         return new Response("ok");
