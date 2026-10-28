@@ -115,7 +115,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
     {dialog === "receive" && w && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Receive {code}</DialogTitle></DialogHeader><p className="break-all font-mono text-lg font-bold">{w.accountNumber}</p><p className="text-xs text-muted-foreground">{share}</p><Button variant="brand" onClick={copyAll}><Copy />Copy details</Button></DialogContent></Dialog>}
     {dialog === "limits" && <Dialog open onOpenChange={(o) => !o && setDialog(null)}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>{code} limits & fees</DialogTitle></DialogHeader><LimitsList code={code} /></DialogContent></Dialog>}
     {dialog === "swap" && <SwapDialog from={code} live={live} balanceOf={balanceOf} onClose={() => setDialog(null)} onDone={refresh} />}
-    {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={extras?.payouts[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
+    {dialog === "withdraw" && <WithdrawDialog code={code} live={live} balance={balance} payout={(extras?.payouts as Record<string, PayoutAccount> | undefined)?.[code] ?? null} holder={extras?.holder ?? ""} onNavigate={onNavigate} onClose={() => setDialog(null)} onDone={refresh} />}
     {dialog === "send" && <SendDialog code={code} live={live} balance={balance} onClose={() => setDialog(null)} onDone={refresh} />}
   </section>;
 }
