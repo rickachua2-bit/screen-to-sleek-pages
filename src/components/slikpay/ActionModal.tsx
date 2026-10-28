@@ -93,6 +93,8 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   const [bankError, setBankError] = useState("");
   const [feeValue, setFeeValue] = useState<number | null>(null);
   const [feeBusy, setFeeBusy] = useState(false);
+  // A flat fee confirmed by the provider is reused for every amount until the modal closes.
+  const flatFee = useRef<number | null>(null);
   const [resultStatus, setResultStatus] = useState("pending");
   const [key] = useState(() => crypto.randomUUID());
   const [recents, setRecents] = useState<Recipient[]>([]);
