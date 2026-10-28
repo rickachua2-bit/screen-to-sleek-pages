@@ -32,7 +32,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const name = user?.name ?? "Patrick Otu";
   const initials = user?.initials ?? "PO";
   const isBiz = mode === "merchant";
-  const groups = isBiz && onModuleChange ? MERCHANT_GROUPS : [{ title: "", items: nav }];
+  const groups = onModuleChange ? (isBiz ? MERCHANT_GROUPS : PERSONAL_GROUPS) : [{ title: "", items: nav }];
   const goMode = (r: Role) => { setRole(r); setSwitcher(false); navigate({ to: r === "merchant" ? "/dashboard" : "/personal" }); };
   const sidebar = <aside className="merchant-sidebar flex h-full w-[260px] flex-col border-r border-border bg-background/95 backdrop-blur-2xl">
     <div className="flex shrink-0 items-center justify-between px-5 py-6">
@@ -43,7 +43,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       {groups.map((g) => <div key={g.title} className="mb-3">{g.title && <h2 className="px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80">{g.title}</h2>}{g.items.map(({ label, icon: Icon, id }) => {
         const selected = activeModule ? activeModule === id : active === label;
         const classes = `merchant-nav-item mb-1.5 flex h-auto min-h-11 w-full justify-start gap-3 whitespace-normal rounded-lg px-3 py-3 text-left text-sm leading-5 ${selected ? "bg-gradient-tri font-bold text-primary-foreground shadow-cobalt" : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`;
-        return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to="/dashboard" search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
+        return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;
       })}</div>)}
     </nav>
     <div className="shrink-0 border-t border-border px-4 py-4">
