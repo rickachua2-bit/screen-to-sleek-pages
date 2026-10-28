@@ -41,3 +41,8 @@
 - [x] Apply Composer Split to the bank transfer page; desktop/mobile layout and quick-amount summary checked in isolation; signed-in payment flow remains unverified
 - [x] Three full-dashboard design mockups (buttons styled differently in each) for the user to pick
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
+
+## Bulk payments and fiat/crypto transfers
+- [ ] Review bulk-upload gaps against global payment standards and report confirmed limitations
+- [ ] Add fiat/crypto choices to bank transfers, including USDT/USDC conversion to NGN and bank payout, only through verified supported rails
+- [ ] Verify quote, fee, balance reservation, conversion and payout status end-to-end — blocked: external authenticated test access and confirmed conversion/payout contract
