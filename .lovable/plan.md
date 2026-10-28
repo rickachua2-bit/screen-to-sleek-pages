@@ -12,6 +12,17 @@
 - **Escrow:** create escrow
 - **Pricing:** plans, fee calculator
 - **Sandbox only:** simulate an incoming payment
+- **Accepting payments:** checkout sessions, card, bank-debit and pan-African charges, global card checkout, payment verification, refunds, disputes, and hosted PayLinks
+- **Flights:** airport search, flight search, and ticket issuing (paid from the spend wallet)
+- **Also:** NIN check, Remita bills, saved counterparties, open banking, treasury pools and sweeps, team invites, scoped API keys, and Slack/Discord alerts
+
+**Not in Paddle's docs:** event tickets, storefronts and invoices. Slikpay will build storefronts, invoices and payment links itself, and customers will pay through Paddle's checkout. Event ticketing waits until Paddle shares its documentation.
+
+## Beyond Paddle (Slikpay-built)
+- **Storefronts:** a public shop page for each merchant with products, cart and Paddle checkout
+- **Invoices:** branded invoices with line items, tax and due dates, sent by email, with a pay button, auto-reconciled when paid
+- **Payment links:** fixed or open amounts, with a QR code and an expiry
+- **Developer tools:** API keys and webhooks for each merchant, in sandbox and live
 
 Paddle uses one web address for both modes. A `sk_test_` key runs in sandbox, and a `sk_live_` key moves real money.
 
