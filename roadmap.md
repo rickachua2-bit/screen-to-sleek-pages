@@ -22,3 +22,14 @@
 - [ ] Link left-menu Cards/Treasury/Disputes/Approvals to live service screens
 - [x] Live fees and FX from the provider (admin-set rates later)
 - [ ] Admin backend for own rates and markups
+
+## Services in the side menu
+- [x] Sidebar regrouped by service category, foldable, searchable; bills/gov/escrow open directly
+- [ ] Virtual cards full lifecycle (create, fund, freeze, limits, terminate)
+- [ ] Payment links & invoices live screen
+- [ ] Escrow fund/release/dispute timeline
+- [ ] Bulk payouts CSV with per-row results
+- [ ] Mandates, QR/SmartTag, SoftPOS live screens
+- [ ] Stocks, treasury, flights screens
+- [ ] Disputes, statements, approvals, team on provider records
+- [ ] Personal wallet menu regrouping
