@@ -265,7 +265,7 @@ function AccountTabs({ role, onChange }: { role: Role; onChange: (r: Role) => vo
 
 /* ---------- sign in ---------- */
 
-function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: boolean) => void }) {
+function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const { signInWithPassword, resetPassword } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [id, setId] = useState("");
@@ -280,7 +280,6 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(45);
   const [forgot, setForgot] = useState(false);
-  const isBiz = role === "merchant";
 
   useEffect(() => {
     if (step !== 2 || timer <= 0) return;
