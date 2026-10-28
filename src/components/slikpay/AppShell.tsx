@@ -43,7 +43,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Close menu" onClick={() => setOpen(false)}><X /></Button>
     </div>
     <nav aria-label="Main navigation" className="dropdown-list min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-      {groups.map((g) => <div key={g.title} className="mb-3">{g.title && <h2 className="px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80">{g.title}</h2>}{g.items.map(({ label, icon: Icon, id }) => {
+      {groups.map((g) => <div key={g.title} className="mb-3">{g.title && <h2 className="px-2 pb-2 pt-3 text-xs font-bold uppercase text-muted-foreground/80">{g.title}</h2>}{g.items.map(({ label: rawLabel, icon: Icon, id }) => { const label = id === "golive" && banking?.mode === "live" ? "KYB" : rawLabel;
         const selected = activeModule ? activeModule === id : active === label;
         const classes = `merchant-nav-item mb-1.5 flex h-auto min-h-11 w-full justify-start gap-3 whitespace-normal rounded-lg px-3 py-3 text-left text-sm leading-5 ${selected ? "bg-gradient-tri font-bold text-primary-foreground shadow-cobalt" : "font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`;
         return onModuleChange && id ? <Button asChild variant="ghost" key={label} className={classes}><Link to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)}><Icon className="shrink-0" /><span>{label}</span></Link></Button> : <Button variant="ghost" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon /><span>{label}</span></Button>;

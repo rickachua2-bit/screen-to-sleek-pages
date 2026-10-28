@@ -3,15 +3,22 @@ export type GoLiveStep = { key: string; title: string; detail: string; auto?: bo
 export type KycRow = { step: string; status: string; summary?: string | null };
 
 export const MERCHANT_STEPS: GoLiveStep[] = [
-  { key: "contacts", title: "Phone & email verified", detail: "Confirmed with one-time codes at sign-up.", auto: true },
-  { key: "business_identity", title: "Business identity", detail: "Registry match plus certificate of incorporation and memorandum/articles." },
-  { key: "tax_id", title: "Tax ID (TIN)", detail: "Your tax identification number, checked instantly.", auto: true },
-  { key: "director_bvn", title: "Directors", detail: "BVN/NIN match, live selfie and ID for every director.", auto: true },
-  { key: "beneficial_owners", title: "Beneficial owners", detail: "Everyone owning 25% or more, verified like directors." },
-  { key: "operations", title: "Address & operations", detail: "Proof of address, website or socials, what you sell and expected volume." },
-  { key: "settlement_account", title: "Settlement account", detail: "A corporate account whose name matches your registered business.", auto: true },
-  { key: "compliance_review", title: "Compliance review", detail: "Sanctions/PEP screening, risk rating and approval by Slikpay compliance." },
+  { key: "contacts", title: "Phone & email", detail: "Confirmed with one-time codes at sign-up.", auto: true },
+  { key: "business_identity", title: "Business identity", detail: "Captured from your registry verification at sign-up.", auto: true },
+  { key: "director_bvn", title: "Directors", detail: "Verify at least one director with their BVN.", auto: true },
+  { key: "beneficial_owners", title: "Beneficial owners", detail: "Everyone owning 25% or more, verified by BVN.", auto: true },
+  { key: "operations", title: "Address & web presence", detail: "Business address plus your website or social pages." },
+  { key: "settlement_account", title: "Settlement account", detail: "A bank account in your registered business name.", auto: true },
+  { key: "two_factor", title: "Two-factor authentication", detail: "Secure sign-in with Google Authenticator." },
 ];
+
+const SUFFIX: [RegExp, string][] = [[/\blimited\b/g, "ltd"], [/\bnigeria\b/g, "nig"], [/\bcompany\b/g, "co"], [/\bpublic limited company\b/g, "plc"], [/\benterprises?\b/g, "ent"], [/\band\b/g, "&"]];
+export function normaliseName(n: string) {
+  let s = n.toLowerCase().replace(/[.,'"()\-_/]/g, " ");
+  for (const [re, to] of SUFFIX) s = s.replace(re, to);
+  return s.replace(/&/g, " & ").replace(/\s+/g, " ").trim();
+}
+export const namesMatch = (a: string, b: string) => normaliseName(a) === normaliseName(b) && normaliseName(a).length > 0;
 
 export const PERSONAL_STEPS: GoLiveStep[] = [
   { key: "contacts", title: "Phone & email verified", detail: "Confirmed with one-time codes.", auto: true, tier: 1 },

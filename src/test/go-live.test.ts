@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { MERCHANT_STEPS, progress } from "@/lib/go-live";
+import { MERCHANT_STEPS, namesMatch, progress } from "@/lib/go-live";
 
-describe("go-live checklist", () => {
-  it("merchant has 8 steps and stays locked until review approved", () => {
+describe("business go-live", () => {
+  it("has 7 steps with no tax or sanctions review", () => {
+    expect(MERCHANT_STEPS.map((s) => s.key)).toEqual(["contacts", "business_identity", "director_bvn", "beneficial_owners", "operations", "settlement_account", "two_factor"]);
+  });
+  it("is complete only when every step is verified", () => {
     const all = MERCHANT_STEPS.map((s) => ({ step: s.key, status: "verified" }));
-    expect(progress("merchant", all, "pending").canGoLive).toBe(false);
-    expect(progress("merchant", all, "approved")).toEqual({ done: 8, total: 8, canGoLive: true });
+    expect(progress("merchant", all).canGoLive).toBe(true);
+    expect(progress("merchant", all.filter((r) => r.step !== "two_factor")).canGoLive).toBe(false);
   });
-  it("rejected step blocks live", () => {
-    const rows = MERCHANT_STEPS.map((s) => ({ step: s.key, status: s.key === "tax_id" ? "failed" : "verified" }));
-    expect(progress("merchant", rows, "approved").canGoLive).toBe(false);
-  });
-  it("new merchant starts with only contacts done", () => {
-    expect(progress("merchant", [], null).done).toBe(1);
+  it("settlement name must match the business", () => {
+    expect(namesMatch("ACME LOGISTICS LIMITED", "Acme Logistics Ltd.")).toBe(true);
+    expect(namesMatch("Acme Logistics Nigeria Ltd", "ACME LOGISTICS NIG LIMITED")).toBe(true);
+    expect(namesMatch("TUNDE ADEBAYO BALOGUN", "Acme Logistics Ltd")).toBe(false);
   });
 });
