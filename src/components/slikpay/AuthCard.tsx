@@ -239,33 +239,9 @@ function SecurityPill() {
   );
 }
 
-/* ---------- account type tabs ---------- */
-
-function AccountTabs({ role, onChange }: { role: Role; onChange: (r: Role) => void }) {
-  const tabs = [
-    { v: "merchant" as const, icon: Building2, label: "Business / Merchant", desc: "SoftPOS, Dedicated NUBANs, Bulk Payroll & Developer APIs" },
-    { v: "personal" as const, icon: UserIcon, label: "Personal User", desc: "Free P2P, Virtual Cards, Bills & @SlikTag transfers" },
-  ];
-  return (
-    <div>
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1" role="tablist" aria-label="Account type">
-        {tabs.map(({ v, icon: Icon, label }) => (
-          <button key={v} type="button" role="tab" aria-selected={role === v} onClick={() => onChange(v)}
-            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold transition-all ${role === v ? "bg-gradient-brand text-primary-foreground shadow-cobalt" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="h-4 w-4" /> <span className="hidden sm:inline">{label}</span><span className="sm:hidden">{v === "merchant" ? "Business" : "Personal"}</span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 rounded-lg border border-cyan/40 bg-cyan/10 px-3 py-2 text-xs font-semibold text-body">
-        {tabs.find((t) => t.v === role)!.desc}
-      </p>
-    </div>
-  );
-}
-
 /* ---------- sign in ---------- */
 
-function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: boolean) => void }) {
+function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const { signInWithPassword, resetPassword } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [id, setId] = useState("");
@@ -280,7 +256,6 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(45);
   const [forgot, setForgot] = useState(false);
-  const isBiz = role === "merchant";
 
   useEffect(() => {
     if (step !== 2 || timer <= 0) return;
@@ -292,10 +267,10 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const idOk = isBiz ? id.trim().length >= 3 : id.trim().length >= 3;
+    const idOk = id.trim().length >= 3;
     const secretOk = pinMode ? isPin(pin) : pw.length >= 8;
     const next = {
-      id: idOk ? undefined : isBiz ? "Enter your work email or Merchant ID" : "Enter your phone number or @SlikTag",
+      id: idOk ? undefined : "Enter your email, phone number or @SlikTag",
       pw: secretOk ? undefined : pinMode ? "PIN must be exactly 4 digits" : "Password must be at least 8 characters",
     };
     if (next.id || next.pw) return fail(next);
@@ -369,26 +344,17 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
     <form onSubmit={submit} noValidate className="animate-in fade-in space-y-4" key={shake}>
       <div>
         <h2 className="text-xl font-black text-foreground">Welcome Back</h2>
-        <p className="text-sm font-medium text-body">Sign in to your Slikpay {isBiz ? "Business Console" : "Personal Wallet"}.</p>
+        <p className="text-sm font-medium text-body">Sign in and we'll take you straight to your account.</p>
       </div>
-      <Field label={isBiz ? "Work Email or Merchant ID" : "Phone Number or @SlikTag"} id="login-id" icon={isBiz ? Mail : AtSign} error={err["id"]} shake>
-        {isBiz ? (
-          <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="director@company.com" />
-        ) : (
-          <div className="flex gap-2">
-            <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">🇳🇬</span><span className="font-mono">+234</span></span>
-            <input id="login-id" autoComplete="username" className={`${inputCls(false)} flex-1`} value={id} onChange={(e) => setId(e.target.value)} placeholder="0803 000 0000 or @babatunde" />
-          </div>
-        )}
+      <Field label="Email, Phone or @SlikTag" id="login-id" icon={AtSign} error={err["id"]} shake>
+        <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="you@company.com, 0803 000 0000 or @babatunde" />
       </Field>
-      {!isBiz && (
-        <div className="flex justify-end">
-          <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline">
-            {pinMode ? "Use password instead" : "Use 4-digit Security PIN instead"}
-          </button>
-        </div>
-      )}
-      {pinMode && !isBiz ? (
+      <div className="flex justify-end">
+        <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline">
+          {pinMode ? "Use password instead" : "Use 4-digit Security PIN instead"}
+        </button>
+      </div>
+      {pinMode ? (
         <Field label="4-Digit Security PIN" id="login-pin" error={err["pw"]} shake>
           <div className="flex justify-center pt-1"><PinBoxes value={pin} onChange={setPin} autoFocus /></div>
         </Field>
@@ -404,13 +370,11 @@ function SignIn({ role, onDone }: { role: Role; onDone: (p: Pending, remember: b
         <button type="button" onClick={() => setForgot(true)} className="font-bold text-cobalt hover:underline">Forgot password?</button>
       </div>
       <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri text-base">
-        {busy && <Loader2 className="animate-spin" />} Sign In to {isBiz ? "Business Console" : "Personal Account"} →
+        {busy && <Loader2 className="animate-spin" />} Sign In →
       </Button>
-      {!isBiz && (
-        <button type="button" onClick={() => toast.info("Biometric sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
-          <Fingerprint className="h-4 w-4 text-magenta" /> Or sign in with Face ID / Fingerprint
-        </button>
-      )}
+      <button type="button" onClick={() => toast.info("Biometric sign-in is coming soon")} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-border text-sm font-bold text-foreground transition-colors hover:border-cobalt">
+        <Fingerprint className="h-4 w-4 text-magenta" /> Or sign in with Face ID / Fingerprint
+      </button>
       <SecurityPill />
     </form>
   );
@@ -911,13 +875,12 @@ function TypeSelect({ onPick }: { onPick: (r: Role) => void }) {
 
 export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const [mode, setMode] = useState<Mode>("in");
-  const [role, setRole] = useState<Role>("merchant");
   const [picked, setPicked] = useState<Role | null>(null);
   const [success, setSuccess] = useState<Pending | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleDone = (p: Pending, remember: boolean) => {
-    if (p.needsConfirmation) { toast.success("Check your email to confirm your account, then sign in."); setMode("in"); setPicked(null); setRole(p.role); return; }
+    if (p.needsConfirmation) { toast.success("Check your email to confirm your account, then sign in."); setMode("in"); setPicked(null); return; }
     if (mode === "up") setSuccess(p);
     else onDone(p, remember);
   };
@@ -933,11 +896,10 @@ export function AuthCard({ onDone }: { onDone: (p: Pending, remember: boolean) =
           </button>
         ))}
       </div>
-      {mode === "in" && <div className="mb-5"><AccountTabs role={role} onChange={setRole} /></div>}
       {mode === "in"
-        ? <SignIn key={`in-${role}`} role={role} onDone={handleDone} />
+        ? <SignIn key="in" onDone={handleDone} />
         : picked === null
-          ? <TypeSelect onPick={(r) => { setPicked(r); setRole(r); }} />
+          ? <TypeSelect onPick={setPicked} />
           : picked === "merchant"
             ? <BusinessSignUp key="up-biz" onDone={handleDone} onBack={() => setPicked(null)} />
             : <PersonalSignUp key="up-per" onDone={handleDone} onBack={() => setPicked(null)} />}
