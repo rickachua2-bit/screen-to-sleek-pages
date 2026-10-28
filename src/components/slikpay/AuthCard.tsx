@@ -381,10 +381,14 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   if (step === 2) {
     return (
       <div className="animate-in fade-in slide-in-from-right-4">
-        <StepBar n={2} labels={["Details", "2FA"]} />
+        <StepBar n={2} labels={["Password", "2FA"]} />
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt"><ShieldCheck className="h-6 w-6" /></span>
         <h2 className="mt-4 text-xl font-black text-foreground">Two-Factor Security Verification</h2>
-        <p className="mt-1 text-sm font-medium text-body">Enter the 6-digit verification code sent to your registered email or authenticator app.</p>
+        <p className="mt-1 text-sm font-medium text-body">
+          {method === "totp"
+            ? "Open your authenticator app and enter the current 6-digit code."
+            : <>We emailed a 6-digit code to <span className="font-bold text-foreground">{maskedEmail}</span>. Enter it to finish signing in.</>}
+        </p>
         <div className={`mt-6 flex justify-center ${err["otp"] ? "animate-shake" : ""}`}>
           <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
             <InputOTPGroup className="gap-2">
@@ -394,12 +398,14 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         </div>
         <div className="text-center"><ErrorPill msg={err["otp"]} /></div>
         <p className="mt-4 text-center text-sm font-semibold text-muted-foreground">
-          {timer > 0 ? <>Resend code in {timer}s</> : <button className="font-bold text-cobalt hover:underline" onClick={() => { setTimer(45); toast.success("A new code is on its way"); }}>Resend code</button>}
+          {method === "totp"
+            ? "The code refreshes every 30 seconds in your authenticator app."
+            : timer > 0 ? <>Resend code in {timer}s</> : <button className="font-bold text-cobalt hover:underline" disabled={busy} onClick={resend}>Resend code</button>}
         </p>
         <Button variant="brand" className="shine mt-5 h-12 w-full bg-gradient-tri text-base" disabled={otp.length !== 6 || busy} onClick={verify}>
-          {busy && <Loader2 className="animate-spin" />} Verify &amp; Launch Console →
+          {busy && <Loader2 className="animate-spin" />} Verify &amp; Sign In →
         </Button>
-        <button onClick={() => { setStep(1); setOtp(""); }} className="mt-3 w-full text-sm font-bold text-body hover:text-foreground">← Use a different account</button>
+        <button onClick={abandon} className="mt-3 w-full text-sm font-bold text-body hover:text-foreground">← Use a different account</button>
       </div>
     );
   }
