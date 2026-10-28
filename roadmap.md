@@ -12,7 +12,7 @@
 - [ ] Signed-in end-to-end checks — blocked: test login
 
 ## Services hub (plan approved 28 Oct)
-- [ ] Apply selected Ask Slikpay design to banking and business services, preserving connected flows
+- [x] Apply selected Ask Slikpay design to banking and business services, preserving connected flows (catalog visually checked; signed-in service execution remains unverified)
 - [x] Services hub: categories, intent search, status badges, favourites, recents; raw console moved to Developers
 - [x] Guided bills: airtime, data, electricity (token), cable TV, internet, betting, exam PINs
 - [x] Government: FIRS tax and Remita with validate step
