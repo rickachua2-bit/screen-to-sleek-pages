@@ -33,7 +33,7 @@ export function sixDigits() {
 
 export async function paddle(path: "/otp/send" | "/otp/verify" | "/identity/cac" | "/accounts/resolve", body: object) {
   const key = process.env['PADDLE_BAAS_KEY'];
-  if (!key) throw new Error("Paddle verification is not connected yet.");
+  if (!key) throw new Error("Verification is not connected yet.");
   const base = process.env['PADDLE_BAAS_URL'] || "https://api.getpaddle.online/v1";
   if (base.replace(/\/$/, "") !== "https://api.getpaddle.online/v1") throw new Error("Paddle service URL must match the approved provider.");
   const response = await fetch(`${base.replace(/\/$/, "")}${path}`, { method: "POST", headers: { "Content-Type": "application/json", "X-API-Key": key }, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) });
@@ -43,7 +43,7 @@ export async function paddle(path: "/otp/send" | "/otp/verify" | "/identity/cac"
     throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After"), response.headers.get("X-RateLimit-Reset")));
   }
   const result = await response.json() as { success?: boolean; data?: Record<string, unknown> };
-  if (result.success !== true || !result.data) throw new Error("Paddle did not confirm this request.");
+  if (result.success !== true || !result.data) throw new Error("The service did not confirm this request.");
   return result.data;
 }
 

@@ -7,8 +7,8 @@ const BASE = "https://api.getpaddle.online/v1";
 
 export function paddleKey(mode: Mode) {
   const key = mode === "live" ? process.env["PADDLE_BAAS_KEY"] : process.env["PADDLE_SANDBOX_KEY"];
-  if (!key) throw new Error(mode === "live" ? "Live Paddle access is not connected." : "Sandbox is waiting for the Paddle sandbox key (sk_test_…).");
-  if (!key.startsWith(mode === "live" ? "sk_live_" : "sk_test_")) throw new Error(`The saved Paddle ${mode} key has the wrong prefix.`);
+  if (!key) throw new Error(mode === "live" ? "Live access is not connected yet." : "Sandbox is not connected yet.");
+  if (!key.startsWith(mode === "live" ? "sk_live_" : "sk_test_")) throw new Error(`The saved ${mode} key has the wrong prefix.`);
   return key;
 }
 
@@ -26,7 +26,7 @@ export async function callPaddle(mode: Mode, method: string, path: string, body?
   // Never log keys, PINs or provider bodies.
   if (!response.ok) throw new Error(paddleFailure(response.status, payload, response.headers.get("Retry-After"), response.headers.get("X-RateLimit-Reset")));
   const p = payload as { success?: boolean; data?: unknown; message?: string } | null;
-  if (p && p.success === false) throw new Error("Paddle did not confirm this request.");
+  if (p && p.success === false) throw new Error("The service did not confirm this request.");
   return { data: p && "data" in p ? p.data : payload, message: typeof p?.message === "string" ? p.message.slice(0, 200) : undefined };
 }
 

@@ -679,7 +679,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
           <div className="animate-in fade-in zoom-in-95 rounded-2xl border-2 border-success/40 bg-success-soft p-4 shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--success)_50%,transparent)]">
             <p className="flex items-center gap-1.5 text-sm font-black text-success"><Check className="h-4 w-4" strokeWidth={3} /> Corporate Affairs Commission Record Found</p>
             <p className="mt-2 text-sm font-extrabold text-foreground">{companyName}</p>
-            <p className="mt-0.5 text-xs font-semibold text-success">ACTIVE · Verified by Paddle</p>
+            <p className="mt-0.5 text-xs font-semibold text-success">ACTIVE · Verified</p>
           </div>
         )}
         <div>
@@ -696,7 +696,7 @@ function BusinessSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <div>
           <label className="flex items-start gap-2 text-sm font-semibold text-body">
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cobalt" />
-            I agree to Slikpay's Merchant Terms of Service, AML/CFT Regulatory Policy, and Sterling Bank BaaS Settlement Agreement.
+            I agree to Slikpay's Merchant Terms of Service, AML/CFT Regulatory Policy, and Partner Bank Settlement Agreement.
           </label>
           <ErrorPill msg={err["terms"]} />
         </div>
@@ -857,7 +857,7 @@ function SuccessModal({ role, onEnter }: { role: Role; onEnter: () => void }) {
         <h2 className="mt-5 text-2xl font-black text-foreground">Your Slikpay Account is Ready!</h2>
         <p className="mt-1 text-sm font-semibold text-body">{nuban ? "Your banking account details are available." : "Your sign-in is ready. Banking account issuance is still pending."}</p>
         {nuban && <div className="mt-5 rounded-2xl border-2 border-cobalt/30 bg-cobalt/5 p-4 text-left">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Sterling Bank Plc / Slikpay</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Slikpay Personal</p>
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <span className="font-mono text-2xl font-black tracking-widest text-foreground">{nuban}</span>
             <button type="button" onClick={() => { void navigator.clipboard?.writeText(nuban); toast.success("Account number copied"); }}

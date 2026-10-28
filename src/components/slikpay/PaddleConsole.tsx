@@ -43,7 +43,7 @@ export function ModeBanner({ profile, error }: { profile: Profile | null; error:
         {(bal.length ? bal : [["NGN", 0] as [string, number]]).map(([c, v]) => <span key={c} className="rounded-xl border border-border bg-background/60 px-4 py-2 font-mono text-sm font-bold">{c} {v.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>)}
       </div>
     </div>
-    {!live && !profile.sandboxReady && <p className="relative mt-3 text-xs font-semibold text-magenta">Sandbox services start once the Paddle sandbox key is added.</p>}
+    {!live && !profile.sandboxReady && <p className="relative mt-3 text-xs font-semibold text-magenta">Sandbox services start once sandbox access is connected.</p>}
   </div>;
 }
 
@@ -91,7 +91,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
     setBusy(true);
     try {
       const r = await run({ data: { id: endpoint.id, params: Object.fromEntries(pathParams.map((p) => [p.name, params[p.name] ?? ""])), body, idempotencyKey: crypto.randomUUID(), pin: pin || undefined, currency } });
-      setOut(r); toast.success(r.receipt ? "Transaction confirmed by Paddle" : "Paddle responded"); onDone();
+      setOut(r); toast.success(r.receipt ? "Transaction confirmed" : "Request completed"); onDone();
     } catch (err) { setError(err instanceof Error ? err.message.replace(/\s*\[retry-after:\d+\]/, "") : "Request failed"); }
     finally { setBusy(false); }
   }
@@ -125,7 +125,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
       {out && <div className="mt-5 space-y-3">
         {out.receipt && <div className="rounded-2xl border border-cyan/40 bg-cyan/5 p-4">
           <p className="flex items-center gap-2 font-bold text-cyan"><CheckCircle2 className="h-5 w-5" />Receipt · {out.receipt.mode}</p>
-          <dl className="mt-2 grid grid-cols-2 gap-2 text-xs"><dt className="text-muted-foreground">Amount</dt><dd className="font-mono font-bold">{out.receipt.currency} {out.receipt.amount?.toLocaleString()}</dd><dt className="text-muted-foreground">Paddle reference</dt><dd className="break-all font-mono">{out.receipt.reference ?? "Not returned"}</dd><dt className="text-muted-foreground">NIP session ID</dt><dd className="break-all font-mono">{out.receipt.sessionId ?? "Not returned"}</dd></dl>
+          <dl className="mt-2 grid grid-cols-2 gap-2 text-xs"><dt className="text-muted-foreground">Amount</dt><dd className="font-mono font-bold">{out.receipt.currency} {out.receipt.amount?.toLocaleString()}</dd><dt className="text-muted-foreground">Reference</dt><dd className="break-all font-mono">{out.receipt.reference ?? "Not returned"}</dd><dt className="text-muted-foreground">NIP session ID</dt><dd className="break-all font-mono">{out.receipt.sessionId ?? "Not returned"}</dd></dl>
         </div>}
         {out.message && <p className="text-sm font-semibold text-body">{out.message}</p>}
         <div className="rounded-2xl border border-border bg-background/50 p-4"><ResultView value={JSON.parse(out.resultJson) as unknown} /></div>
@@ -148,7 +148,7 @@ export function PaddleConsole({ role }: { role: Role }) {
   return <div className="space-y-5">
     <ModeBanner profile={profile} error={error} />
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{available}</span> services available to you via Paddle</p>
+      <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{available}</span> services available to you</p>
       <label className="relative w-full max-w-xs"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search services" className="field h-11 w-full pl-9" placeholder="Search cards, flights, payouts…" value={q} onChange={(e) => setQ(e.target.value)} /></label>
     </div>
     <div className="flex gap-2 overflow-x-auto pb-1">
@@ -168,7 +168,7 @@ export function PaddleConsole({ role }: { role: Role }) {
     {!shown.length && <p className="py-10 text-center text-sm text-muted-foreground">No services match “{q}”.</p>}
     {profile && profile.receipts.length > 0 && <section className="rounded-2xl border border-border bg-card/60 p-5">
       <h2 className="mb-3 font-bold">Recent receipts</h2>
-      <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs"><thead className="text-muted-foreground"><tr><th className="p-2">When</th><th className="p-2">Service</th><th className="p-2">Amount</th><th className="p-2">Paddle reference</th><th className="p-2">NIP session</th><th className="p-2">Status</th></tr></thead><tbody>{profile.receipts.map((r) => <tr key={r.id} className="border-t border-border"><td className="p-2">{new Date(r.created_at).toLocaleString()}</td><td className="p-2 font-mono">{r.operation.replace("/v1/", "")}</td><td className="p-2 font-mono">{r.currency} {Number(r.amount ?? 0).toLocaleString()}</td><td className="p-2 font-mono">{r.provider_reference ?? "—"}</td><td className="p-2 font-mono">{r.session_id ?? "—"}</td><td className={`p-2 font-bold ${r.status === "succeeded" ? "text-cyan" : r.status === "failed" ? "text-destructive" : "text-magenta"}`}>{r.status}{r.mode === "sandbox" && " · test"}</td></tr>)}</tbody></table></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs"><thead className="text-muted-foreground"><tr><th className="p-2">When</th><th className="p-2">Service</th><th className="p-2">Amount</th><th className="p-2">Reference</th><th className="p-2">NIP session</th><th className="p-2">Status</th></tr></thead><tbody>{profile.receipts.map((r) => <tr key={r.id} className="border-t border-border"><td className="p-2">{new Date(r.created_at).toLocaleString()}</td><td className="p-2 font-mono">{r.operation.replace("/v1/", "")}</td><td className="p-2 font-mono">{r.currency} {Number(r.amount ?? 0).toLocaleString()}</td><td className="p-2 font-mono">{r.provider_reference ?? "—"}</td><td className="p-2 font-mono">{r.session_id ?? "—"}</td><td className={`p-2 font-bold ${r.status === "succeeded" ? "text-cyan" : r.status === "failed" ? "text-destructive" : "text-magenta"}`}>{r.status}{r.mode === "sandbox" && " · test"}</td></tr>)}</tbody></table></div>
     </section>}
     {open && <Runner endpoint={open} mode={mode} onClose={() => setOpen(null)} onDone={() => void refresh()} />}
   </div>;
@@ -190,7 +190,7 @@ export function GoLive({ role }: { role: Role }) {
     e.preventDefault();
     if (!/^\d{11}$/.test(f.bvn)) return setMsg("BVN must be 11 digits.");
     setBusy(true); setMsg("");
-    try { const r = await check({ data: f }); setMsg(r.verified ? "Verified — your next step is unlocked." : "Paddle could not match those details."); await refresh(); }
+    try { const r = await check({ data: f }); setMsg(r.verified ? "Verified — your next step is unlocked." : "We could not match those details."); await refresh(); }
     catch (err) { setMsg(err instanceof Error ? err.message : "Verification failed"); }
     finally { setBusy(false); }
   }
@@ -205,7 +205,7 @@ export function GoLive({ role }: { role: Role }) {
       </section>
       <section className="rounded-2xl border border-cobalt/40 bg-cobalt/5 p-6">
         <h2 className="text-lg font-black">{role === "merchant" ? "Director verification" : "Verify your identity"}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">We check your BVN with Paddle. Your BVN is not stored.</p>
+        <p className="mt-1 text-sm text-muted-foreground">We check your BVN instantly. Your BVN is not stored.</p>
         {bvnStep?.status === "verified" ? <p className="mt-5 flex items-center gap-2 font-bold text-cyan"><CheckCircle2 className="h-5 w-5" />Verified · {bvnStep.summary}</p> :
           <form onSubmit={submit} className="mt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -214,8 +214,8 @@ export function GoLive({ role }: { role: Role }) {
             </div>
             <label className="block text-sm font-semibold text-body">BVN<input className="field mt-1 w-full font-mono tracking-widest" inputMode="numeric" maxLength={11} value={f.bvn} onChange={(e) => setF((s) => ({ ...s, bvn: e.target.value.replace(/\D/g, "") }))} required /></label>
             {msg && <p role="status" className="text-sm font-semibold text-magenta">{msg}</p>}
-            <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri">{busy && <Loader2 className="animate-spin" />}Verify with Paddle</Button>
-            {profile?.mode === "sandbox" && <p className="text-[11px] text-muted-foreground">Sandbox tip: Paddle's test BVN is 22222222222.</p>}
+            <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri">{busy && <Loader2 className="animate-spin" />}Verify</Button>
+            {profile?.mode === "sandbox" && <p className="text-[11px] text-muted-foreground">Sandbox tip: the test BVN is 22222222222.</p>}
           </form>}
       </section>
     </div>

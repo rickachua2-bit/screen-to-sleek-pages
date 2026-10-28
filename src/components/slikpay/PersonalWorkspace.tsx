@@ -214,16 +214,16 @@ function CardsModule({ open }: { open: (k: ActionKind) => void }) {
           <CardGraphic label="PERSONAL" name="Slikpay Personal" last4={USD_CARD.last4} expiry={USD_CARD.expiry} />
         </div>
       </Panel>
-      <Panel title="Dedicated Sterling NUBAN">
+      <Panel title="Dedicated NUBAN">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt"><Landmark className="h-5 w-5" /></span>
-          <div><p className="text-sm font-extrabold text-foreground">Sterling Bank Plc / Slikpay</p><p className="text-xs font-semibold text-muted-foreground">Beneficiary: {USD_CARD.holder}</p></div>
+          <div><p className="text-sm font-extrabold text-foreground">Slikpay Personal</p><p className="text-xs font-semibold text-muted-foreground">Beneficiary: {USD_CARD.holder}</p></div>
         </div>
         <div className="mt-5 font-mono text-3xl font-bold tracking-wider text-foreground">8204 918 234</div>
         <p className="mt-1 text-xs font-semibold text-muted-foreground">Receive instant interbank transfers with 0.8s settlement.</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Button variant="crisp" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText("8204918234"); } catch { /* clipboard unavailable */ } toast.success("Account number copied", { description: "8204 918 234" }); }}><Copy /> Copy Account</Button>
-          <Button variant="ghost" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText("PATRICK OTU · Sterling Bank · 8204918234"); } catch { /* clipboard unavailable */ } toast.success("Account details copied — share anywhere"); }}><Share2 /> Share details</Button>
+          <Button variant="ghost" className="rounded-full" onClick={async () => { try { await navigator.clipboard.writeText("PATRICK OTU · Slikpay · 8204918234"); } catch { /* clipboard unavailable */ } toast.success("Account details copied — share anywhere"); }}><Share2 /> Share details</Button>
         </div>
       </Panel>
     </div>

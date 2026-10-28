@@ -8,7 +8,7 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Slikpay" },
-      { name: "description", content: "Sign in or open a Slikpay Business or Personal account, powered by Sterling Bank." },
+      { name: "description", content: "Sign in or open a Slikpay Business or Personal account in minutes." },
       { property: "og:title", content: "Sign in — Slikpay" },
       { property: "og:description", content: "Access your Slikpay Business console or Personal wallet." },
       { property: "og:type", content: "website" },
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const TRUST = ["Sterling Bank clearing rails", "CBN & NDIC regulated partner", "256-bit TLS · PCI-DSS Level 1"];
+const TRUST = ["Licensed partner-bank rails", "CBN & NDIC regulated partner", "256-bit TLS · PCI-DSS Level 1"];
 
 function AuthPage() {
     const navigate = useNavigate();

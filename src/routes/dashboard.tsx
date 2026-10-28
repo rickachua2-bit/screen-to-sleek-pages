@@ -43,11 +43,11 @@ function Dashboard() {
   const days = Array.from({ length: 15 }, (_, i) => { const start = since + i * 2 * 864e5; const d = new Date(start); return { label: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), value: credits.filter((t) => { const x = new Date(t.date).getTime(); return x >= start && x < start + 2 * 864e5; }).reduce((a, t) => a + t.amount, 0) }; });
   const issueAccount = async () => {
     setIssuing(true);
-    try { await issue({ data: { id: "post-accounts-virtual", params: {}, body: { accountName: profile?.company_name ?? user?.name ?? "Slikpay Business" }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } }); toast.success("Account number issued"); await refresh(); }
+    try { await issue({ data: { id: "post-accounts-virtual", params: {}, body: { accountName: profile?.company_name ?? user?.name ?? "Slikpay Business", accountType: "corporate", bank: "sterling" }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } }); toast.success("Account number issued"); await refresh(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Could not issue account"); }
     finally { setIssuing(false); }
   };
-  const acct: Account = { balance: banking?.balances["NGN"] ?? 0, nuban: banking?.virtualAccount ?? "—", bank: profile?.bank_name ?? "Sterling Bank", inflow30d, inflowChange: 0 };
+  const acct: Account = { balance: banking?.balances["NGN"] ?? 0, nuban: banking?.virtualAccount ?? "—", bank: "Slikpay", inflow30d, inflowChange: 0 };
   const [modal, setModal] = useState<ActionKind | null>(null);
   const [search, setSearch] = useState("");
   const connected = !!profile;
@@ -64,10 +64,10 @@ function Dashboard() {
         <Panel title="Inflow by Channel"><DonutChart data={donut} center={naira(inflow30d)} /></Panel>
         <Panel title="Inflow 30-Day Trend"><BarChart days={days} /></Panel>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2"><div>{banking?.virtualAccount ? <NubanCard nuban={banking.virtualAccount} label={banking.mode === "live" ? "Slikpay Business" : "Sandbox account"} /> : <Panel title="Dedicated NUBAN Account"><p className="text-sm text-muted-foreground">You don't have an account number yet. Issue one through Paddle to start receiving payments{banking?.mode === "sandbox" ? " (sandbox)" : ""}.</p><Button variant="brand" className="mt-4" disabled={issuing || !banking} onClick={issueAccount}>{issuing && <Loader2 className="animate-spin" />}Issue my account number</Button></Panel>}</div><UsdCardPanel onFund={() => changeModule("services")} label="CORPORATE" note={banking?.cardIssued ? undefined : "No card issued yet — issue one in All Banking Services."} /></div>
+      <div className="grid gap-4 xl:grid-cols-2"><div>{banking?.virtualAccount ? <NubanCard nuban={banking.virtualAccount} label={banking.mode === "live" ? "Slikpay Business" : "Sandbox account"} /> : <Panel title="Dedicated NUBAN Account"><p className="text-sm text-muted-foreground">You don't have an account number yet. Issue one to start receiving payments{banking?.mode === "sandbox" ? " (sandbox)" : ""}.</p><Button variant="brand" className="mt-4" disabled={issuing || !banking} onClick={issueAccount}>{issuing && <Loader2 className="animate-spin" />}Issue my account number</Button></Panel>}</div><UsdCardPanel onFund={() => changeModule("services")} label="CORPORATE" note={banking?.cardIssued ? undefined : "No card issued yet — issue one in All Banking Services."} /></div>
       <div className="flex flex-wrap gap-2">{[{ icon: Send, title: "Send Money", kind: "send" }, { icon: Receipt, title: "Pay Utilities", kind: "bills" }, { icon: CreditCard, title: "Virtual USD Card", kind: "fund" }, { icon: Smartphone, title: "SoftPOS", kind: "softpos" }, { icon: ArrowLeftRight, title: "Currency Swap", kind: "swap" }].map(({ icon: Icon, title, kind }) => <Button key={kind} variant="crisp" className="h-10 rounded-full px-4 text-xs" onClick={() => setModal(kind as ActionKind)}><Icon className="text-cyan" />{title}</Button>)}</div>
       <MerchantLedger txns={txns} globalSearch={search} recent onViewAll={() => changeModule("transactions")} />
-      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Sterling Bank NIP settlement rails · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"}</p>
+      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Instant NIP settlement · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"}</p>
     </> : module === "transactions" ? <MerchantLedger txns={txns} globalSearch={search} /> : <MerchantWorkspace key={module} module={module} account={acct} onAction={setModal} search={search} />}
     {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
   </AppShell>;

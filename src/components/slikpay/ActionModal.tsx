@@ -97,7 +97,7 @@ export function ActionModal({ kind, onClose }: { kind: ActionKind; onClose: () =
             <p className="font-semibold text-body">Transfer to your dedicated account from any Nigerian bank:</p>
             <div className="rounded-xl border-2 border-border p-4">
               <div className="font-mono text-2xl font-bold text-foreground">7946 4362 44</div>
-              <div className="font-semibold text-muted-foreground">Sterling Bank • Slikpay</div>
+              <div className="font-semibold text-muted-foreground">Slikpay</div>
             </div>
             <Button variant="brand" className="w-full" onClick={() => { navigator.clipboard?.writeText("7946436244"); toast.success("Account number copied"); }}>Copy account number</Button>
           </div>

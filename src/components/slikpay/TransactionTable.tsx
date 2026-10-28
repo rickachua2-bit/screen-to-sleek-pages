@@ -58,7 +58,7 @@ export function ModalReceipt({ txn, onClose }: { txn: Txn; onClose: () => void }
     ["Date", fmt(txn.date)],
     ["Channel", txn.channel],
     [txn.direction === "credit" ? "From" : "To", txn.customer],
-    ["Settlement bank", "Sterling Bank"],
+    ["Settlement", "Slikpay"],
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" onClick={onClose}>
