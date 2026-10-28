@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
 import { useAuth } from "@/lib/auth";
-import { PERSONAL_NAV, PERSONAL_TABS } from "@/lib/personal";
+import { PERSONAL_NAV, PERSONAL_TABS, personalModule } from "@/lib/personal";
 import { AppShell } from "@/components/slikpay/AppShell";
 import { PersonalWorkspace } from "@/components/slikpay/PersonalWorkspace";
 import { ActionModal, type ActionKind } from "@/components/slikpay/ActionModal";

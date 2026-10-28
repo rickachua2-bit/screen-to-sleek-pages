@@ -29,6 +29,10 @@ export const PERSONAL_TABS: PersonalNavItem[] = [
   { id: "profile", label: "Profile", icon: Settings, blurb: "" },
 ];
 
+export function personalModule(value: unknown): string {
+  return typeof value === "string" && PERSONAL_NAV.some((n) => n.id === value) ? value : "home";
+}
+
 export const AIRTIME_NETWORKS = [
   { id: "mtn", name: "MTN", color: "bg-yellow-400" },
   { id: "airtel", name: "Airtel", color: "bg-red-500" },
