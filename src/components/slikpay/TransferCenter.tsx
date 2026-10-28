@@ -11,7 +11,7 @@ import { useBankingProfile } from "./PaddleConsole";
 import { SendNip, type TransferPreview } from "./ActionModal";
 import { TransferComposerLayout } from "./TransferComposerLayout";
 
-type Row = BulkRow & { name?: string; state?: "checking" | "ready" | "sent" | "failed"; msg?: string };
+type Row = BulkRow & { key: string; name?: string; state?: "checking" | "ready" | "sent" | "pending" | "failed"; msg?: string };
 
 export function TransferCenter({ initial = "single" }: { initial?: "single" | "bulk" }) {
   const { profile } = useBankingProfile();
@@ -35,10 +35,9 @@ export function TransferCenter({ initial = "single" }: { initial?: "single" | "b
 function Bulk({ live, balance }: { live: boolean; balance?: number | undefined }) {
   const resolve = useServerFn(baasService); const run = useServerFn(runPaddleOperation);
   const [rows, setRows] = useState<Row[]>([]); const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false);
-  const [batch] = useState(() => crypto.randomUUID());
   const patch = (i: number, p: Partial<Row>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...p } : x)));
   const load = async (text: string) => {
-    const parsed: Row[] = parseBulkCsv(text).map((r) => ({ ...r, state: r.error ? "failed" : "checking" }));
+    const parsed: Row[] = parseBulkCsv(text).map((r) => ({ ...r, key: crypto.randomUUID(), state: r.error ? "failed" : "checking" }));
     setRows(parsed);
     await Promise.all(parsed.map(async (r, i) => {
       if (r.error) return;
@@ -54,9 +53,9 @@ function Bulk({ live, balance }: { live: boolean; balance?: number | undefined }
     setBusy(true);
     for (const [i, r] of rows.entries()) {
       if (r.state !== "ready") continue;
-      const key = `${batch}-${i}`;
-      try { await run({ data: { id: "post-payouts-transfer", params: {}, body: { amount: r.amount, destinationBankCode: r.bankCode, destinationAccountNumber: r.account, destinationAccountName: r.name, narration: r.note, reference: key }, idempotencyKey: key, currency: "NGN", ...(pin ? { pin } : {}) } }); patch(i, { state: "sent" }); }
-      catch (e) { patch(i, { state: "failed", msg: e instanceof Error ? e.message : "Failed. No money was taken." }); }
+      const key = r.key;
+      try { const result = await run({ data: { id: "post-payouts-transfer", params: {}, body: { amount: r.amount, destinationBankCode: r.bankCode, destinationAccountNumber: r.account, destinationAccountName: r.name, narration: r.note, reference: key }, idempotencyKey: key, currency: "NGN", ...(pin ? { pin } : {}) } }); patch(i, { state: result.receipt?.status === "succeeded" ? "sent" : result.receipt?.status === "failed" ? "failed" : "pending", msg: result.receipt?.status === "failed" ? "Bank declined payment" : "Awaiting bank confirmation" }); }
+      catch (e) { patch(i, { state: "pending", msg: e instanceof Error ? e.message : "Check your ledger before retrying." }); }
     }
     setBusy(false); toast.success("Batch finished");
   };
