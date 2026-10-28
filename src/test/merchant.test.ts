@@ -3,10 +3,10 @@ import { filterLedger, merchantModule, MERCHANT_GROUPS, MERCHANT_NAV } from "@/l
 import { MOCK_TXNS } from "@/lib/api";
 
 describe("Merchant modules", () => {
-  it("contains all 17 modules in six groups", () => {
+  it("contains all 19 modules in six groups", () => {
     expect(MERCHANT_GROUPS).toHaveLength(6);
-    expect(MERCHANT_NAV).toHaveLength(17);
-    expect(new Set(MERCHANT_NAV.map((n) => n.id)).size).toBe(17);
+    expect(MERCHANT_NAV).toHaveLength(19);
+    expect(new Set(MERCHANT_NAV.map((n) => n.id)).size).toBe(19);
   });
   it("validates module navigation", () => {
     expect(merchantModule("approvals")).toBe("approvals");

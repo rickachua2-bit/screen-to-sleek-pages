@@ -1,4 +1,4 @@
-import { CreditCard, Gift, Home, PiggyBank, Receipt, Send, Settings, Smartphone, Zap, type LucideIcon } from "lucide-react";
+import { Boxes, CreditCard, Rocket, Gift, Home, PiggyBank, Receipt, Send, Settings, Smartphone, Zap, type LucideIcon } from "lucide-react";
 
 export interface PersonalNavItem { id: string; label: string; icon: LucideIcon; blurb: string }
 
@@ -11,6 +11,8 @@ export const PERSONAL_NAV: PersonalNavItem[] = [
   { id: "savings", label: "Savings & Ajo", icon: PiggyBank, blurb: "Target locks, daily interest, thrift circles" },
   { id: "rewards", label: "Rewards & Referrals", icon: Gift, blurb: "Earn ₦1,000 per invited friend" },
   { id: "profile", label: "Profile & Security", icon: Settings, blurb: "KYC tier, PIN, biometric login" },
+  { id: "services", label: "All Services", icon: Boxes, blurb: "Flights, investments, crypto, cards and more via Paddle" },
+  { id: "golive", label: "Go Live (KYC)", icon: Rocket, blurb: "Verify your identity to move from sandbox to live" },
 ];
 
 export const PERSONAL_GROUPS: { title: string; items: PersonalNavItem[] }[] = [
