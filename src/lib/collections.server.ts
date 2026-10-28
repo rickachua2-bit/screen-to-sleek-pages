@@ -1,3 +1,4 @@
+import { namesMatch } from "./go-live";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { callPaddle } from "./paddle.server";
 import type { Mode } from "./paddle-policy";
