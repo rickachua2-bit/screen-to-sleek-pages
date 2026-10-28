@@ -72,7 +72,7 @@ export const lookupMerchantBusiness = createServerFn({ method: "POST" })
     if (!row.phone_verified || !row.email_verified) throw new Error("Verify your phone and email first.");
     if (data.country !== "NG") throw new Error("Registration lookup for this country is awaiting country-specific verification endpoint.");
     const result = await paddle("/identity/cac", { rcNumber: data.rcNumber });
-    if (typeof result['companyName'] !== "string" || !result['companyName'].trim() || result['status'] !== "ACTIVE") throw new Error("Paddle did not confirm an active registered business.");
+    if (typeof result['companyName'] !== "string" || !result['companyName'].trim() || result['status'] !== "ACTIVE") throw new Error("The registry did not confirm an active registered business.");
     const update = await db.from("merchant_verification_challenges").update({ country: data.country, rc_number: data.rcNumber, company_name: result['companyName'] }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString());
     if (update.error) throw new Error("Could not save business verification.");
     return { companyName: result['companyName'], status: "ACTIVE" };

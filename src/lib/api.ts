@@ -74,7 +74,7 @@ export const mockUser = (name = "Patrick Otu", email = "patrick@slikpay.online")
 export const MOCK_ACCOUNT: Account = {
   balance: 60048.4,
   nuban: "7946436244",
-  bank: "Sterling Bank",
+  bank: "Slikpay",
   inflow30d: 12430550.2,
   inflowChange: 18.4,
 };
@@ -91,7 +91,7 @@ export const MOCK_TXNS: Txn[] = [
 export const PERSONAL_ACCOUNT: Account = {
   balance: 1420500,
   nuban: "8204918234",
-  bank: "Sterling Bank",
+  bank: "Slikpay",
   inflow30d: 612400,
   inflowChange: 9.2,
 };
