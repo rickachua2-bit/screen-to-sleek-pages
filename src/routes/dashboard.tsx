@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftRight, ArrowUpRight, CreditCard, FileText, Receipt, Send, Smartphone } from "lucide-react";
-import { api, MOCK_ACCOUNT, MOCK_TXNS, naira, type Account, type Txn } from "@/lib/api";
+import { naira, type Account } from "@/lib/api";
+import { ConnectionBadge } from "@/components/slikpay/ConnectionBadge";
 import { merchantModule, MERCHANT_NAV } from "@/lib/merchant";
 import { useAuth } from "@/lib/auth";
 import { AppShell } from "@/components/slikpay/AppShell";
@@ -25,36 +26,30 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const { module } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
-  const [acct, setAcct] = useState<Account>(MOCK_ACCOUNT);
-  const [txns, setTxns] = useState<Txn[]>(MOCK_TXNS);
+  const { user, profile, txns } = useAuth();
+  const since = Date.now() - 30 * 864e5;
+  const inflow30d = txns.filter((t) => t.direction === "credit" && t.status === "Successful" && new Date(t.date).getTime() >= since).reduce((a, t) => a + t.amount, 0);
+  const acct: Account = { balance: profile?.wallet_balance ?? 0, nuban: profile?.nuban ?? "—", bank: profile?.bank_name ?? "Sterling Bank", inflow30d, inflowChange: 0 };
   const [modal, setModal] = useState<ActionKind | null>(null);
   const [search, setSearch] = useState("");
-  const [connected, setConnected] = useState(false);
-  useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    api.accounts().then((result) => { if (!cancelled) { setAcct(result); setConnected(result !== MOCK_ACCOUNT); } });
-    api.transactions(100, 1).then((result) => { if (!cancelled) setTxns(result); });
-    return () => { cancelled = true; };
-  }, [token]);
+  const connected = !!profile;
   const changeModule = (id: string) => { navigate({ to: "/dashboard", search: { module: id } }); };
   const current = MERCHANT_NAV.find((n) => n.id === module);
   return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch}>
     <div className="flex flex-wrap items-end justify-between gap-3">
-      <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1><p className="mt-2 text-xs text-muted-foreground">{module === "overview" ? `Welcome back, ${user?.name.split(" ")[0] ?? "Patrick"}. Here’s your business at a glance.` : "Acme Logistics Ltd · Merchant workspace"}</p></div>
-      <span className={`rounded-full border border-border px-3 py-1.5 text-[10px] font-semibold ${connected ? "text-success" : "text-cyan"}`}>{connected ? "Connected account" : "Sample account data"}</span>
+      <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1><p className="mt-2 text-xs text-muted-foreground">{module === "overview" ? `Welcome back, ${user?.name.split(" ")[0] ?? "there"}. Here’s your business at a glance.` : `${profile?.company_name ?? "Your business"} · Merchant workspace`}</p></div>
+      <ConnectionBadge />
     </div>
     {module === "overview" ? <>
       <div className="grid gap-4 xl:grid-cols-3">
-        <BalanceCard title="Settlement Balance" balance={acct.balance} sub="Available for settlement" footer={<div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-base font-extrabold">{naira(acct.inflow30d)}</div><div className="mt-1 text-[10px] text-muted-foreground">Total inflow (30 days)</div></div><span className="flex items-center rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success"><ArrowUpRight className="h-3 w-3" />+{acct.inflowChange}%</span></div>} />
+        <BalanceCard title="Settlement Balance" balance={acct.balance} sub="Available for settlement" footer={<div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-base font-extrabold">{naira(acct.inflow30d)}</div><div className="mt-1 text-[10px] text-muted-foreground">Total inflow (30 days)</div></div><span className="flex items-center rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success"><ArrowUpRight className="h-3 w-3" />{txns.length} txns</span></div>} />
         <Panel title="Inflow by Channel"><DonutChart /></Panel>
         <Panel title="Inflow 30-Day Trend"><BarChart /></Panel>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2"><div><NubanCard nuban={acct.nuban} /><p className="mt-2 text-[10px] text-muted-foreground">Account status: {connected ? "available" : "sample — not a verified live account"}</p></div><UsdCardPanel onFund={() => setModal("fund")} label="CORPORATE" /></div>
+      <div className="grid gap-4 xl:grid-cols-2"><div><NubanCard nuban={acct.nuban} /><p className="mt-2 text-[10px] text-muted-foreground">Account status: {connected ? "active" : "profile not loaded"}</p></div><UsdCardPanel onFund={() => setModal("fund")} label="CORPORATE" /></div>
       <div className="flex flex-wrap gap-2">{[{ icon: Send, title: "Send Money", kind: "send" }, { icon: Receipt, title: "Pay Utilities", kind: "bills" }, { icon: CreditCard, title: "Virtual USD Card", kind: "fund" }, { icon: Smartphone, title: "SoftPOS", kind: "softpos" }, { icon: ArrowLeftRight, title: "Currency Swap", kind: "swap" }].map(({ icon: Icon, title, kind }) => <Button key={kind} variant="crisp" className="h-10 rounded-full px-4 text-xs" onClick={() => setModal(kind as ActionKind)}><Icon className="text-cyan" />{title}</Button>)}</div>
       <MerchantLedger txns={txns} globalSearch={search} recent onViewAll={() => changeModule("transactions")} />
-      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Sterling Bank NIP settlement rails · {connected ? "Account data from Slikpay" : "Preview data; no live settlement confirmed"}</p>
+      <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Sterling Bank NIP settlement rails · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"}</p>
     </> : module === "transactions" ? <MerchantLedger txns={txns} globalSearch={search} /> : <MerchantWorkspace key={module} module={module} account={acct} onAction={setModal} search={search} />}
     {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
   </AppShell>;
