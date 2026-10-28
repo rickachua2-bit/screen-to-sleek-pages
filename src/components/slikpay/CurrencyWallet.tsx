@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { getWallets, issueCurrencyWallet, type WalletView } from "@/lib/wallets.functions";
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { currencyDef, NOT_ACTIVE, CURRENCIES } from "@/lib/wallets";
-import { setCurrency } from "@/lib/currency-store";
 import { useHideAmounts, mask } from "@/lib/insights";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -68,7 +67,6 @@ export function CurrencyWallet({ code, mode }: { code: string; mode?: string | u
       const d = JSON.parse(r.resultJson || "null") as { toAmount?: number; rate?: number } | null;
       toast.success(`Swapped to ${v["to"]}`, { description: d?.toAmount != null ? `Received ${d.toAmount} ${v["to"]} at rate ${d.rate}` : undefined }); await refresh();
     }} />}
-    <div className="relative mt-5 flex flex-wrap gap-1.5">{CURRENCIES.map((c) => <button key={c.code} onClick={() => setCurrency(c.code)} className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${c.code === code ? "bg-background text-foreground" : "bg-background/30 text-foreground/80 hover:bg-background/50"}`}>{c.flag} {c.code}</button>)}</div>
   </section>;
 }
 const crypto_uuid = () => globalThis.crypto.randomUUID();
@@ -102,4 +100,11 @@ function MoneyDialog({ title, live, onClose, submit, fields = [], toOptions }: {
       <p className="text-[10px] text-muted-foreground">The exchange rate and fees are confirmed by the service when the request completes.</p>
     </form>
   </DialogContent></Dialog>;
+}
+
+/** Always-visible one-tap currency switcher shown at the top of every dashboard page. */
+export function CurrencyBar({ current, onPick }: { current: string; onPick: (code: string) => void }) {
+  return <nav aria-label="Choose wallet currency" className="dropdown-list -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+    {CURRENCIES.map((c) => { const on = c.code === current; return <button key={c.code} onClick={() => onPick(c.code)} aria-pressed={on} className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition-all ${on ? "border-transparent bg-gradient-tri text-primary-foreground shadow-cobalt" : "border-border bg-background/40 text-muted-foreground hover:border-cyan hover:text-foreground"}`}><span className="text-sm">{c.flag}</span>{c.code}</button>; })}
+  </nav>;
 }
