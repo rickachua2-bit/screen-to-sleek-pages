@@ -93,6 +93,9 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   const [bankError, setBankError] = useState("");
   const [feeValue, setFeeValue] = useState<number | null>(null);
   const [feeBusy, setFeeBusy] = useState(false);
+  // Live fee shown while the user types, before they reach the review step.
+  const [formFee, setFormFee] = useState<{ fee: number; description: string } | null>(null);
+  const [formFeeBusy, setFormFeeBusy] = useState(false);
   // A flat fee confirmed by the provider is reused for every amount until the modal closes.
   const flatFee = useRef<number | null>(null);
   const [resultStatus, setResultStatus] = useState("pending");
@@ -111,6 +114,18 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   }, [bank, acct, resolve]);
   const amt = Number(amount);
   useEffect(() => { onPreviewChange?.({ amount: Number.isFinite(amt) ? amt : 0, name, bank: bank?.name ?? "", account: acct, fee, step }); }, [amt, name, bank, acct, fee, step, onPreviewChange]);
+  useEffect(() => {
+    let on = true;
+    const t = setTimeout(() => {
+      if (!validTransferAmount(amount)) { setFormFee(null); setFormFeeBusy(false); return; }
+      setFormFeeBusy(true);
+      feeFn({ data: { rail: "payouts", amount: Number(amount) } })
+        .then((r) => { if (on) setFormFee(r && Number.isFinite(r.fee) ? { fee: r.fee, description: String(r.description ?? "") } : null); })
+        .catch(() => { if (on) setFormFee(null); })
+        .finally(() => { if (on) setFormFeeBusy(false); });
+    }, 400);
+    return () => { on = false; clearTimeout(t); };
+  }, [amount, feeFn]);
   const review = async () => {
     if (!bank || !name || !validTransferAmount(amount)) return;
     setStep("review"); setFeeBusy(true);
@@ -157,6 +172,11 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
     <Field label="Account number"><input className="field font-mono" inputMode="numeric" maxLength={10} placeholder="0123456789" value={acct} onChange={(e) => setAcct(e.target.value.replace(/\D/g, ""))} /></Field>
     {name ? <div className="transfer-verified" role="status"><CheckCircle2 className="h-4 w-4 shrink-0" /><span>{name}</span><span className="ml-auto text-xs">Verified</span></div> : lookup && <p role="status" className="text-xs text-muted-foreground">{lookup}</p>}
     <Field label="Amount (NGN)"><div className="transfer-amount-input"><input className="field" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /><span>NGN</span></div><div className="mt-2 flex flex-wrap gap-2">{QUICK.map((v) => <Button variant="outline" key={v} type="button" onClick={() => setAmount(String(v))} aria-pressed={amount === String(v)} className="transfer-quick-amount">{naira(v)}</Button>)}</div></Field>
+    <div className="transfer-fee-line" role="status">
+      {formFeeBusy ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /><span>Checking fee…</span></>
+        : formFee ? <><span className="transfer-fee-label">Fee</span><span className="transfer-fee-value">{naira(formFee.fee)}</span><span className="transfer-fee-note">{formFee.description || "Charged on every transfer"}</span><span className="transfer-fee-total">Total {naira(Number(amount) + formFee.fee)}</span></>
+        : <><span className="transfer-fee-label">Fee</span><span className="transfer-fee-note">Enter an amount to see the fee</span></>}
+    </div>
     <Field label="Note (optional)"><input className="field" maxLength={60} value={narration} onChange={(e) => setNarration(e.target.value)} /></Field>
     {balance !== undefined && <p className="text-xs text-muted-foreground">Available: <span className="font-bold text-foreground">{naira(balance)}</span></p>}
     {short && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">This is more than your available balance.</p>}
