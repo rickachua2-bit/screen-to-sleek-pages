@@ -769,3 +769,34 @@ html { scroll-behavior: smooth; }
 .ledger-chip { padding: 2px 9px; border-radius: 9999px; font-weight: 700; color: var(--primary); background: color-mix(in oklab, var(--primary) 10%, transparent); }
 .ledger-chip.is-text { color: var(--foreground); background: color-mix(in oklab, var(--foreground) 6%, transparent); }
 .ledger-chart { background: color-mix(in oklab, var(--primary) 3%, var(--card)); }
+
+/* Ask Slikpay: shared banking and business service catalog. */
+.services-catalog {
+  --service-command: color-mix(in oklab, var(--cyan) 8%, var(--card));
+  --service-shadow: 0 6px 20px -12px color-mix(in oklab, var(--navy) 22%, transparent);
+  --service-search-shadow: 0 0 0 2px color-mix(in oklab, var(--cyan) 10%, transparent), 0 4px 14px -8px var(--cyan);
+  letter-spacing: 0;
+}
+.services-command { background: var(--service-command); border-block: 1px solid color-mix(in oklab, var(--cyan) 12%, var(--border)); }
+.services-search { background: var(--card); border: 1px solid color-mix(in oklab, var(--cyan) 60%, var(--border)); border-radius: 999px; box-shadow: var(--service-search-shadow); }
+.services-search:focus-within { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.services-search-submit { background: var(--cyan); color: var(--primary-foreground); box-shadow: var(--shadow-cobalt); }
+.services-suggestion { color: var(--foreground); background: color-mix(in oklab, var(--card) 80%, transparent); border: 1px solid color-mix(in oklab, var(--cyan) 12%, var(--border)); }
+.services-feature { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--card); box-shadow: var(--service-shadow); }
+.services-feature-links { border-top: 1px solid var(--border); }
+.services-feature-links svg { width: 12px; height: 12px; color: var(--cyan); }
+.services-category { display: flex; align-items: center; gap: 18px; padding: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--service-shadow); }
+.service-tone-move, .service-tone-gov, .service-tone-business { --service-tone: var(--cobalt); }
+.service-tone-paid, .service-tone-bills, .service-tone-grow { --service-tone: var(--cyan); }
+.service-tone-cards, .service-tone-travel, .service-tone-dev { --service-tone: var(--magenta); }
+.services-category-icon { display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--service-tone, var(--cobalt)); background: color-mix(in oklab, var(--service-tone, var(--cobalt)) 10%, var(--card)); }
+.services-item { position: relative; min-width: 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; transition: border-color .18s, box-shadow .18s; }
+.services-item:hover { border-color: color-mix(in oklab, var(--service-tone) 50%, var(--border)); box-shadow: var(--service-shadow); }
+.services-item-main { width: 100%; height: 104px; padding: 16px; padding-right: 38px; text-align: left; white-space: normal; justify-content: flex-start; gap: 12px; border-radius: 8px; }
+.services-item-main .services-category-icon { height: 40px; width: 40px; flex-shrink: 0; }
+.services-star { position: absolute; z-index: 1; right: 4px; top: 4px; width: 30px; height: 30px; color: var(--muted-foreground); }
+.services-status { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--muted-foreground); }
+.services-status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.services-status.status-available { color: var(--success); }
+.services-status.status-verify { color: var(--magenta); }
+.services-empty { background: var(--service-command); border: 1px dashed var(--border); border-radius: 8px; }
