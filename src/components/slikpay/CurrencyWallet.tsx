@@ -154,10 +154,18 @@ function LimitsList({ code }: { code: string }) {
 function useFee(rail: string | null, amount: number) {
   const calc = useServerFn(quoteFee);
   const [fee, setFee] = useState<{ text: string; loading: boolean }>({ text: "", loading: false });
+  // A rail the provider prices flat (e.g. ₦80 per NIP transfer) is quoted once and never changes with the amount.
+  const flatRef = useRef<{ rail: string; text: string } | null>(null);
   useEffect(() => {
-    if (!rail || !(amount > 0)) { setFee({ text: rail ? "" : "Shown on receipt", loading: false }); return; }
+    if (!rail) { flatRef.current = null; setFee({ text: "Shown on receipt", loading: false }); return; }
+    if (!(amount > 0)) { setFee({ text: "", loading: false }); return; }
+    if (flatRef.current?.rail === rail) { setFee({ text: flatRef.current.text, loading: false }); return; }
     let on = true; setFee({ text: "", loading: true });
-    calc({ data: { rail, amount } }).then((r) => on && setFee({ text: r ? `${r.fee.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${r.currency} · ${r.description}` : "Shown on receipt", loading: false })).catch(() => on && setFee({ text: "Live fee unavailable · shown on receipt", loading: false }));
+    calc({ data: { rail, amount } }).then((r) => {
+      if (!on) return;
+      if (r?.flat) flatRef.current = { rail, text: `Flat ${r.fee.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${r.currency} per transfer` };
+      setFee({ text: r ? (r.flat ? flatRef.current!.text : `${r.fee.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${r.currency} · ${r.description}`) : "Shown on receipt", loading: false });
+    }).catch(() => on && setFee({ text: "Live fee unavailable · shown on receipt", loading: false }));
     return () => { on = false; };
   }, [rail, amount, calc]);
   return fee.loading ? "Calculating…" : fee.text;
