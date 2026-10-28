@@ -36,11 +36,11 @@ const STATUS_STYLE: Record<ServiceStatus, string> = {
   available: "bg-chart-2/15 text-chart-2", sandbox: "bg-chart-4/20 text-chart-4", verify: "bg-magenta/15 text-magenta", business: "bg-muted text-muted-foreground",
 };
 
-export function ServicesHub({ role, only, title }: { role: Role; only?: string[]; title?: string }) {
+export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?: string[]; title?: string; autoOpen?: boolean }) {
   const { profile } = useBankingProfile();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState<ServiceDef | null>(null);
+  const [open, setOpen] = useState<ServiceDef | null>(() => (autoOpen && only?.length === 1 ? SERVICES.find((s) => s.id === only[0] && s.flow) ?? null : null));
   const { prefs, toggleFav, addRecent } = usePrefs(role);
   const ctx = { role, mode: profile?.mode ?? "sandbox", review: profile?.review ?? "not_started" } as const;
   const items = useMemo(() => SERVICES.filter((s) => (role === "merchant" || !s.module || PERSONAL_MODULES[s.module]) && (!only || only.includes(s.id))), [role, only]);
