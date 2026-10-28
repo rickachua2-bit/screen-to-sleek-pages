@@ -35,7 +35,7 @@ const runSchema = z.object({
   body: z.record(z.string(), z.unknown()).default({}),
   idempotencyKey: z.string().uuid(),
   pin: z.string().regex(/^\d{4}$/).optional(),
-  currency: z.string().regex(/^[A-Z]{3}$/).default("NGN"),
+  currency: z.string().regex(/^[A-Z]{3,4}$/).default("NGN"),
 });
 
 export const runPaddleOperation = createServerFn({ method: "POST" })

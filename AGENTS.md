@@ -22,3 +22,4 @@
 - External Auth bearer attachment is registered as function middleware in `src/start.ts`, preserving CSRF middleware; server-only credentials live in handler-imported helpers, never browser code.
 - Inline contact controls request independent channel-specific OTP challenges; a server function binds both verified proofs to current contact values before business lookup, so editing either contact cannot reuse stale verification.
 - Paddle failure handling uses allowlisted safe messages and provider retry/reset headers; inline OTP controls suppress overlapping requests, preserve an existing challenge on failed resend, and never auto-retry paid delivery.
+- Non-NGN wallets (fiat via accounts/global, USDT/USDC via crypto/address) are tracked as `paddle_resources` rows tagged `POST /v1/... <CODE>` with wallet details JSON in resource_id; USDT/USDC auto-issue for live users holding a NUBAN, and refused issuance is recorded so the UI shows "Account not active yet".
