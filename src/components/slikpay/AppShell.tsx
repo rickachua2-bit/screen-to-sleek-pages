@@ -57,7 +57,8 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     <div className="min-w-0 flex-1">
       <header className="sticky top-0 z-30 flex h-[72px] items-center gap-2 border-b border-border bg-background/95 px-4 backdrop-blur-2xl md:gap-4 md:px-7">
         <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
-        {greeting && <h1 className="hidden text-lg font-black xl:block">{greeting}</h1>}
+        {greeting && <div className="hidden shrink-0 xl:block"><h1 className="text-lg font-black">{greeting}</h1>{tierBadge && <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-success" />{tierBadge}</p>}</div>}
+        {onAddMoney && <Button variant="brand" size="sm" className="hidden shrink-0 rounded-full md:inline-flex" onClick={onAddMoney}><Plus /> Add Money</Button>}
         <label className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><input aria-label="Global search" className="field h-10 pl-9 text-xs" placeholder={isBiz ? "Search transactions, customers, payments, or reference..." : "Search transactions..."} value={onSearchChange ? search : undefined} onChange={(e) => onSearchChange?.(e.target.value)} /></label>
         <div className="relative hidden sm:block"><Button variant="crisp" size="sm" onClick={() => { setCurrencies(!currencies); setSwitcher(false); setNotifications(false); }} aria-expanded={currencies}> {currency === "NGN" ? "🇳🇬 NGN (₦)" : currency}<ChevronDown /></Button>{currencies && <div className="merchant-popover absolute right-0 mt-3 w-40 rounded-lg border border-border bg-background p-2 shadow-cobalt">{["NGN", "KES", "GHS", "ZAR", "USD", "EUR", "GBP", "USDT"].map((c) => <Button key={c} variant="ghost" className="w-full justify-between" onClick={() => { setCurrency(c); setCurrencies(false); }}>{c}{c === currency && <Check />}</Button>)}</div>}</div>
         <div className="relative shrink-0"><Button variant="crisp" size="sm" onClick={() => { setSwitcher(!switcher); setCurrencies(false); setNotifications(false); }} aria-expanded={switcher} aria-label="Environment menu"><span className={`h-1.5 w-1.5 rounded-full motion-safe:animate-pulse ${environment === "Live Mode" ? "bg-success" : "bg-chart-4"}`} /><span className="hidden md:inline">{environment}</span><ChevronDown /></Button>{switcher && <div className="merchant-popover absolute right-0 mt-3 w-52 rounded-lg border border-border bg-background p-2 shadow-cobalt">{["Live Mode", "Test Sandbox"].map((e) => <Button key={e} variant="ghost" className="w-full justify-between text-xs" onClick={() => { setEnvironment(e); setSwitcher(false); }}>{e}{e === environment && <Check />}</Button>)}<div className="my-1 border-t border-border" /><Button variant="ghost" className="w-full justify-start text-xs" onClick={() => goMode(isBiz ? "personal" : "merchant")}>{isBiz ? "Personal Wallet" : "Business Console"}</Button></div>}</div>
@@ -65,7 +66,20 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       </header>
       {environment === "Test Sandbox" && <div className="border-b border-chart-4/30 bg-chart-4/10 px-7 py-2 text-xs text-foreground">Test Sandbox selected · environment switching is preview-only; no requests are rerouted.</div>}
       {currency !== "NGN" && <div className="border-b border-border px-7 py-2 text-xs text-muted-foreground">{currency} selected · settlement balances remain denominated in NGN.</div>}
-      <main className="space-y-5 p-4 md:p-7">{children}</main>
+      <main className={`space-y-5 p-4 md:p-7 ${bottomNav ? "pb-24 lg:pb-7" : ""}`}>{children}</main>
+      {bottomNav && (
+        <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden">
+          {bottomNav.map(({ label, icon: Icon, id }) => {
+            const selected = activeModule ? activeModule === id : active === label;
+            return (
+              <button key={label} onClick={() => { if (onModuleChange && id) onModuleChange(id); else setActive(label); }} aria-current={selected ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-bold ${selected ? "text-cyan" : "text-muted-foreground"}`}>
+                <Icon className="h-5 w-5" />
+                {label}
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   </div>;
 }
