@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpDown, ArrowUpRight, Banknote, Copy, Download, FileText, Gauge, Link2, Loader2, Lock, MoreHorizontal, Plus, Repeat, Share2, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpDown, ArrowUpRight, Banknote, Copy, Download, FileText, Gauge, Link2, Loader2, Lock, MoreHorizontal, Plus, QrCode, Repeat, Share2, Wallet, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { getWalletExtras, getWallets, issueCurrencyWallet, savePayoutAccount, swapCurrency, withdrawFunds, type PayoutAccount, type WalletView } from "@/lib/wallets.functions";
