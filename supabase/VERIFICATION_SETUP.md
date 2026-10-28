@@ -21,3 +21,6 @@ Not production-ready yet:
 - Existing sample card/bill/savings experiences are outside this integration scope.
 
 TanStack server functions implement the secure proxy on this project; no Deno Edge Function is deployed or invoked.
+## Sign-in 2FA email codes
+
+Run `slikpay_login_2fa.sql` in the same SQL editor. It creates private `login_challenges` storage (service-role only) and the `claim_login_attempt` rate-limit function used when a user without an authenticator app signs in. Users who enrolled an authenticator app during go-live are verified through Supabase MFA (TOTP) instead and need no extra setup.

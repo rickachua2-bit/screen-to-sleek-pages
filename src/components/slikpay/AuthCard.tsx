@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useServerFn } from "@tanstack/react-start";
 import { combineMerchantContacts, createVerifiedMerchant, lookupMerchantBusiness } from "@/lib/merchant-verification.functions";
+import { startLoginEmailCode, verifyLoginEmailCode } from "@/lib/login-2fa.functions";
 import { contactsVerified, phoneInternational } from "@/lib/verification";
+import { supabase } from "@/lib/supabase";
 import { MerchantContactVerification } from "./MerchantContactVerification";
 
 export type Pending = AuthResult;
@@ -243,6 +245,8 @@ function SecurityPill() {
 
 function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void }) {
   const { signInWithPassword, resetPassword } = useAuth();
+  const startEmail = useServerFn(startLoginEmailCode);
+  const verifyEmail = useServerFn(verifyLoginEmailCode);
   const [step, setStep] = useState<1 | 2>(1);
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
@@ -256,6 +260,10 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(45);
   const [forgot, setForgot] = useState(false);
+  const [method, setMethod] = useState<"totp" | "email">("email");
+  const [challengeId, setChallengeId] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [factor, setFactor] = useState<{ id: string; challengeId: string } | null>(null);
 
   useEffect(() => {
     if (step !== 2 || timer <= 0) return;
@@ -279,20 +287,76 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
     try {
       const email = isEmail(id) ? id : `${id.replace(/^@/, "").toLowerCase().replace(/\s+/g, ".")}@slikpay.online`;
       const r = await signInWithPassword({ email, password: pinMode ? pin : pw });
-      onDone(r, remember);
+      // Password is only factor one: require the authenticator app when enrolled, else an emailed code.
+      const factors = await supabase.auth.mfa.listFactors();
+      const totp = factors.data?.totp?.find((f) => f.status === "verified");
+      if (totp) {
+        const ch = await supabase.auth.mfa.challenge({ factorId: totp.id });
+        if (ch.error) throw new Error(ch.error.message);
+        setFactor({ id: totp.id, challengeId: ch.data.id });
+        setMethod("totp");
+      } else {
+        const sent = await startEmail();
+        setChallengeId(sent.challengeId);
+        setMaskedEmail(sent.email);
+        setMethod("email");
+      }
+      setPending(r);
+      setOtp("");
+      setTimer(45);
+      setStep(2);
     } catch (e) {
+      await supabase.auth.signOut().catch(() => undefined);
       const m = e instanceof Error ? e.message : "";
-      fail({ pw: /confirm/i.test(m) ? "Confirm your email first — check your inbox." : "We couldn't sign you in. Check your details." });
+      fail({ pw: /confirm/i.test(m) ? "Confirm your email first — check your inbox." : m && !/sign you in/i.test(m) ? m : "We couldn't sign you in. Check your details." });
     } finally {
       setBusy(false);
     }
   }
 
   async function verify() {
+    if (!pending) return;
+    if (!/^\d{6}$/.test(otp)) return fail({ otp: "Enter the 6-digit code." });
+    setErr({});
     setBusy(true);
-    setBusy(false);
-    if (/^\d{6}$/.test(otp) && pending) onDone(pending, remember);
-    else fail({ otp: "Invalid code. Enter the 6 digits sent to you." });
+    try {
+      if (method === "totp" && factor) {
+        const v = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: factor.challengeId, code: otp });
+        if (v.error) throw new Error("That authenticator code didn't match. Try the latest one.");
+      } else {
+        await verifyEmail({ data: { challengeId, code: otp } });
+      }
+      onDone(pending, remember);
+    } catch (e) {
+      fail({ otp: e instanceof Error ? e.message : "Verification failed. Try again." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    if (method === "totp") return;
+    setBusy(true);
+    try {
+      const sent = await startEmail();
+      setChallengeId(sent.challengeId);
+      setMaskedEmail(sent.email);
+      setOtp("");
+      setTimer(45);
+      toast.success("A new code is on its way");
+    } catch (e) {
+      fail({ otp: e instanceof Error ? e.message : "Could not resend. Try again shortly." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function abandon() {
+    await supabase.auth.signOut().catch(() => undefined);
+    setPending(null);
+    setFactor(null);
+    setStep(1);
+    setOtp("");
   }
 
   if (forgot) {
@@ -317,10 +381,14 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
   if (step === 2) {
     return (
       <div className="animate-in fade-in slide-in-from-right-4">
-        <StepBar n={2} labels={["Details", "2FA"]} />
+        <StepBar n={2} labels={["Password", "2FA"]} />
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt"><ShieldCheck className="h-6 w-6" /></span>
         <h2 className="mt-4 text-xl font-black text-foreground">Two-Factor Security Verification</h2>
-        <p className="mt-1 text-sm font-medium text-body">Enter the 6-digit verification code sent to your registered email or authenticator app.</p>
+        <p className="mt-1 text-sm font-medium text-body">
+          {method === "totp"
+            ? "Open your authenticator app and enter the current 6-digit code."
+            : <>We emailed a 6-digit code to <span className="font-bold text-foreground">{maskedEmail}</span>. Enter it to finish signing in.</>}
+        </p>
         <div className={`mt-6 flex justify-center ${err["otp"] ? "animate-shake" : ""}`}>
           <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
             <InputOTPGroup className="gap-2">
@@ -330,12 +398,14 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         </div>
         <div className="text-center"><ErrorPill msg={err["otp"]} /></div>
         <p className="mt-4 text-center text-sm font-semibold text-muted-foreground">
-          {timer > 0 ? <>Resend code in {timer}s</> : <button className="font-bold text-cobalt hover:underline" onClick={() => { setTimer(45); toast.success("A new code is on its way"); }}>Resend code</button>}
+          {method === "totp"
+            ? "The code refreshes every 30 seconds in your authenticator app."
+            : timer > 0 ? <>Resend code in {timer}s</> : <button className="font-bold text-cobalt hover:underline" disabled={busy} onClick={resend}>Resend code</button>}
         </p>
         <Button variant="brand" className="shine mt-5 h-12 w-full bg-gradient-tri text-base" disabled={otp.length !== 6 || busy} onClick={verify}>
-          {busy && <Loader2 className="animate-spin" />} Verify &amp; Launch Console →
+          {busy && <Loader2 className="animate-spin" />} Verify &amp; Sign In →
         </Button>
-        <button onClick={() => { setStep(1); setOtp(""); }} className="mt-3 w-full text-sm font-bold text-body hover:text-foreground">← Use a different account</button>
+        <button onClick={abandon} className="mt-3 w-full text-sm font-bold text-body hover:text-foreground">← Use a different account</button>
       </div>
     );
   }
