@@ -23,7 +23,7 @@ export function walletActions(code: string, status: WalletStatus, balance: numbe
 export type Rates = Record<string, number>;
 export function learnRate(rates: Rates, from: string, to: string, rate: number): Rates {
   if (!(rate > 0)) return rates;
-  const next = { ...rates, NGN: 1 };
+  const next: Rates = { ...rates, NGN: 1 };
   if (from === "NGN") next[to] = 1 / rate;
   else if (to === "NGN") next[from] = rate;
   else if (next[from]) next[to] = next[from]! / rate;
