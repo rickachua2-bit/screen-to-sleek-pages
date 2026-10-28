@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthCard } from "@/components/slikpay/AuthCard";
 
 const mocks = vi.hoisted(() => ({
@@ -19,6 +19,7 @@ vi.mock("@/components/ui/input-otp", () => ({
   InputOTPGroup: () => null,
   InputOTPSlot: () => null,
 }));
+beforeEach(() => { Element.prototype.scrollIntoView = vi.fn(); });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 async function reachPinStep() {
@@ -58,8 +59,10 @@ describe("merchant sign-up PIN-only completion", () => {
   it("blocks completion when the confirmation does not match the four-digit PIN", async () => {
     await reachPinStep();
     const pins = screen.getAllByLabelText("PIN entry");
-    fireEvent.change(pins[0], { target: { value: "1234" } });
-    fireEvent.change(pins[1], { target: { value: "4321" } });
+    const [pin, confirmation] = pins;
+    if (!pin || !confirmation) throw new Error("Both PIN inputs are required");
+    fireEvent.change(pin, { target: { value: "1234" } });
+    fireEvent.change(confirmation, { target: { value: "4321" } });
     fireEvent.click(screen.getByRole("button", { name: /Launch Slikpay Business Console/ }));
     expect(mocks.create).not.toHaveBeenCalled();
   });
