@@ -11,7 +11,7 @@ import { BarChart, CHANNEL_STYLES, DonutChart } from "@/components/slikpay/Chart
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useBankingProfile } from "@/components/slikpay/PaddleConsole";
+import { GoLiveProgress, useBankingProfile } from "@/components/slikpay/PaddleConsole";
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { MerchantLedger } from "@/components/slikpay/MerchantLedger";
 import { MerchantWorkspace } from "@/components/slikpay/MerchantWorkspace";
@@ -59,6 +59,7 @@ function Dashboard() {
       <ConnectionBadge />
     </div>
     {module === "overview" ? <>
+      <GoLiveProgress role="merchant" onOpen={() => changeModule("golive")} />
       <div className="grid gap-4 xl:grid-cols-3">
         <BalanceCard title="Settlement Balance" balance={acct.balance} sub={banking?.mode === "live" ? "Available for settlement" : "Sandbox test balance"} footer={<div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-base font-extrabold">{naira(acct.inflow30d)}</div><div className="mt-1 text-[10px] text-muted-foreground">Total inflow (30 days)</div></div><span className="flex items-center rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success"><ArrowUpRight className="h-3 w-3" />{txns.length} txns</span></div>} />
         <Panel title="Inflow by Channel"><DonutChart data={donut} center={naira(inflow30d)} /></Panel>
