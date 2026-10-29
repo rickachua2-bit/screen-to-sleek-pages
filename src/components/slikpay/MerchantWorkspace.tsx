@@ -63,7 +63,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "banking") return <TransferCenter key="single" />;
   if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
   if (module === "cards") return <Cards />;
-  if (module === "treasury") return <TreasuryAutomation />;
+  if (module === "treasury") return <InternationalServices />;
   if (module === "links") return <PaymentLinks />;
   if (module === "smarttag") return <SmartTag />;
   if (module === "mandates") return <DirectDebits />;
