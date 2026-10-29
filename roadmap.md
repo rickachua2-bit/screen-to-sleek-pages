@@ -43,6 +43,8 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
+- [ ] Improve bulk-payout workspace: compact layout, import review and column mapping, pre-submission row corrections, search/status filters, history and separate PIN review.
+- [ ] Background batch execution, maker-checker approvals, scheduling and automatic payout reconciliation — blocked: durable server workflow, account permissions and provider status contract; not represented as active controls.
 - [x] Show clear, white-labelled withdrawal failure reasons without misreporting uncertain payments; inline errors, insufficient funds, PIN, recipient, verification and declined/unknown outcomes covered. 20 tests pass and build OK; live signed-in failure checks remain unverified.
 - [x] Apply selected Composer Split design to crypto-to-bank page (02:37 UTC): navy coin-to-bank artwork and Convert/Review/Pay stages beside white asset, amount, recipient and PIN form. Payment/recovery behavior unchanged; isolated desktop/mobile rendering checked, artwork loaded and no mobile overflow; 17 selected tests pass and build OK. Signed-in payments remain unverified.
 - [x] Add merchant crypto cash-out to any provider-supported NGN recipient account (02:32 UTC), with searchable banks, verified names and existing protected NIP transfers. Recipient changes clear stale verification, bank payout re-resolves names server-side and requires confirmed conversion credit plus fee-inclusive holds. 17 selected tests pass; build OK. Other fiat conversion corridors remain unavailable until confirmed; signed-in execution remains unverified.
