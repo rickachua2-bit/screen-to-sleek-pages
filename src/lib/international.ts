@@ -15,7 +15,7 @@ export const INTERNATIONAL_NOT_ACTIVE = "International payments are not active y
 /* ---------- Owner-confirmed corridors, fees and recovery rules (29 Oct 2026) ---------- */
 
 export interface BeneficiaryField { name: string; label: string; pattern?: RegExp | undefined; hint?: string | undefined }
-export interface Corridor { id: string; label: string; target: string; fields: BeneficiaryField[] }
+export interface Corridor { id: string; label: string; target: string; fields: BeneficiaryField[]; method?: string }
 
 const f = (name: string, label: string, pattern?: RegExp, hint?: string): BeneficiaryField => ({ name, label, pattern, hint });
 const eurFields = [
@@ -50,6 +50,58 @@ export const CORRIDORS: Corridor[] = [
     f("bankName", "Bank name"),
   ] },
 ];
+
+/** How each corridor's money arrives, shown in the market directory. */
+const METHODS: Record<string, string> = { USD: "US bank transfer (ACH / wire)", GBP: "UK Faster Payments", EUR: "SEPA bank transfer", GHS: "Ghana bank transfer", KES: "Kenya bank transfer", ZAR: "South Africa EFT" };
+export function corridorMethod(c: Corridor) { return c.method ?? METHODS[c.target] ?? "Bank transfer"; }
+
+/** Reason for the payment, recorded on the receipt. */
+export const PAYMENT_PURPOSES = ["Family support", "Education / tuition", "Business services", "Supplier / invoice payment", "Salary / payroll", "Personal savings", "Other"] as const;
+export type PaymentPurpose = (typeof PAYMENT_PURPOSES)[number];
+
+/** Quotes are live estimates: re-priced after this window and re-confirmed at send time. */
+export const QUOTE_TTL_MS = 60_000;
+export function quoteSecondsLeft(quotedAt: number, now: number) { return Math.max(0, Math.ceil((quotedAt + QUOTE_TTL_MS - now) / 1000)); }
+
+/** The send must debit exactly the total the user confirmed; any rate move needs a fresh confirmation. */
+export function quoteStillMatches(confirmedTotal: number, freshTotal: number) {
+  return Number.isFinite(confirmedTotal) && Number.isFinite(freshTotal) && Math.abs(confirmedTotal - freshTotal) <= 0.01;
+}
+export const QUOTE_CHANGED = "The exchange rate moved since you confirmed. Review the new total and confirm again — nothing was sent.";
+
+export interface SavedRecipient { key: string; country: string; accountName: string; fields: Record<string, string>; lastUsed: string }
+interface ReceiptLike { operation: string; status: string; created_at: string; summary?: Record<string, unknown> | null }
+/** Recipients reused from the owner's own completed or pending international receipts (newest first, unique). */
+export function savedRecipientsFrom(receipts: ReceiptLike[]): SavedRecipient[] {
+  const out = new Map<string, SavedRecipient>();
+  for (const r of receipts) {
+    if (!isInternationalReceipt(r.operation) || r.status === "failed") continue;
+    const b = r.summary?.["beneficiary"];
+    if (!b || typeof b !== "object") continue;
+    const bene = b as Record<string, unknown>;
+    const country = typeof bene["country"] === "string" ? bene["country"] : "";
+    const accountName = typeof bene["accountName"] === "string" ? bene["accountName"] : "";
+    const corridor = corridorFor(country);
+    if (!corridor || !accountName) continue;
+    const fields: Record<string, string> = {};
+    for (const fl of corridor.fields) { const v = bene[fl.name]; if (typeof v === "string") fields[fl.name] = v; }
+    const key = `${country}|${accountName.toLowerCase()}|${corridor.fields.map((fl) => fields[fl.name] ?? "").join("|")}`;
+    if (!out.has(key)) out.set(key, { key, country, accountName, fields, lastUsed: r.created_at });
+  }
+  return [...out.values()].slice(0, 8);
+}
+
+export type TrackStep = { label: string; state: "done" | "current" | "failed" | "todo" };
+/** Timeline for one international payment, from its ledger receipt status. */
+export function trackSteps(status: string): TrackStep[] {
+  const failed = status === "failed", done = status === "succeeded";
+  return [
+    { label: "Created", state: "done" },
+    { label: "Funds reserved", state: "done" },
+    { label: "Sent to network", state: done || failed ? "done" : "current" },
+    { label: failed ? "Declined — funds returned" : "Paid out", state: failed ? "failed" : done ? "done" : "todo" },
+  ];
+}
 
 /** Wallets that can fund a payout: the naira wallet (converting) or a foreign-currency wallet paying out in kind. */
 export const GLOBAL_SOURCES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"] as const;

@@ -2,7 +2,7 @@ import { callPaddle } from "./paddle.server";
 import { guardMoney, settleMoney } from "./wallets.server";
 import { parseFxRates, type FxRates } from "./pricing";
 import type { Mode } from "./paddle-policy";
-import { beneficiaryFor, corridorFor, globalWalletFee, minimumTargetAmount, nairaCrossBorderFee, safeDeclineReason } from "./international";
+import { QUOTE_CHANGED, quoteStillMatches, beneficiaryFor, corridorFor, globalWalletFee, minimumTargetAmount, nairaCrossBorderFee, safeDeclineReason } from "./international";
 import { payoutStatus } from "./transfer-validation";
 import { UNCERTAIN_PAYMENT } from "./wallet-safety";
 
@@ -50,7 +50,7 @@ export async function buildGlobalQuote(ctx: GlobalCtx, input: GlobalQuoteInput) 
   return { corridor, beneficiary, quote: { country: corridor.id, corridorLabel: corridor.label, sourceCurrency: source, target: corridor.target, rate: null, recipientGets: input.amount, principal: input.amount, fee, feeCurrency: source, totalDebit: Math.round((input.amount + fee) * 100) / 100, minimum, rule: "0.5% of the amount, minimum 5, capped at 25 (wallet currency)" } };
 }
 
-export interface GlobalPayoutInput extends GlobalQuoteInput { pin?: string | undefined; idempotencyKey: string }
+export interface GlobalPayoutInput extends GlobalQuoteInput { pin?: string | undefined; idempotencyKey: string; confirmedTotal?: number | undefined; purpose?: string | undefined }
 export type GlobalPayoutResult =
   | { status: "succeeded"; reference: string; trackingReference: string | null; recipientGets: number; fee: number; totalDebit: number; destinationCurrency: string }
   | { status: "failed"; reason: string }
@@ -73,6 +73,8 @@ export async function executeGlobalPayout(ctx: GlobalCtx, input: GlobalPayoutInp
     return r.data as { status: string; summary: Record<string, unknown> | null; provider_reference: string | null } | null;
   };
   let receipt = await readReceipt();
+  // A brand-new payment must debit exactly what the user confirmed; resumed payments are bound by their receipt instead.
+  if (!receipt && input.confirmedTotal !== undefined && !quoteStillMatches(input.confirmedTotal, quote.totalDebit)) throw new Error(QUOTE_CHANGED);
   if (receipt?.status === "failed") throw new Error("This payment was declined earlier. Check your ledger.");
   if (receipt?.status === "succeeded") {
     const s = receipt.summary ?? {};
@@ -91,7 +93,7 @@ export async function executeGlobalPayout(ctx: GlobalCtx, input: GlobalPayoutInp
     if (outcome.status !== "pending") return outcome;
     return { status: "pending", note: "This payment is already awaiting confirmation. Funds remain reserved; do not send again." };
   }
-  const summary = { principal: quote.principal, fee: quote.fee, feeCurrency: quote.feeCurrency, destinationCurrency: corridor.target, recipient: beneficiary.accountName, totalDebit: quote.totalDebit };
+  const summary = { principal: quote.principal, fee: quote.fee, feeCurrency: quote.feeCurrency, destinationCurrency: corridor.target, recipient: beneficiary.accountName, totalDebit: quote.totalDebit, recipientGets: quote.recipientGets, country: corridor.id, beneficiary, purpose: input.purpose ?? null };
   let settled = false;
   try {
     const r = await callPaddle(ctx.mode, "POST", "/v1/payouts/global", {
