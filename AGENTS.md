@@ -12,12 +12,12 @@
 - `src/lib/api.ts` holds only shared types and display helpers — no demo data or offline success fallbacks (guarded by the banking-safety test). Verification and banking use TanStack server functions without mock success so outages never imply verified identity or completed transfers.
 - Auth state lives in `src/lib/auth.tsx` (React context backed by localStorage/sessionStorage); the backend is external, not Lovable Cloud.
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
-- Unconnected merchant operations stay labelled in-memory drafts; never imply they are live without a service response.
+- Unconnected operations stay labelled drafts. TeamSecurity uses owner-scoped profiles, PIN actions and invitation notices only; no team access is granted until workspace authorization exists.
 - Slikpay overlays use shared global surface tokens and BrandSelect wraps the existing Radix Select; portal content carries its own theme so it remains branded outside page containers.
 - External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
 - Merchant onboarding uses durable server-only verification challenges and an Auth insertion trigger from `supabase/slikpay_verification.sql` (run manually) so direct client sign-up cannot bypass OTP and registry proof.
-- Paddle services run through `runPaddleOperation` with the generated catalog (`src/lib/paddle-catalog.ts`) and `paddle-policy.ts` scopes: platform-wide reads stay hidden, item calls need a `paddle_resources` ownership row, and live money movement needs approval, PIN and an atomic `hold_funds` reservation, because one Paddle account holds every customer's funds.
+- Provider calls use the catalog and policy: hide platform-wide reads, require ownership rows for item calls, and approval, PIN and atomic reservations for live money movement; one provider account holds all customer funds.
 - Account mode (sandbox/live) lives server-side in `account_modes`; sandbox uses the `sk_test_` key, live the `sk_live_` key, and users can never switch themselves to live.
 - External Auth bearer attachment is registered as function middleware in `src/start.ts`, preserving CSRF middleware; server-only credentials live in handler-imported helpers, never browser code.
 - Inline contact controls request channel-specific OTP challenges; a server function binds both verified proofs to current contact values before business lookup, so editing either contact cannot reuse stale verification.
