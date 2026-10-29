@@ -84,7 +84,7 @@ function Dashboard() {
       <p className="flex items-center gap-2 text-[10px] text-muted-foreground"><FileText className="h-3 w-3" />Instant NIP settlement · {connected ? (txns.length ? "Live account data" : "No transactions yet") : "Profile not loaded"} · Balance <ArrowUpRight className="h-3 w-3" />{txns.length} txns</p>
     </> : module === "transactions" ? <MerchantLedger txns={txns} globalSearch={search} balances={banking?.balances} /> : <MerchantWorkspace key={module} module={module} account={acct} onAction={setModal} search={search} />}
     {modal && <ActionModal kind={modal} onClose={() => setModal(null)} />}
-    <QuickActionFab items={quick} raised />
+    {module !== "payroll" && <QuickActionFab items={quick} raised />}
     <CommandPalette open={cmd} onOpenChange={setCmd} actions={quick} go={changeModule} txns={txns} />
   </AppShell>;
 }
