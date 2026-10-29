@@ -27,6 +27,14 @@ export interface TagChargeView {
   status: LinkStatus;
 }
 
+export interface SoundboxView {
+  deviceId: string;
+  label: string;
+  handle: string;
+  voice: string;
+  createdAt: string;
+}
+
 const HANDLE = /^[a-z0-9][a-z0-9-]{1,29}$/;
 
 const createSchema = z.object({
