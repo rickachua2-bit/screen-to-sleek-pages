@@ -64,10 +64,7 @@ function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => voi
 
   const amountValid = /^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) > 0;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const bankValid =
-    currency === "USD" ? /^\d{9}$/.test(routingNumber) && /^\d{4,17}$/.test(accountNumber)
-    : currency === "EUR" ? /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban)
-    : /^\d{6}$/.test(sortCode) && /^\d{4,17}$/.test(accountNumber);
+  const bankValid = bankFieldsValid(currency, { routingNumber, accountNumber, iban, sortCode });
   const valid = name.trim().length >= 2 && emailValid && amountValid && bankValid;
 
   const submit = async (e: React.FormEvent) => {
