@@ -12,6 +12,15 @@ export const listBusinessKeys = createServerFn({ method: "POST" }).handler(async
   return keys.data ?? [];
 });
 
+export const startKeyEmailCode = createServerFn({ method: "POST" }).handler(async () => {
+  setResponseHeader("Cache-Control", "no-store");
+  const { bankingUser } = await import("./paddle.server");
+  const { user, role } = await bankingUser();
+  if (role !== "merchant") throw new Error("Business accounts only.");
+  const { sendEmailCode } = await import("./email-otp.server");
+  return sendEmailCode(user.id, user.email ?? undefined, "Your Slikpay API key code", "confirm your API key action");
+});
+
 export const manageBusinessKey = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => keyAction.parse(data))
   .handler(async ({ data }) => {
@@ -21,8 +30,8 @@ export const manageBusinessKey = createServerFn({ method: "POST" })
     if (role !== "merchant") throw new Error("Business accounts only.");
     const key = await db.from("business_api_keys").select("id,mode,revoked_at").eq("id", data.id).eq("user_id", user.id).maybeSingle();
     if (key.error || !key.data) throw new Error("Key unavailable.");
-    const { verifyKeyPin } = await import("./business-key-security.server");
-    await verifyKeyPin(db, user.id, data.pin);
+    const { verifyEmailCode } = await import("./email-otp.server");
+    await verifyEmailCode(user.id, data.challengeId, data.code);
     if (data.action === "revoke") {
       const r = await db.from("business_api_keys").update({ revoked_at: new Date().toISOString(), encrypted_secret: null }).eq("id", data.id).eq("user_id", user.id).select("id").maybeSingle();
       if (r.error || !r.data) throw new Error("Key could not be revoked.");
