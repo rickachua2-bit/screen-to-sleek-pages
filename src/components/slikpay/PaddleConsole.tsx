@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
@@ -7,13 +7,15 @@ import { BrandSelect } from "./BrandSelect";
 import { CATEGORIES, ENDPOINTS, accessFor, categoryOf, movesMoney, type PaddleEndpoint, type Role } from "@/lib/paddle-policy";
 import { progress, stepsFor, statusOf, type StepStatus } from "@/lib/go-live";
 import { getBankingProfile, runPaddleOperation, submitIdentityCheck } from "@/lib/paddle.functions";
+import { consoleReceiptMessage, whiteLabelConsoleText } from "@/lib/console-safety";
+import { paymentFeedback } from "@/lib/payment-feedback";
 
 type Profile = Awaited<ReturnType<typeof getBankingProfile>>;
 
 function label(e: PaddleEndpoint) {
   const s = e.summary.replace(/^(GET|POST|DELETE)\s+\/v1\//, "");
-  if (s !== e.summary) return s.split("/").map((p) => p.replace(/[{}]/g, "").replace(/-/g, " ")).join(" › ").replace(/^\w/, (c) => c.toUpperCase());
-  return s;
+  if (s !== e.summary) return whiteLabelConsoleText(s.split("/").map((p) => p.replace(/[{}]/g, "").replace(/-/g, " ")).join(" › ").replace(/^\w/, (c) => c.toUpperCase()));
+  return whiteLabelConsoleText(s);
 }
 
 export interface BankingSnapshot { profile: Profile | null; error: string; updatedAt: Date | null }
@@ -77,14 +79,14 @@ export function ModeBanner({ profile, error }: { profile: Profile | null; error:
 
 function ResultView({ value, depth = 0 }: { value: unknown; depth?: number }) {
   if (value == null) return <span className="text-muted-foreground">—</span>;
-  if (typeof value !== "object") return <span className="break-all font-mono text-xs">{String(value)}</span>;
+  if (typeof value !== "object") return <span className="break-all font-mono text-xs">{whiteLabelConsoleText(String(value))}</span>;
   if (Array.isArray(value)) {
     const rows = value.slice(0, 50);
     if (rows.length && rows.every((r) => r && typeof r === "object" && !Array.isArray(r))) {
       const cols = [...new Set(rows.flatMap((r) => Object.keys(r as object)))].slice(0, 7);
       return <div className="overflow-x-auto rounded-xl border border-border"><table className="w-full text-left text-xs"><thead className="bg-cobalt/10 text-muted-foreground"><tr>{cols.map((c) => <th key={c} className="p-2 font-bold">{c}</th>)}</tr></thead><tbody>{rows.map((r, i) => <tr key={i} className="border-t border-border">{cols.map((c) => <td key={c} className="p-2 align-top">{depth < 2 ? <ResultView value={(r as Record<string, unknown>)[c]} depth={depth + 1} /> : "…"}</td>)}</tr>)}</tbody></table>{value.length > 50 && <p className="p-2 text-xs text-muted-foreground">Showing 50 of {value.length}</p>}</div>;
     }
-    return <span className="font-mono text-xs">{rows.map((r: unknown) => (typeof r === "object" ? JSON.stringify(r) : String(r))).join(", ")}</span>;
+    return <span className="font-mono text-xs">{whiteLabelConsoleText(rows.map((r: unknown) => (typeof r === "object" ? JSON.stringify(r) : String(r))).join(", "))}</span>;
   }
   return <dl className="grid gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(120px,auto)_1fr]">{Object.entries(value as Record<string, unknown>).map(([k, v]) => <div key={k} className="contents"><dt className="text-xs font-bold text-muted-foreground">{k}</dt><dd>{depth < 3 ? <ResultView value={v} depth={depth + 1} /> : "…"}</dd></div>)}</dl>;
 }
@@ -92,7 +94,10 @@ function ResultView({ value, depth = 0 }: { value: unknown; depth?: number }) {
 function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint; mode: "sandbox" | "live"; onClose: () => void; onDone: () => void }) {
   const run = useServerFn(runPaddleOperation);
   const [params, setParams] = useState<Record<string, string>>({});
-  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(endpoint.fields.filter((f) => f.enum?.length).map((f) => [f.name, f.enum![0]!])));
+  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(endpoint.fields.flatMap((f) => f.enum?.[0] ? [[f.name, f.enum[0]]] : [])));
+  const reference = useRef<string | null>(null);
+  const submitting = useRef(false);
+  const [attempted, setAttempted] = useState(false);
   const [extra, setExtra] = useState("");
   const [pin, setPin] = useState("");
   const [currency, setCurrency] = useState("NGN");
@@ -105,7 +110,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy) return;
+    if (submitting.current || money && attempted) return;
     setError(""); setOut(null);
     let body: Record<string, unknown> = {};
     try { body = extra.trim() ? JSON.parse(extra) as Record<string, unknown> : {}; if (typeof body !== "object" || Array.isArray(body)) throw new Error(); }
@@ -116,15 +121,21 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
       body[f.name] = f.type === "number" || f.type === "integer" ? Number(v) : f.type === "boolean" ? v === "true" : f.type === "array" || f.type === "object" ? (() => { try { return JSON.parse(v) as unknown; } catch { return v; } })() : v;
     }
     for (const q of queryParams) if (params[q.name]) body[q.name] = params[q.name];
-    setBusy(true);
+    submitting.current = true; setBusy(true);
+    reference.current ??= crypto.randomUUID();
+    if (money) setAttempted(true);
     try {
-      const r = await run({ data: { id: endpoint.id, params: Object.fromEntries(pathParams.map((p) => [p.name, params[p.name] ?? ""])), body, idempotencyKey: crypto.randomUUID(), pin: pin || undefined, currency } });
-      setOut(r); toast.success(r.receipt ? "Transaction confirmed" : "Request completed"); onDone();
-    } catch (err) { setError(err instanceof Error ? err.message.replace(/\s*\[retry-after:\d+\]/, "") : "Request failed"); }
-    finally { setBusy(false); }
+      const r = await run({ data: { id: endpoint.id, params: Object.fromEntries(pathParams.map((p) => [p.name, params[p.name] ?? ""])), body, idempotencyKey: reference.current, pin: pin || undefined, currency } });
+      setOut(r);
+      if (!r.receipt || r.receipt.status === "succeeded") toast.success(r.receipt ? consoleReceiptMessage(r.receipt.status) : "Request completed");
+      else if (r.receipt.status === "failed") toast.error(consoleReceiptMessage(r.receipt.status));
+      else toast.info(consoleReceiptMessage(r.receipt.status));
+      onDone();
+    } catch (err) { setError(money ? paymentFeedback(err, "transfer") : "Request could not be completed. Refresh and try again."); onDone(); }
+    finally { submitting.current = false; setBusy(false); }
   }
 
-  return <div className="fixed inset-0 z-50 flex items-end justify-center slik-overlay-backdrop p-0 sm:items-center sm:p-4" onClick={onClose}>
+  return <div className="fixed inset-0 z-50 flex items-end justify-center slik-overlay-backdrop p-0 sm:items-center sm:p-4" onClick={() => !busy && onClose()}>
     <div role="dialog" aria-modal="true" aria-label={label(endpoint)} className="slik-popup max-h-[92vh] w-full max-w-2xl overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
@@ -132,14 +143,14 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
           <h2 className="mt-1 text-xl font-black">{label(endpoint)}</h2>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{endpoint.path}</p>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X /></Button>
+        <Button variant="ghost" size="icon" aria-label="Close" disabled={busy} onClick={onClose}><X /></Button>
       </div>
       <form onSubmit={submit} className="space-y-3">
         {[...pathParams, ...queryParams].map((p) => <label key={p.name} className="block text-sm font-semibold text-body">{p.name}{p.required && " *"}<input className="field mt-1 w-full" value={params[p.name] ?? ""} onChange={(e) => setParams((s) => ({ ...s, [p.name]: e.target.value }))} required={p.required} /></label>)}
-        {endpoint.fields.map((f) => <div key={f.name}>
+        {endpoint.fields.filter((f) => !(endpoint.id === "post-accounts-virtual" && f.name === "bank")).map((f) => <div key={f.name}>
           {f.enum?.length ? <><p className="mb-1 text-sm font-semibold text-body">{f.name}{f.required && " *"}</p><BrandSelect label={f.name} value={values[f.name] ?? ""} onChange={(v) => setValues((s) => ({ ...s, [f.name]: v }))} options={f.enum.map((o) => ({ value: o, label: o }))} /></>
             : <label className="block text-sm font-semibold text-body">{f.name}{f.required && " *"}<input className="field mt-1 w-full" inputMode={f.type === "number" ? "decimal" : undefined} placeholder={f.example != null ? String(typeof f.example === "object" ? JSON.stringify(f.example) : f.example) : f.type} value={values[f.name] ?? ""} onChange={(e) => setValues((s) => ({ ...s, [f.name]: e.target.value }))} /></label>}
-          {f.hint && <p className="mt-1 text-[11px] text-muted-foreground">{f.hint}</p>}
+          {f.hint && <p className="mt-1 text-[11px] text-muted-foreground">{whiteLabelConsoleText(f.hint)}</p>}
         </div>)}
         {endpoint.method !== "GET" && <label className="block text-sm font-semibold text-body">{endpoint.fields.length ? "Additional details (optional JSON)" : "Request details (JSON)"}<textarea className="field mt-1 min-h-24 w-full font-mono text-xs" value={extra} onChange={(e) => setExtra(e.target.value)} placeholder='{"amount": 5000}' /></label>}
         {money && <div className="grid gap-3 rounded-xl border border-magenta/30 bg-magenta/5 p-3 sm:grid-cols-2">
@@ -148,11 +159,12 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
             : <p className="self-end text-xs font-semibold text-magenta">Sandbox — no real money moves.</p>}
         </div>}
         {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>}
-        <Button variant="brand" type="submit" disabled={busy} className="shine h-12 w-full bg-gradient-tri text-base">{busy && <Loader2 className="animate-spin" />}{money ? "Confirm transaction" : endpoint.method === "GET" ? "Fetch" : "Submit"}</Button>
+        {money && attempted && <p role="status" className="text-xs text-muted-foreground">This attempt is recorded. Check its reference in your ledger before starting another payment.</p>}
+        <Button variant="brand" type="submit" disabled={busy || money && attempted} className="shine h-12 w-full bg-gradient-tri text-base">{busy && <Loader2 className="animate-spin" />}{money ? "Confirm transaction" : endpoint.method === "GET" ? "Fetch" : "Submit"}</Button>
       </form>
       {out && <div className="mt-5 space-y-3">
         {out.receipt && <div className="rounded-2xl border border-cyan/40 bg-cyan/5 p-4">
-          <p className="flex items-center gap-2 font-bold text-cyan"><CheckCircle2 className="h-5 w-5" />Receipt · {out.receipt.mode}</p>
+          <p className="flex items-center gap-2 font-bold text-cyan"><CheckCircle2 className="h-5 w-5" />{consoleReceiptMessage(out.receipt.status)} · {out.receipt.mode}</p>
           <dl className="mt-2 grid grid-cols-2 gap-2 text-xs"><dt className="text-muted-foreground">Amount</dt><dd className="font-mono font-bold">{out.receipt.currency} {out.receipt.amount?.toLocaleString()}</dd><dt className="text-muted-foreground">Reference</dt><dd className="break-all font-mono">{out.receipt.reference ?? "Not returned"}</dd><dt className="text-muted-foreground">NIP session ID</dt><dd className="break-all font-mono">{out.receipt.sessionId ?? "Not returned"}</dd></dl>
         </div>}
         {out.message && <p className="text-sm font-semibold text-body">{out.message}</p>}

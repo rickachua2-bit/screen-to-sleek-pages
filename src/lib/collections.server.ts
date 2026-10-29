@@ -2,6 +2,7 @@ import { namesMatch } from "./go-live";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { callPaddle } from "./paddle.server";
 import type { Mode } from "./paddle-policy";
+import { payoutStatus } from "./transfer-validation";
 
 /** Shape of a provider collection record (from /v1/transactions or a webhook body). */
 export interface InboundTx { id?: unknown; reference?: unknown; amount?: unknown; netAmount?: unknown; currency?: unknown; status?: unknown; channel?: unknown; customer?: { name?: unknown } | null; metadata?: Record<string, unknown> | null; accountNumber?: unknown; virtualAccountNumber?: unknown; createdAt?: unknown }
@@ -16,7 +17,7 @@ export function inboundCredit(tx: InboundTx, owned: Set<string>) {
   const amount = Number(tx.amount ?? m["sourceAmount"]);
   const ref = s(tx.reference ?? m["reference"] ?? tx.id);
   if (!account || !owned.has(account) || !ref || !Number.isFinite(amount) || amount <= 0) return null;
-  if (!/success|completed|paid/.test(status)) return null;
+  if (payoutStatus({ status }) !== "succeeded" && status !== "paid") return null;
   const net = Number(tx.netAmount);
   return {
     account, reference: ref, amount,
@@ -32,7 +33,9 @@ export function inboundCredit(tx: InboundTx, owned: Set<string>) {
 export async function postCredit(db: SupabaseClient, userId: string, mode: Mode, c: NonNullable<ReturnType<typeof inboundCredit>>) {
   const reference = `col:${c.reference}`;
   const tx = await db.from("transactions").upsert({ user_id: userId, reference, channel: "NIP", customer: c.sender, amount: c.amount, direction: "credit", status: "Successful", created_at: c.at, metadata: { mode, account: c.account, senderBank: c.senderBank, fee: Math.round((c.amount - c.net) * 100) / 100, currency: c.currency } }, { onConflict: "reference", ignoreDuplicates: true }).select("id");
-  await db.from("ledger_entries").upsert({ user_id: userId, mode, currency: c.currency, amount: c.net, status: "posted", operation: "collection", reference }, { onConflict: "reference", ignoreDuplicates: true });
+  if (tx.error) throw new Error("Incoming payment activity could not be saved.");
+  const ledger = await db.from("ledger_entries").upsert({ user_id: userId, mode, currency: c.currency, amount: c.net, status: "posted", operation: "collection", reference }, { onConflict: "reference", ignoreDuplicates: true });
+  if (ledger.error) throw new Error("Incoming payment balance needs reconciliation.");
   return (tx.data?.length ?? 0) > 0;
 }
 

@@ -17,7 +17,7 @@
 - External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
 - Merchant onboarding uses durable server-only verification challenges and an Auth insertion trigger from `supabase/slikpay_verification.sql` (run manually) so direct client sign-up cannot bypass OTP and registry proof.
-- Provider calls use the catalog and policy: hide platform-wide reads, require ownership rows for item calls, and approval, PIN and atomic reservations for live money movement; one provider account holds all customer funds.
+- Provider calls enforce ownership, approval, PIN and atomic holds; console settlement needs explicit status. Verified webhooks retry incomplete idempotent credits; one provider account holds all funds.
 - Account mode (sandbox/live) lives server-side in `account_modes`; sandbox uses the `sk_test_` key, live the `sk_live_` key, and users can never switch themselves to live.
 - External Auth bearer attachment is registered as function middleware in `src/start.ts`, preserving CSRF middleware; server-only credentials live in handler-imported helpers, never browser code.
 - Inline contact controls request channel-specific OTP challenges; a server function binds both verified proofs to current contact values before business lookup, so editing either contact cannot reuse stale verification.
