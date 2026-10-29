@@ -29,7 +29,7 @@ export function categoryOf(path: string) {
 }
 
 // Public catalogue reads with no customer data: safe for any signed-in user.
-const REFERENCE = /^\/v1\/(accounts\/banks|bills\/(airtime\/operators|betting\/operators|cable\/plans|electricity\/discos|giftcards|internet\/providers|tolls|education\/pins)|flights\/(airports|health)|investments\/(markets|assets|quotes\/\{symbol\}|yields)|pricing(\/plans|\/current)?|build-with-us\/services)$/;
+const REFERENCE = /^\/v1\/(accounts\/banks|bills\/(airtime\/operators|betting\/operators|cable\/plans|data\/plans|electricity\/discos|giftcards|internet\/providers|tolls|education\/pins)|flights\/(airports|health)|investments\/(markets|assets|quotes\/\{symbol\}|yields)|pricing(\/plans|\/current)?|build-with-us\/services)$/;
 // Platform-wide reads/settings that would expose every Slikpay customer's data or shared funds.
 const PLATFORM = /^\/v1\/(audit|logs|overview|history|idempotency|ledger|wallet|treasury|security|team|integrations|support|messaging|pricing\/subscribe|test\/webhooks|build-with-us\/inquire)/;
 const INTERNAL = /^\/v1\/otp\//;
