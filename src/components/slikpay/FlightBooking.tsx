@@ -391,23 +391,21 @@ function OfferCard({
             )}
           </div>
           <div className="flex w-full sm:w-auto items-center gap-2">
-            <Button 
+            <button 
               type="button"
-              variant="outline" 
-              size="sm" 
               onClick={onDetails} 
-              className="h-10 px-3.5 rounded-xl font-bold border-border hover:border-cobalt/60 hover:bg-cobalt/5 transition-all text-xs"
+              className="h-10 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-cobalt text-white hover:bg-cobalt-deep hover:text-white active:bg-navy border border-cobalt shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cobalt/50"
             >
-              <Info className="h-3.5 w-3.5 mr-1 text-cobalt" />
-              Flight Details
-            </Button>
-            <Button 
+              <Info className="h-4 w-4 text-cyan" />
+              <span>Flight Details</span>
+            </button>
+            <button 
               type="button"
               onClick={onSelect} 
-              className="h-10 px-4 rounded-xl font-black shadow-md hover:shadow-lg transition-all text-xs"
+              className="h-10 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer bg-navy text-white hover:bg-cobalt hover:text-white active:bg-obsidian border border-slate-700/60 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan/50"
             >
-              Select Flight
-            </Button>
+              <span>Select Flight</span>
+            </button>
           </div>
         </div>
       </div>
@@ -761,21 +759,21 @@ function FlightDetailsModal({
             <p className="text-xl sm:text-2xl font-black text-cobalt tracking-tight">{displayPrice}</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <Button 
+            <button 
               type="button"
-              variant="outline" 
               onClick={onClose}
-              className="flex-1 sm:flex-initial rounded-xl font-bold px-4"
+              className="flex-1 sm:flex-initial rounded-xl font-bold px-5 h-11 border border-border bg-muted/60 text-foreground hover:bg-navy hover:text-white hover:border-navy transition-all cursor-pointer text-xs sm:text-sm"
             >
               Back to results
-            </Button>
-            <Button 
+            </button>
+            <button 
               type="button"
               onClick={onBook}
-              className="flex-1 sm:flex-initial rounded-xl font-black px-6 shadow-md hover:shadow-lg transition-all"
+              className="flex-1 sm:flex-initial rounded-xl font-black px-6 h-11 shadow-md hover:shadow-lg transition-all cursor-pointer bg-cobalt text-white hover:bg-cobalt-deep hover:text-white border border-cobalt text-xs sm:text-sm flex items-center justify-center gap-2"
             >
-              Proceed to Book Flight
-            </Button>
+              <span>Proceed to Book Flight</span>
+              <ChevronRight className="h-4 w-4 text-cyan" />
+            </button>
           </div>
         </div>
       </div>
