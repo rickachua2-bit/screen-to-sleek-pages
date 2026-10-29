@@ -84,6 +84,20 @@ function parseTag(raw: string): SmartTagView | null {
   } catch { return null; }
 }
 
+function parseSoundbox(raw: string): SoundboxView | null {
+  try {
+    const v = JSON.parse(raw) as Partial<SoundboxView>;
+    if (typeof v.deviceId !== "string" || typeof v.label !== "string" || typeof v.handle !== "string") return null;
+    return {
+      deviceId: v.deviceId,
+      label: v.label,
+      handle: v.handle,
+      voice: typeof v.voice === "string" ? v.voice : "English",
+      createdAt: typeof v.createdAt === "string" ? v.createdAt : "",
+    };
+  } catch { return null; }
+}
+
 function parseCharge(raw: string): TagChargeView | null {
   try {
     const v = JSON.parse(raw) as Partial<TagChargeView>;
