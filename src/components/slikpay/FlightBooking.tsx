@@ -579,7 +579,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                 {role === "personal" ? "Global Flights" : "Corporate Air Travel"}
               </span>
               <span className="flex items-center gap-1 rounded-full bg-magenta/15 px-2.5 py-1 text-[11px] font-bold text-magenta border border-magenta/25">
-                <Sparkles className="h-3 w-3" /> Real-Time PaddleBaas NDC Engine
+                <Sparkles className="h-3 w-3" /> Real-Time Slikpay Global NDC Engine
               </span>
               <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-400 border border-emerald-500/25">
                 <Coins className="h-3 w-3" /> Multi-Currency: Naira · Fiat · Crypto
@@ -629,7 +629,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                 <Coins className="h-4 w-4 text-cobalt" /> View Fares In:
               </span>
               <span className="text-xs text-muted-foreground hidden sm:inline">
-                (Live rates from PaddleBaas FX)
+                (Live Mid-Market Interbank FX Rates)
               </span>
             </div>
 
@@ -696,7 +696,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                Live PaddleBaas Wholesale Fares (Guaranteed Zero Slippage)
+                Guaranteed Wholesale NDC Fares (Zero Slippage)
               </div>
             </div>
 
@@ -785,7 +785,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
               disabled={busy}
             >
               {busy ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Search className="mr-2 h-5 w-5" />}
-              {busy ? "Aggregating 500+ Airlines via PaddleBaas…" : "Search Available Flights"}
+              {busy ? "Aggregating 500+ Airlines via Slikpay Global Rail…" : "Search Available Flights"}
             </Button>
           </section>
 
