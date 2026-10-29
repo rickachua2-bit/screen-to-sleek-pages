@@ -61,8 +61,8 @@ function Dashboard() {
   const currency = useCurrency();
   const tiles = useTiles(user?.id);
   const quick = merchantQuickActions(setModal, changeModule, () => { void Promise.all([refresh(), authRefresh()]).then(() => toast.success("Dashboard refreshed")); });
-  const bottomNav = [{ label: "Home", icon: LayoutDashboard, id: "overview" }, { label: "Ledger", icon: ArrowRightLeft, id: "transactions" }, { label: "Go Live", icon: Rocket, id: "golive" }, { label: "Settings", icon: Settings, id: "settings" }];
-  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch} onRefresh={authRefresh} bottomNav={bottomNav}>
+  const bottomNav = [{ label: "Home", icon: LayoutDashboard, id: "overview" }, { label: "Payments", icon: Send, id: "links" }, { label: "Ledger", icon: ArrowRightLeft, id: "transactions" }, { label: "More", icon: LayoutGrid, id: "more" }];
+  return <AppShell mode="merchant" nav={MERCHANT_NAV} activeModule={module} onModuleChange={changeModule} search={search} onSearchChange={setSearch} onRefresh={authRefresh} bottomNav={bottomNav} bottomAction={{ label: "New payment or transfer", onClick: () => changeModule("banking") }}>
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div><p className="mb-2 text-[10px] font-bold uppercase text-cyan">SLIKPAY BUSINESS / {module === "overview" ? "OVERVIEW" : "WORKSPACE"}</p><h1 className="text-2xl font-extrabold">{current?.label ?? "Dashboard"}</h1>{module !== "overview" && <p className="mt-2 text-xs text-muted-foreground">{profile?.company_name ?? "Your business"} · Merchant workspace</p>}</div>
       <div className="flex items-center gap-2">{module === "overview" && <CustomiseButton tiles={tiles} />}<ConnectionBadge /></div>
