@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { slikpayTransferFee, payoutBody, payoutStatus } from "./transfer-validation";
 import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scopeOf } from "./paddle-policy";
+import { INTERNATIONAL_NOT_ACTIVE, isUnverifiedInternationalPayout } from "./international";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
   const { bankingUser } = await import("./paddle.server");
@@ -49,6 +50,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     if (!endpoint) throw new Error("Unknown service.");
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { db, user, role, mode, review } = await bankingUser();
+    if (isUnverifiedInternationalPayout(endpoint.path)) throw new Error(INTERNATIONAL_NOT_ACTIVE);
     if (endpoint.path === "/v1/crypto/swap") {
       throw new Error("Use the wallet conversion screen for protected conversion and recovery.");
     }

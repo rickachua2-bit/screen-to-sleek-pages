@@ -31,7 +31,7 @@ export function ServicesCatalog({ items, ctx, title, favourites, recent, launch,
   const results = searchServices(query, items).filter((s) => category === "all" || s.category === category);
   const filtered = Boolean(query.trim()) || category !== "all";
   const favs = items.filter((s) => favourites.includes(s.id));
-  const suggestions = [{ id: "send", label: "Send money", icon: "Send" }, { id: "airtime", label: "Buy airtime", icon: "Phone" }, { id: "intl", label: "Send to Ghana", icon: "Globe" }, { id: "bulk", label: "Pay your team", icon: "Users" }];
+  const suggestions = [{ id: "send", label: "Send money", icon: "Send" }, { id: "airtime", label: "Buy airtime", icon: "Phone" }, { id: "intl", label: "Cross-border", icon: "Globe" }, { id: "bulk", label: "Pay your team", icon: "Users" }];
 
   const serviceTile = (s: ServiceDef) => {
     const status = serviceStatus(s, ctx);
