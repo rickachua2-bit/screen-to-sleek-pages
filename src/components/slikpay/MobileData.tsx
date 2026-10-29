@@ -128,17 +128,18 @@ export function MobileData() {
   useEffect(() => {
     if (!operatorId) { setPlans(null); setPlansFailed(false); return; }
     const seq = ++plansSeq.current;
+    const label = operators?.find((o) => o.id === operatorId)?.label ?? "";
     setPlans(null); setPlansFailed(false); setPlanCode(""); setAmount("");
-    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, network: operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
+    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, network: label || operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
       .then((r) => {
         if (plansSeq.current !== seq) return;
-        const list = toDataPlans(JSON.parse(r.resultJson));
+        const list = toDataPlans(JSON.parse(r.resultJson), label || undefined);
         setPlans(list);
         setPlansFailed(list.length === 0);
       })
       .catch(() => { if (plansSeq.current === seq) { setPlans([]); setPlansFailed(true); } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [operatorId]);
+  }, [operatorId, operators]);
 
   const operator = useMemo(() => operators?.find((o) => o.id === operatorId) ?? null, [operators, operatorId]);
   const plan = useMemo(() => plans?.find((p) => p.code === planCode) ?? null, [plans, planCode]);
