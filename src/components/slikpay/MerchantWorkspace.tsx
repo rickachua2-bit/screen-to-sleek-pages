@@ -22,6 +22,11 @@ import { MobileData } from "./MobileData";
 import { BillsService } from "./BillsService";
 import { GovernmentPayments } from "./GovernmentPayments";
 import { TeamSecurity } from "./TeamSecurity";
+import { DisputesManager } from "./DisputesManager";
+import { StatementsManager } from "./StatementsManager";
+import { CashierShiftsManager } from "./CashierShiftsManager";
+import { ApprovalsManager } from "./ApprovalsManager";
+import { TreasuryAutomation } from "./TreasuryAutomation";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
 
@@ -56,10 +61,14 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "banking") return <TransferCenter key="single" />;
   if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
   if (module === "cards") return <Cards />;
-  if (module === "treasury") return <InternationalServices />;
+  if (module === "treasury") return <TreasuryAutomation />;
   if (module === "links") return <PaymentLinks />;
   if (module === "smarttag") return <SmartTag />;
   if (module === "mandates") return <DirectDebits />;
+  if (module === "disputes") return <DisputesManager />;
+  if (module === "statements") return <StatementsManager />;
+  if (module === "shifts" || module === "softpos") return <CashierShiftsManager />;
+  if (module === "approvals") return <ApprovalsManager />;
   if (!config) return null;
   const rows = drafts.filter((d) => d.tab === tab && d.values.join(" ").toLowerCase().includes(search.toLowerCase()));
   return <>

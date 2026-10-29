@@ -14,6 +14,8 @@ import { CardGraphic } from "./CardGraphic";
 import { Cards } from "./Cards";
 import { BrandSelect } from "./BrandSelect";
 import type { ActionKind } from "./ActionModal";
+import { PersonalSavings } from "./PersonalSavings";
+import { PersonalRewards } from "./PersonalRewards";
 
 const fmt = (d: string) => {
   const dt = new Date(d);
@@ -157,26 +159,6 @@ function CardsModule() {
   return <Cards />;
 }
 
-function SavingsModule() {
-  return (
-    <Panel className="flex flex-col items-center justify-center py-10 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground"><PiggyBank className="h-6 w-6" /></span>
-      <p className="mt-3 text-sm font-extrabold text-foreground">No savings plans yet</p>
-      <p className="mt-1 max-w-sm text-xs font-semibold text-muted-foreground">Savings targets and Ajo circles open here when the savings service is switched on for your account.</p>
-    </Panel>
-  );
-}
-
-function RewardsModule() {
-  return (
-    <Panel className="flex flex-col items-center justify-center py-10 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-magenta/15 text-magenta"><Gift className="h-6 w-6" /></span>
-      <p className="mt-3 text-sm font-extrabold text-foreground">Rewards are coming</p>
-      <p className="mt-1 max-w-sm text-xs font-semibold text-muted-foreground">Referral rewards and milestones will show here, with your real earnings, once the programme launches.</p>
-    </Panel>
-  );
-}
-
 function ProfileModule() {
   const { user } = useAuth();
   const [bio, setBio] = useState(true);
@@ -193,7 +175,7 @@ function ProfileModule() {
           </div>
         </div>
         <div className="mt-5 rounded-xl border border-border p-4">
-<TierCard />
+          <TierCard />
         </div>
       </Panel>
       <Panel title="Security">
@@ -218,8 +200,8 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "airtime": return <AirtimeModule />;
     case "bills": return <BillsModule />;
     case "cards": return <CardsModule />;
-    case "savings": return <SavingsModule />;
-    case "rewards": return <RewardsModule />;
+    case "savings": return <PersonalSavings />;
+    case "rewards": return <PersonalRewards />;
     case "profile": return <ProfileModule />;
     case "services": return <ServicesHub role="personal" />;
     case "golive": return <GoLive role="personal" />;
