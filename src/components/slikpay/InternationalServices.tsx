@@ -72,7 +72,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
   const dispatching = useRef(false);
   const runQuote = useCallback(async (key: string) => {
     const sequence = ++quoteSequence.current;
-    if (!amountValid || !fieldsFilled) { setQuote(null); setQuoteError(""); return; }
+    if (!amountValid || !fieldsFilled) { quoteInFlight.current = false; setQuoting(false); setQuote(null); setQuoteError(""); return; }
     quoteInFlight.current = true;
     setQuoting(true); setQuoteError("");
     try {
@@ -238,7 +238,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
             <p className={`mt-1.5 text-xs ${sourceBalance >= quote.totalDebit ? "text-muted-foreground" : "text-destructive"}`}>Available: {money(sourceBalance, quote.feeCurrency)}{sourceBalance < quote.totalDebit ? " — not enough for this total yet" : ""}</p>
           </div>}
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="international-payment-actions mt-5 flex flex-wrap items-center gap-3">
             <Button variant="outline" className="border-magenta/50 text-magenta hover:bg-magenta/5" disabled={reconciling} onClick={() => void reconcile()}>
               <RefreshCw className={reconciling ? "h-4 w-4 animate-spin" : "h-4 w-4"} />Check pending payments
             </Button>
