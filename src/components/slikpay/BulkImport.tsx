@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { readBulkImport, mappedBulkCsv, type ImportColumns } from "@/lib/bulk-import";
 import { parseBulkCsv } from "@/lib/transfer-rules";
+import documents from "@/assets/bulk-import-documents.png";
 
-export function BulkImport({ busy, onPrepare }: { busy: boolean; onPrepare: (csv: string) => Promise<void> }) {
+export function BulkImport({ busy, onPrepare, onStageChange }: { busy: boolean; onPrepare: (csv: string) => Promise<void>; onStageChange?: (selected: boolean) => void }) {
   const [file, setFile] = useState<ReturnType<typeof readBulkImport> | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [page, setPage] = useState(0);
+  useEffect(() => { onStageChange?.(file !== null); }, [file, onStageChange]);
   const preview = useMemo(() => {
     if (!file) return null;
     try { const csv = mappedBulkCsv(file.rows, file.columns); return { csv, rows: parseBulkCsv(csv), error: "" }; }
@@ -23,13 +25,13 @@ export function BulkImport({ busy, onPrepare }: { busy: boolean; onPrepare: (csv
   }
   const invalid = preview?.rows.filter((r) => r.error).length ?? 0;
   if (!file) return <div className="space-y-3">
-    <label className={`flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-5 text-center transition-colors hover:border-primary ${busy ? "pointer-events-none opacity-60" : ""}`}>
-      <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 text-primary"><FileSpreadsheet className="h-6 w-6" /></span>
+    <label className={`bulk-studio-drop flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-primary/30 p-5 text-center transition-colors hover:border-primary ${busy ? "pointer-events-none opacity-60" : ""}`}>
+      <img src={documents} width={992} height={672} alt="Payment documents and spreadsheet" className="bulk-studio-art" />
       <span className="font-bold text-foreground">Choose payment CSV</span><span className="text-xs text-muted-foreground">Up to 500 payments · 1 MB · NGN</span>
       <input type="file" aria-label="Upload payment CSV" accept=".csv,text/csv" className="sr-only" disabled={busy} onChange={(e) => { const selected = e.target.files?.[0]; if (selected) void choose(selected); e.target.value = ""; }} />
     </label>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   </div>;
-  return <div className="space-y-4">
+  return <div className="space-y-4 bulk-studio-import">
     <div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{name}</p><p className="text-xs text-muted-foreground">{file.rows.length} payments · Import review</p></div><Button variant="ghost" size="icon" title="Discard import" aria-label="Discard import" disabled={busy} onClick={() => setFile(null)}><X /></Button></div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{([["bank", "Bank code"], ["account", "Account number"], ["amount", "Amount"], ["note", "Note · optional"]] as const).map(([key, label]) => <label className="text-xs font-semibold text-foreground" key={key}>{label}<select aria-label={`Map ${label}`} className="field mt-1 w-full" disabled={busy} value={file.columns[key]} onChange={(e) => { const columns: ImportColumns = { ...file.columns, [key]: e.target.value }; setFile({ ...file, columns }); }}><option value="">{key === "note" ? "None" : "Choose column"}</option>{file.headers.map((h, i) => <option key={i} value={String(i)}>{h}</option>)}</select></label>)}</div>
     {preview?.error ? <p role="alert" className="text-sm text-destructive">{preview.error}</p> : <>
