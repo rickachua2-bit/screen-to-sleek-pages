@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X, Code2, Webhook, Receipt, RefreshCw, Copy, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandSelect } from "./BrandSelect";
@@ -9,6 +9,7 @@ import { progress, stepsFor, statusOf, type StepStatus } from "@/lib/go-live";
 import { getBankingProfile, runPaddleOperation, submitIdentityCheck } from "@/lib/paddle.functions";
 import { consoleReceiptMessage, whiteLabelConsoleText } from "@/lib/console-safety";
 import { paymentFeedback } from "@/lib/payment-feedback";
+import { WebhookMonitor } from "./WebhookMonitor";
 
 type Profile = Awaited<ReturnType<typeof getBankingProfile>>;
 
@@ -60,7 +61,6 @@ export function ModeBanner({ profile, error }: { profile: Profile | null; error:
   const live = profile.mode === "live";
   const bal = Object.entries(profile.balances);
   return <div className={`relative overflow-hidden rounded-2xl border p-5 ${live ? "border-cyan/40 bg-cyan/5" : "border-magenta/40 bg-magenta/5"}`}>
-    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cobalt/25 blur-3xl" />
     <div className="relative flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${live ? "bg-cyan/20 text-cyan" : "bg-magenta/20 text-magenta"}`}>{live ? <Radio className="h-5 w-5" /> : <FlaskConical className="h-5 w-5" />}</span>
@@ -113,7 +113,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
     if (submitting.current || money && attempted) return;
     setError(""); setOut(null);
     let body: Record<string, unknown> = {};
-    try { body = extra.trim() ? JSON.parse(extra) as Record<string, unknown> : {}; if (typeof body !== "object" || Array.isArray(body)) throw new Error(); }
+    try { body = extra.trim() ? JSON.parse(extra) as Record<string, unknown> : {}; if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error(); }
     catch { return setError("Additional details must be a JSON object, e.g. {\"key\": \"value\"}."); }
     for (const f of endpoint.fields) {
       const v = values[f.name]?.trim();
@@ -160,6 +160,7 @@ function Runner({ endpoint, mode, onClose, onDone }: { endpoint: PaddleEndpoint;
         </div>}
         {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>}
         {money && attempted && <p role="status" className="text-xs text-muted-foreground">This attempt is recorded. Check its reference in your ledger before starting another payment.</p>}
+        {reference.current && <div className="flex items-center gap-2 text-xs"><span className="min-w-0 break-all font-mono">{reference.current}</span><Button variant="ghost" size="icon" type="button" title="Copy attempt reference" aria-label="Copy attempt reference" onClick={() => { if (reference.current) void navigator.clipboard.writeText(reference.current).then(() => toast.success("Reference copied")).catch(() => toast.error("Could not copy reference")); }}><Copy /></Button></div>}
         <Button variant="brand" type="submit" disabled={busy || money && attempted} className="shine h-12 w-full bg-gradient-tri text-base">{busy && <Loader2 className="animate-spin" />}{money ? "Confirm transaction" : endpoint.method === "GET" ? "Fetch" : "Submit"}</Button>
       </form>
       {out && <div className="mt-5 space-y-3">
@@ -179,37 +180,50 @@ export function PaddleConsole({ role }: { role: Role }) {
   const [cat, setCat] = useState<string>("all");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<PaddleEndpoint | null>(null);
+  const [tab, setTab] = useState<"explorer" | "webhooks" | "receipts">("explorer");
+  const [method, setMethod] = useState("all");
+  const [page, setPage] = useState(1);
   const mode = profile?.mode ?? "sandbox";
   const list = useMemo(() => ENDPOINTS.map((e) => ({ e, access: accessFor(e, role, mode), cat: categoryOf(e.path) })).filter((x) => x.access.allowed || role === "merchant"), [role, mode]);
   const cats = CATEGORIES.filter((c) => list.some((x) => x.cat === c.id));
-  const shown = list.filter((x) => (cat === "all" || x.cat === cat) && `${label(x.e)} ${x.e.path} ${x.e.tag}`.toLowerCase().includes(q.toLowerCase()));
+  const shown = list.filter((x) => (cat === "all" || x.cat === cat) && (method === "all" || x.e.method === method) && `${label(x.e)} ${x.e.path} ${x.e.tag}`.toLowerCase().includes(q.toLowerCase()));
+  const pages = Math.max(1, Math.ceil(shown.length / 18));
+  const currentPage = Math.min(page, pages);
+  const visible = shown.slice((currentPage - 1) * 18, currentPage * 18);
   const available = list.filter((x) => x.access.allowed).length;
 
-  return <div className="space-y-5">
-    <ModeBanner profile={profile} error={error} />
+  return <div className="space-y-5 min-w-0">
+    <header className="developer-console-banner flex flex-wrap items-center justify-between gap-5 p-5 sm:p-7"><div className="flex items-center gap-4"><span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-cyan/30 bg-cyan/10 text-cyan"><Code2 className="size-6" /></span><div><p className="text-xs text-muted-foreground">Slikpay / Developer workspace</p><h2 className="mt-1 text-2xl font-bold">API & Webhooks</h2><p className="mt-2 text-xs text-muted-foreground">{profile ? `${mode === "live" ? "Live environment" : "Sandbox environment"} · ${available} accessible operations` : "Checking your environment…"}</p></div></div><Button variant="outline" onClick={() => void refresh()}><RefreshCw />Refresh account</Button></header>
+    <nav className="flex gap-1 overflow-x-auto border-b border-border" aria-label="Developer workspace">{[{ id: "explorer" as const, name: "API explorer", icon: Code2 }, { id: "webhooks" as const, name: "Webhooks", icon: Webhook }, { id: "receipts" as const, name: "Payment attempts", icon: Receipt }].map(({ id, name, icon: Icon }) => <Button key={id} variant="ghost" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} className={`h-12 shrink-0 rounded-none border-b-2 px-4 ${tab === id ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}><Icon />{name}</Button>)}</nav>
+    {error && <p role="alert" className="text-sm text-destructive">Account information is unavailable. Refresh before making a request.</p>}
+    {tab === "webhooks" && <WebhookMonitor />}
+    {tab === "explorer" && <>
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{available}</span> services available to you</p>
-      <label className="relative w-full max-w-xs"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search services" className="field h-11 w-full pl-9" placeholder="Search cards, flights, payouts…" value={q} onChange={(e) => setQ(e.target.value)} /></label>
+      <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{shown.length}</span> operations</p>
+      <div className="flex w-full flex-wrap gap-2 sm:w-auto"><label className="relative min-w-0 flex-1 sm:w-72"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search services" className="field h-11 w-full pl-9" placeholder="Search name or endpoint…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label><div className="w-28"><BrandSelect label="Request method" value={method} onChange={(v) => { setMethod(v); setPage(1); }} options={["all", "GET", "POST", "DELETE"].map((v) => ({ value: v, label: v === "all" ? "All methods" : v }))} /></div></div>
     </div>
     <div className="flex gap-2 overflow-x-auto pb-1">
-      {[{ id: "all", label: "All" }, ...cats].map((c) => <button key={c.id} type="button" onClick={() => setCat(c.id)} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${cat === c.id ? "border-cyan bg-cyan/15 text-cyan shadow-[0_0_20px_-6px_var(--cyan)]" : "border-border text-muted-foreground hover:border-magenta/50 hover:text-foreground"}`}>{c.label}</button>)}
+      {[{ id: "all", label: "All" }, ...cats].map((c) => <Button key={c.id} variant="outline" size="sm" aria-pressed={cat === c.id} onClick={() => { setCat(c.id); setPage(1); }} className={`shrink-0 ${cat === c.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{c.label}</Button>)}
     </div>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {shown.map(({ e, access }) => <button key={e.id} type="button" disabled={!access.allowed} onClick={() => setOpen(e)} className="panel group flex items-start gap-3 rounded-2xl border border-border bg-card/70 p-4 text-left disabled:cursor-not-allowed disabled:opacity-55">
+      {visible.map(({ e, access }) => <Button variant="outline" key={e.id} disabled={!profile || !access.allowed} onClick={() => setOpen(e)} className="group flex h-auto min-h-28 items-start gap-3 whitespace-normal rounded-lg border border-border bg-card p-4 text-left hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-65">
         <span className={`mt-0.5 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold ${e.method === "GET" ? "bg-cyan/15 text-cyan" : e.method === "DELETE" ? "bg-destructive/15 text-destructive" : "bg-magenta/15 text-magenta"}`}>{e.method}</span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-bold">{label(e)}</span>
           <span className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground">{e.path}</span>
-          {!access.allowed ? <span className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground"><Lock className="h-3 w-3" />{access.reason}</span> : movesMoney(e) && <span className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-magenta"><Sparkles className="h-3 w-3" />Moves money · receipt issued</span>}
+          {!access.allowed ? <span className="mt-1.5 flex items-start gap-1 text-[11px] text-muted-foreground"><Lock className="h-3 w-3 shrink-0" />{access.reason}</span> : <span className={`mt-2 flex items-center gap-1 text-[11px] font-semibold ${movesMoney(e) ? "text-magenta" : "text-primary"}`}>{movesMoney(e) ? <><Sparkles className="h-3 w-3" />Payment · confirmation required</> : <><ShieldCheck className="h-3 w-3" />Authenticated request</>}</span>}
         </span>
         {access.allowed && <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-cyan" />}
-      </button>)}
+      </Button>)}
     </div>
     {!shown.length && <p className="py-10 text-center text-sm text-muted-foreground">No services match “{q}”.</p>}
-    {profile && profile.receipts.length > 0 && <section className="rounded-2xl border border-border bg-card/60 p-5">
-      <h2 className="mb-3 font-bold">Recent receipts</h2>
+    <div className="flex items-center justify-between border-t border-border pt-3"><p className="text-xs text-muted-foreground">Page {currentPage} of {pages}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</Button><Button variant="outline" size="sm" disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>Next<ArrowRight /></Button></div></div>
+    </>}
+    {tab === "receipts" && <section className="min-w-0 py-2">
+      <h2 className="mb-1 font-bold">Recent payment attempts</h2><p className="mb-4 text-xs text-muted-foreground">Pending is not a confirmed payment. Keep the original reference for reconciliation.</p>
+      {!profile ? <p className="text-sm text-muted-foreground">Payment history is unavailable.</p> : !profile.receipts.length ? <p className="py-10 text-center text-sm text-muted-foreground">No recorded payment attempts.</p> :
       <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs"><thead className="text-muted-foreground"><tr><th className="p-2">When</th><th className="p-2">Service</th><th className="p-2">Amount</th><th className="p-2">Reference</th><th className="p-2">NIP session</th><th className="p-2">Status</th></tr></thead><tbody>{profile.receipts.map((r) => <tr key={r.id} className="border-t border-border"><td className="p-2">{new Date(r.created_at).toLocaleString()}</td><td className="p-2 font-mono">{r.operation.replace("/v1/", "")}</td><td className="p-2 font-mono">{r.currency} {Number(r.amount ?? 0).toLocaleString()}</td><td className="p-2 font-mono">{r.provider_reference ?? "—"}</td><td className="p-2 font-mono">{r.session_id ?? "—"}</td><td className={`p-2 font-bold ${r.status === "succeeded" ? "text-cyan" : r.status === "failed" ? "text-destructive" : "text-magenta"}`}>{r.status}{r.mode === "sandbox" && " · test"}</td></tr>)}</tbody></table></div>
-    </section>}
+    }</section>}
     {open && <Runner endpoint={open} mode={mode} onClose={() => setOpen(null)} onDone={() => void refresh()} />}
   </div>;
 }
