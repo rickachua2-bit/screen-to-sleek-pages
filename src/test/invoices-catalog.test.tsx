@@ -41,7 +41,7 @@ describe("invoices panel", () => {
   });
 
   it("creates an invoice with line items and shows its checkout link", async () => {
-    mocks.createInvoice.mockResolvedValue({ ...INVOICES[0], number: "INV-NEW00001", url: "https://pay.example.com/new" });
+    mocks.createInvoice.mockResolvedValue({ ...INVOICES[0], number: "INV-NEW00001", reference: "SLKINV-new", url: "https://pay.example.com/new" });
     render(<InvoicesPanel />);
     await waitFor(() => expect(screen.getByText("300,000.00 NGN")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /New invoice/i }));
