@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Apply selected Wallet Bento to International & Swap; preserve actual balances, receiving accounts and protected swap/send/tracking flows.
 - [x] Applied selected Mission Control: real receipt activity, inbound webhook feed, key access, quick-start code and compact navigation; email-code confirmation preserved. Signed-in visual verification remains unavailable with external auth.
 - [x] Built automatic merchant API keys: database triggers for sandbox signup/live approved KYB, encrypted unclaimed secrets and hashed verification, one-time PIN claim, rotation/revocation, owner-scoped read API for ledger balances/receipts/banks, 365-day expiry and atomic 60 requests/minute verifier.
 - [ ] Business key activation: external business_api_keys table absent (HTTP 404); user must apply enable-business-api-keys.sql. Trigger execution, one-time secret claim and real key-authenticated API reads remain unverified until activation and an external signed-in session.
