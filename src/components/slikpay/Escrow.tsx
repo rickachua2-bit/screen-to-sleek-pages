@@ -171,7 +171,9 @@ function CreateEscrowCard({ onCreated }: { onCreated: (e: EscrowView) => void })
   return <form className="rounded-2xl border border-border bg-card p-5 shadow-sm" onSubmit={(e) => void submit(e)} aria-label="Open an escrow deal">
     <h3 className="font-bold">Open an escrow deal</h3>
     <p className="mt-0.5 text-xs text-muted-foreground">The buyer's money is locked in a trust vault and only released to the seller when you confirm delivery — milestone by milestone.</p>
-    <div className="mt-4 space-y-1.5"><Label htmlFor="esc-title">What is this deal for?</Label>
+    <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_280px]">
+    <div>
+    <div className="space-y-1.5"><Label htmlFor="esc-title">What is this deal for?</Label>
       <Input id="esc-title" value={title} maxLength={140} onChange={(e) => setTitle(e.target.value)} placeholder="Supply of 200 bags of rice" autoComplete="off" required />
     </div>
     <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
