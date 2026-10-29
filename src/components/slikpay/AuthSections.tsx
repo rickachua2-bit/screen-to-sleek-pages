@@ -106,9 +106,9 @@ export function HeroIntro() {
         ))}
       </div>
       <div className="panel mt-3 flex items-center gap-3 p-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-tri text-xs font-black text-primary-foreground">TG</span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-tri text-xs font-black text-primary-foreground">SP</span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-extrabold text-foreground">Travsify Global Inclusive Ltd</div>
+          <div className="text-sm font-extrabold text-foreground">Slikpay Global Enterprise Ltd</div>
           <div className="truncate font-mono text-[10px] font-bold text-success">● KYB verified · Corporate entity · Instant settlement</div>
         </div>
         <span className="hidden rounded-full border border-border px-2 py-0.5 font-mono text-[10px] font-bold text-body sm:inline">TLS 1.3</span>

@@ -37,7 +37,7 @@ describe("naira value", () => {
 
 describe("withdraw ownership", () => {
   it("allows only accounts in the holder's name", () => {
-    expect(isOwnPayoutAccount("TRAVSIFY GLOBAL INCLUSIVE LIMITED", "Travsify Global Inclusive Ltd")).toBe(true);
-    expect(isOwnPayoutAccount("TRAVSIFY GLOBAL INCLUSIVE LIMITED", "John Doe")).toBe(false);
+    expect(isOwnPayoutAccount("slikpay GLOBAL INCLUSIVE LIMITED", "slikpay Global Inclusive Ltd")).toBe(true);
+    expect(isOwnPayoutAccount("slikpay GLOBAL INCLUSIVE LIMITED", "John Doe")).toBe(false);
   });
 });

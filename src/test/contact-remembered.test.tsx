@@ -8,7 +8,7 @@ vi.mock("@/lib/merchant-verification.functions", () => ({ startMerchantVerificat
 
 describe("remembered contact verification", () => {
   it("shows an already-verified email as verified without asking for a new code", () => {
-    render(<MerchantContactVerification channel="email" value="info@travsify.com" alreadyVerified onVerified={vi.fn()} />);
+    render(<MerchantContactVerification channel="email" value="info@slikpay.com" alreadyVerified onVerified={vi.fn()} />);
     expect(screen.getByText("Email verified")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Verify email" })).toBeNull();
     expect(mocks.send).not.toHaveBeenCalled();

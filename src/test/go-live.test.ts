@@ -16,10 +16,10 @@ describe("business go-live", () => {
     expect(namesMatch("TUNDE ADEBAYO BALOGUN", "Acme Logistics Ltd")).toBe(false);
   });
   it("accepts a short bank tag before the business name", () => {
-    expect(namesMatch("FIN-TRAVSIFY GLOBAL INCLUSIVE LIMITED", "TRAVSIFY GLOBAL INCLUSIVE LIMITED")).toBe(true);
-    expect(namesMatch("FLW/TRAVSIFY GLOBAL INCLUSIVE LTD", "TRAVSIFY GLOBAL INCLUSIVE LIMITED")).toBe(true);
-    expect(namesMatch("JOHN DOE TRAVSIFY GLOBAL INCLUSIVE LIMITED", "TRAVSIFY GLOBAL INCLUSIVE LIMITED")).toBe(false);
-    expect(namesMatch("FIN-OTHER COMPANY LTD", "TRAVSIFY GLOBAL INCLUSIVE LIMITED")).toBe(false);
+    expect(namesMatch("FIN-slikpay GLOBAL INCLUSIVE LIMITED", "slikpay GLOBAL INCLUSIVE LIMITED")).toBe(true);
+    expect(namesMatch("FLW/slikpay GLOBAL INCLUSIVE LTD", "slikpay GLOBAL INCLUSIVE LIMITED")).toBe(true);
+    expect(namesMatch("JOHN DOE slikpay GLOBAL INCLUSIVE LIMITED", "slikpay GLOBAL INCLUSIVE LIMITED")).toBe(false);
+    expect(namesMatch("FIN-OTHER COMPANY LTD", "slikpay GLOBAL INCLUSIVE LIMITED")).toBe(false);
   });
 });
 

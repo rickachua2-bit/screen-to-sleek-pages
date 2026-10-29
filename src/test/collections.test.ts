@@ -38,9 +38,9 @@ it("propagates a ledger failure rather than confirming an incoming balance updat
 
 import { adoptableAccount } from "@/lib/collections.server";
 describe("auto-linking receiving accounts", () => {
-  const t = { metadata: { recipientAccountNumber: "7946436244", recipientAccountName: "TRAVSIFY GLOBAL INCLUSIVE LIMITED" } };
+  const t = { metadata: { recipientAccountNumber: "7946436244", recipientAccountName: "slikpay GLOBAL INCLUSIVE LIMITED" } };
   it("links an unrecorded account in the user's verified business name", () => {
-    expect(adoptableAccount(t, "TRAVSIFY GLOBAL INCLUSIVE LTD", new Set())).toBe("7946436244");
+    expect(adoptableAccount(t, "slikpay GLOBAL INCLUSIVE LTD", new Set())).toBe("7946436244");
   });
   it("never links an account in someone else's name", () => {
     expect(adoptableAccount(t, "ACME LOGISTICS LIMITED", new Set())).toBeNull();
