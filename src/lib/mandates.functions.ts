@@ -167,7 +167,7 @@ interface StoredSchedule extends BillingScheduleView {
 const scheduleSchema = createSchema.innerType().omit({ reference: true }).extend({
   frequency: z.enum(SCHEDULE_FREQUENCIES),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a start date."),
-});
+}).superRefine(bankDetailRefine);
 
 const scheduleIdSchema = z.object({ id: z.string().regex(/^SLKSCH-[0-9a-fA-F-]{36}$/) });
 const scheduleActiveSchema = scheduleIdSchema.extend({ active: z.boolean() });
