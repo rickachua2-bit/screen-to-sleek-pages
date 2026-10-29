@@ -421,8 +421,11 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
       }
 
       // Fast polling only if initial response is awaiting NDC aggregation
-      for (let i = 0; i < 4 && !r.complete && r.searchId && n === seq.current; i++) { 
-        await new Promise((ok) => setTimeout(ok, 600)); 
+      let attempts = 0;
+      const maxAttempts = 12;
+      while ((!r.complete || !r.offers?.length) && r.searchId && n === seq.current && attempts < maxAttempts) { 
+        attempts++;
+        await new Promise((ok) => setTimeout(ok, 1200)); 
         r = await poll({ data: r.searchId }); 
         if (r.offers && r.offers.length > 0) {
           if (n === seq.current) {
@@ -1059,12 +1062,28 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                     fx={liveRates}
                   />
                 ))
-              ) : (
+              ) : result.offers.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
                   <Plane className="mx-auto h-10 w-10 text-muted-foreground/60" />
+                  <p className="mt-3 font-extrabold text-lg text-foreground">No flights found for this search</p>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
+                    No available flights were returned for {from?.code} → {to?.code} on {date(depart)}. Try selecting different dates or alternative hubs.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={runSearch} 
+                    className="mt-4 rounded-xl font-bold"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" /> Try Searching Again
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
+                  <SlidersHorizontal className="mx-auto h-10 w-10 text-muted-foreground/60" />
                   <p className="mt-3 font-extrabold text-lg text-foreground">No flights match your active filters</p>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
-                    Try expanding your price range, clearing airline selections, or resetting stops.
+                    {result.offers.length} flight{result.offers.length === 1 ? " is" : "s are"} available, but excluded by your current stops, airline, departure time, or budget filters.
                   </p>
                   <Button 
                     variant="outline" 
@@ -1072,7 +1091,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                     onClick={resetAllFilters} 
                     className="mt-4 rounded-xl font-bold"
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" /> Reset all filters
+                    <RotateCcw className="mr-2 h-4 w-4" /> Reset all filters ({activeFiltersCount} active)
                   </Button>
                 </div>
               )}

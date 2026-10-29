@@ -18,7 +18,7 @@ export async function callPaddle(mode: Mode, method: string, path: string, body?
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
   const url = new URL(BASE + path.replace(/^\/v1/, ""));
   if (method === "GET" && body) for (const [k, v] of Object.entries(body)) if (v !== "" && v != null) url.searchParams.set(k, String(v));
-  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(30000) };
+  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(45000) };
   if (method !== "GET") init.body = JSON.stringify(body ?? {});
   const response = await fetch(url, init);
   const payload: unknown = await response.json().catch(() => null);

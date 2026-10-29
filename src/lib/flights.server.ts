@@ -25,7 +25,7 @@ export async function flightAirports(search: string) {
 
 export async function flightSearchRun(input: z.infer<typeof flightSearch>) {
   const ctx = await bankingUser();
-  const r = await callPaddle(ctx.mode, "POST", "/v1/flights/search", { ...input, waitForResults: true, timeoutMs: 15000 });
+  const r = await callPaddle(ctx.mode, "POST", "/v1/flights/search", { ...input, waitForResults: true, timeoutMs: 25000 });
   return parseSearch(r.data);
 }
 
