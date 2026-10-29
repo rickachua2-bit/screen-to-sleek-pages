@@ -56,7 +56,7 @@ export const getWalletExtras = createServerFn({ method: "POST" }).handler(async 
     readRecord<Record<string, number>>(db, user.id, `fx_rates_${mode}`, {}),
     readRecord<Record<string, PayoutAccount>>(db, user.id, `payout_accounts_${mode}`, {}),
     readRecord<PayoutAccount | null>(db, user.id, "settlement_account", null),
-    db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, summary, created_at").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: false }).limit(100),
+    db.from("payment_receipts").select("id, idempotency_key, operation, status, amount, currency, provider_reference, summary, created_at").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: false }).limit(100),
     db.from("ledger_entries").select("amount, currency, status, operation, reference, created_at").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: false }).limit(200),
     holderName(db, user),
   ]);
