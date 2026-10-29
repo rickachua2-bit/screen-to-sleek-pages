@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router";
+export const Route = createFileRoute("/api/public/business/v1/banks")({ server: { handlers: { GET: async ({ request }) => { const { businessApi } = await import("@/lib/business-api.server"); return businessApi(request, "banks"); } } } });
