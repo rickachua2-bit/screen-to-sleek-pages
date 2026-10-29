@@ -1,1004 +1,214 @@
-import { useState, useEffect } from "react";
-import { 
-  AlertCircle, ArrowLeftRight, ArrowRight, Building2, 
-  Calendar, Check, CheckCircle2, Clock, Download, 
-  HelpCircle, Luggage, Phone, Plane, Plus, Printer, 
-  QrCode, RefreshCw, Search, ShieldCheck, Ticket, Users, X 
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeftRight, CheckCircle2, Clock, Download, Loader2, Luggage, Plane, PlaneLanding, PlaneTakeoff, RefreshCw, Search, ShieldCheck, Ticket, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { naira } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { bookFlight, getFlightHealth, getFlightTrips, pollFlights, searchAirports, searchFlights } from "@/lib/flights.functions";
+import { CABINS, flightSearch, money, passenger, prettyDuration, type Airport, type Cabin, type FlightOffer, type Passenger } from "@/lib/flights";
+import { paymentFeedback } from "@/lib/payment-feedback";
+import { useBankingProfile } from "./PaddleConsole";
 
-export interface FlightOffer {
-  id: string;
-  airlineCode: string;
-  airlineName: string;
-  flightNumber: string;
-  origin: string;
-  originCity: string;
-  destination: string;
-  destinationCity: string;
-  departureTime: string;
-  arrivalTime: string;
-  duration: string;
-  stops: number;
-  cabinClass: string;
-  baggage: string;
-  priceNgn: number;
-  priceUsd: number;
+type Trip = Awaited<ReturnType<typeof getFlightTrips>>[number];
+const CABIN_LABEL: Record<Cabin, string> = { economy: "Economy", premium_economy: "Premium economy", business: "Business", first: "First" };
+const inDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const time = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "—" : d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); };
+const date = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
+const minutes = (o: FlightOffer) => o.slices.reduce((t, s) => t + (Date.parse(s.arriveAt) - Date.parse(s.departAt)) / 60000, 0);
+const blankPax = (): Passenger => ({ title: "mr", givenName: "", familyName: "", bornOn: "", gender: "m", email: "", phone: "", passport: "" });
+
+function AirportField({ label, value, onChange, icon: Icon }: { label: string; value: Airport | null; onChange: (a: Airport) => void; icon: typeof Plane }) {
+  const find = useServerFn(searchAirports);
+  const [q, setQ] = useState(""); const [open, setOpen] = useState(false);
+  const [list, setList] = useState<Airport[]>([]); const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  useEffect(() => {
+    if (q.trim().length < 2) { setList([]); return; }
+    const t = setTimeout(() => { setBusy(true); setErr(""); find({ data: q }).then(setList).catch(() => setErr("Airport search unavailable")).finally(() => setBusy(false)); }, 300);
+    return () => clearTimeout(t);
+  }, [q, find]);
+  return (
+    <div className="relative">
+      <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</label>
+      <div className="mt-1 flex items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2.5 focus-within:border-cobalt">
+        <Icon className="h-4 w-4 shrink-0 text-cobalt" />
+        <input aria-label={label} className="w-full bg-transparent text-sm font-semibold outline-none" placeholder="City or airport" value={open ? q : value ? `${value.city || value.name} (${value.code})` : ""} onFocus={() => { setOpen(true); setQ(""); }} onBlur={() => setTimeout(() => setOpen(false), 150)} onChange={(e) => setQ(e.target.value)} />
+        {busy && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      </div>
+      {open && (q.trim().length >= 2) && (
+        <div className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-2xl border border-border bg-popover p-1 shadow-xl">
+          {err ? <p className="p-3 text-xs text-destructive">{err}</p> : !busy && !list.length ? <p className="p-3 text-xs text-muted-foreground">No airports found</p> : list.map((a) => (
+            <button key={a.code} type="button" onMouseDown={() => { onChange(a); setOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-muted">
+              <span className="rounded-lg bg-cobalt/10 px-2 py-1 font-mono text-xs font-bold text-cobalt">{a.code}</span>
+              <span className="min-w-0"><span className="block truncate text-sm font-semibold">{a.city || a.name}</span><span className="block truncate text-xs text-muted-foreground">{a.name}{a.country ? ` · ${a.country}` : ""}</span></span>
+            </button>))}
+        </div>)}
+    </div>
+  );
 }
 
-export interface FlightBookingOrder {
-  orderId: string;
-  pnr: string;
-  bookingRef: string;
-  airline: string;
-  flightNumber: string;
-  origin: string;
-  destination: string;
-  departureDate: string;
-  passengerName: string;
-  passportNumber?: string;
-  amountNgn: number;
-  status: "CONFIRMED" | "VOIDED";
-  bookedAt: string;
-  voidEligibleUntil: string;
+function OfferCard({ o, onSelect }: { o: FlightOffer; onSelect: () => void }) {
+  return (
+    <article className="rounded-3xl border border-border bg-card p-4 shadow-sm transition hover:border-cobalt/50 hover:shadow-md sm:p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="flex items-center gap-3 lg:w-44">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-cobalt to-cyan font-mono text-xs font-bold text-primary-foreground">{o.airlineCode || <Plane className="h-4 w-4" />}</span>
+          <div className="min-w-0"><p className="truncate font-bold">{o.airline || "Airline"}</p><p className="truncate text-xs text-muted-foreground">{o.slices[0]!.segments.map((s) => s.flightNumber).filter(Boolean).join(" · ")}</p></div>
+        </div>
+        <div className="flex-1 space-y-3">
+          {o.slices.map((s, i) => (
+            <div key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+              <div><p className="text-lg font-extrabold">{time(s.departAt)}</p><p className="font-mono text-xs text-muted-foreground">{s.from}</p></div>
+              <div className="text-center"><p className="text-[11px] text-muted-foreground">{prettyDuration(s.duration) ?? ""}</p><div className="relative my-1 h-px bg-border"><Plane className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-cobalt" /></div><p className={`text-[11px] font-semibold ${s.stops ? "text-magenta" : "text-success"}`}>{s.stops ? `${s.stops} stop${s.stops > 1 ? "s" : ""} · ${s.segments.slice(0, -1).map((g) => g.to).join(", ")}` : "Non-stop"}</p></div>
+              <div className="text-right"><p className="text-lg font-extrabold">{time(s.arriveAt)}</p><p className="font-mono text-xs text-muted-foreground">{s.to}</p></div>
+            </div>))}
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-3 lg:w-48 lg:flex-col lg:items-end lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+          <div className="lg:text-right"><p className="text-xl font-extrabold text-cobalt">{money(o.amount, o.currency)}</p><p className="flex items-center gap-1 text-[11px] text-muted-foreground lg:justify-end">{o.baggage && <><Luggage className="h-3 w-3" />{o.baggage}</>}</p></div>
+          <Button onClick={onSelect}>Select</Button>
+        </div>
+      </div>
+    </article>
+  );
 }
-
-const COMMON_AIRPORTS = [
-  { code: "LOS", city: "Lagos", name: "Murtala Muhammed Intl (LOS)" },
-  { code: "ABV", city: "Abuja", name: "Nnamdi Azikiwe Intl (ABV)" },
-  { code: "LHR", city: "London", name: "Heathrow Airport (LHR)" },
-  { code: "DXB", city: "Dubai", name: "Dubai International (DXB)" },
-  { code: "JFK", city: "New York", name: "John F. Kennedy Intl (JFK)" },
-  { code: "ACC", city: "Accra", name: "Kotoka International (ACC)" },
-  { code: "NBO", city: "Nairobi", name: "Jomo Kenyatta Intl (NBO)" },
-  { code: "JNB", city: "Johannesburg", name: "O.R. Tambo Intl (JNB)" },
-  { code: "YYZ", city: "Toronto", name: "Toronto Pearson (YYZ)" },
-];
 
 export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "personal" }) {
-  const { profile } = useAuth();
-  const [tab, setTab] = useState<"search" | "bookings" | "travelers">("search");
+  const { profile } = useBankingProfile();
+  const live = profile?.mode === "live";
+  const health = useServerFn(getFlightHealth), search = useServerFn(searchFlights), poll = useServerFn(pollFlights), book = useServerFn(bookFlight), trips = useServerFn(getFlightTrips);
+  const [tab, setTab] = useState<"search" | "trips">("search");
+  const [online, setOnline] = useState<boolean | null>(null);
+  const [roundTrip, setRoundTrip] = useState(false);
+  const [from, setFrom] = useState<Airport | null>(null), [to, setTo] = useState<Airport | null>(null);
+  const [depart, setDepart] = useState(inDays(14)), [ret, setRet] = useState(inDays(21));
+  const [adults, setAdults] = useState(1), [cabin, setCabin] = useState<Cabin>("economy");
+  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [result, setResult] = useState<{ searchId: string | null; offers: FlightOffer[] } | null>(null);
+  const [sort, setSort] = useState<"cheapest" | "fastest" | "earliest">("cheapest"), [nonstop, setNonstop] = useState(false);
+  const [picked, setPicked] = useState<FlightOffer | null>(null);
+  const [pax, setPax] = useState<Passenger[]>([blankPax()]), [pin, setPin] = useState("");
+  const [booking, setBooking] = useState(false), [bookErr, setBookErr] = useState("");
+  const key = useRef(""); const seq = useRef(0);
+  const [tripList, setTripList] = useState<Trip[] | null>(null), [tripErr, setTripErr] = useState("");
 
-  // Search parameters
-  const [tripType, setTripType] = useState<"oneway" | "roundtrip">("oneway");
-  const [origin, setOrigin] = useState("LOS");
-  const [destination, setDestination] = useState("LHR");
-  const [departureDate, setDepartureDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 14);
-    return d.toISOString().slice(0, 10);
-  });
-  const [returnDate, setReturnDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 21);
-    return d.toISOString().slice(0, 10);
-  });
-  const [cabinClass, setCabinClass] = useState("economy");
-  const [adults, setAdults] = useState(1);
+  useEffect(() => { health().then((h) => setOnline(h.online)).catch(() => setOnline(false)); }, [health]);
+  const loadTrips = () => { setTripErr(""); trips().then(setTripList).catch(() => setTripErr("Your trips could not be loaded.")); };
+  useEffect(() => { if (tab === "trips") loadTrips(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Search execution & results
-  const [searching, setSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [offers, setOffers] = useState<FlightOffer[]>([]);
-
-  // Health status
-  const [railHealth, setRailHealth] = useState<{ status: string; latency: number }>({
-    status: "ONLINE",
-    latency: 240,
-  });
-
-  // Booking & Modal
-  const [selectedOffer, setSelectedOffer] = useState<FlightOffer | null>(null);
-  const [passengerTitle, setPassengerTitle] = useState("Mr");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNum, setPhoneNum] = useState("");
-  const [passportNum, setPassportNum] = useState("");
-  const [dob, setDob] = useState("");
-  const [bookingInProgress, setBookingInProgress] = useState(false);
-
-  // Confirmed orders list
-  const [orders, setOrders] = useState<FlightBookingOrder[]>(() => {
+  const runSearch = async () => {
+    const parsed = flightSearch.safeParse({ origin: from?.code ?? "", destination: to?.code ?? "", departureDate: depart, returnDate: roundTrip ? ret : undefined, adults, cabinClass: cabin });
+    if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check your search"); return; }
+    const n = ++seq.current; setBusy(true); setError(""); setResult(null);
     try {
-      const saved = localStorage.getItem("slikpay_flight_orders");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+      let r = await search({ data: parsed.data });
+      for (let i = 0; i < 6 && !r.complete && r.searchId && n === seq.current; i++) { await new Promise((ok) => setTimeout(ok, 2500)); r = await poll({ data: r.searchId }); }
+      if (n === seq.current) setResult({ searchId: r.searchId, offers: r.offers });
+    } catch (e) { if (n === seq.current) setError(e instanceof Error ? e.message : "Flight search is unavailable."); }
+    finally { if (n === seq.current) setBusy(false); }
+  };
 
-  // Active E-Ticket View Modal
-  const [viewTicket, setViewTicket] = useState<FlightBookingOrder | null>(null);
+  const shown = useMemo(() => {
+    const list = (result?.offers ?? []).filter((o) => !nonstop || o.slices.every((s) => s.stops === 0));
+    return [...list].sort((a, b) => sort === "cheapest" ? a.amount - b.amount : sort === "fastest" ? minutes(a) - minutes(b) : Date.parse(a.slices[0]!.departAt) - Date.parse(b.slices[0]!.departAt));
+  }, [result, sort, nonstop]);
 
-  // Check flight engine health on mount
-  useEffect(() => {
-    fetch("/v1/flights/health")
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success && res.data) {
-          setRailHealth({
-            status: res.data.status || "ONLINE",
-            latency: res.data.latencyMs || 240,
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // Save orders to localStorage
-  useEffect(() => {
+  const choose = (o: FlightOffer) => { setPicked(o); setBookErr(""); setPin(""); key.current = `FLT-${crypto.randomUUID()}`; setPax(Array.from({ length: adults }, (_, i) => pax[i] ?? blankPax())); };
+  const confirm = async () => {
+    if (!picked || !result?.searchId || booking) return;
+    for (const p of pax) { const v = passenger.safeParse({ ...p, passport: p.passport || undefined }); if (!v.success) { setBookErr(v.error.issues[0]?.message ?? "Check traveller details"); return; } }
+    if (live && !/^\d{4}$/.test(pin)) { setBookErr("Enter your 4-digit transaction PIN."); return; }
+    setBooking(true); setBookErr("");
     try {
-      localStorage.setItem("slikpay_flight_orders", JSON.stringify(orders));
-    } catch {}
-  }, [orders]);
-
-  const handleSwapAirports = () => {
-    const temp = origin;
-    setOrigin(destination);
-    setDestination(temp);
+      const r = await book({ data: { searchId: result.searchId, offerId: picked.id, expectedAmount: picked.amount, expectedCurrency: picked.currency, passengers: pax.map((p) => ({ ...p, passport: p.passport || undefined })), pin: pin || undefined, idempotencyKey: key.current } });
+      setPin("");
+      if (r.status === "succeeded") toast.success(`Ticket issued · PNR ${r.pnr}`);
+      else if (r.status === "failed") toast.error("The airline declined this booking. Your reserved funds are released.");
+      else toast.message("Booking submitted — awaiting airline confirmation. Funds stay reserved until confirmed.");
+      setPicked(null); setTab("trips");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setBookErr(/fare|no longer|expired|verification/i.test(msg) ? msg : paymentFeedback(e, "transfer").replace("Transfer", "Booking"));
+    } finally { setBooking(false); }
   };
 
-  const handleSearchFlights = async () => {
-    if (!origin || !destination) {
-      toast.error("Please select both origin and destination airports");
-      return;
-    }
-    if (origin === destination) {
-      toast.error("Origin and destination cannot be identical");
-      return;
-    }
-    if (!departureDate) {
-      toast.error("Please pick a departure date");
-      return;
-    }
-
-    setSearching(true);
-    setHasSearched(true);
-
-    try {
-      const res = await fetch("/v1/flights/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          origin,
-          destination,
-          departureDate,
-          returnDate: tripType === "roundtrip" ? returnDate : undefined,
-          cabinClass,
-          adults,
-        }),
-      });
-      const data = await res.json();
-
-      if (data.success && data.data && Array.isArray(data.data.flights)) {
-        // Map backend flight objects
-        const mapped: FlightOffer[] = data.data.flights.map((f: any, idx: number) => ({
-          id: f.id || `flt-${idx}`,
-          airlineCode: f.airlineCode || f.owner?.iata_code || "P4",
-          airlineName: f.airlineName || f.owner?.name || "Air Peace Global",
-          flightNumber: f.flightNumber || `${f.airlineCode || "P4"}-${Math.floor(100 + Math.random() * 899)}`,
-          origin: origin,
-          originCity: COMMON_AIRPORTS.find((a) => a.code === origin)?.city || origin,
-          destination: destination,
-          destinationCity: COMMON_AIRPORTS.find((a) => a.code === destination)?.city || destination,
-          departureTime: f.slices?.[0]?.segments?.[0]?.departing_at
-            ? new Date(f.slices[0].segments[0].departing_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })
-            : "08:30 AM",
-          arrivalTime: f.slices?.[0]?.segments?.[0]?.arriving_at
-            ? new Date(f.slices[0].segments[0].arriving_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })
-            : "03:45 PM",
-          duration: f.slices?.[0]?.duration ? f.slices[0].duration.replace("PT", "").toLowerCase() : "6h 15m",
-          stops: f.slices?.[0]?.segments ? f.slices[0].segments.length - 1 : 0,
-          cabinClass: cabinClass.toUpperCase(),
-          baggage: "2 × 23kg Checked Bags Included",
-          priceNgn: Number(f.total_amount_ngn || f.priceNgn || (origin === "LOS" && destination === "LHR" ? 850000 : 1240000)),
-          priceUsd: Number(f.total_amount_usd || f.priceUsd || Math.round(Number(f.total_amount_ngn || 850000) / 1400)),
-        }));
-        setOffers(mapped);
-      } else {
-        // Fallback live wholesale schedules for Nigerian routes
-        generateLiveWholesaleSchedules(origin, destination, cabinClass);
-      }
-    } catch {
-      generateLiveWholesaleSchedules(origin, destination, cabinClass);
-    } finally {
-      setSearching(false);
-    }
+  const receipt = (t: Trip) => {
+    const text = [`Slikpay flight booking`, `Status: ${t.status}`, `PNR: ${t.pnr ?? "pending"}`, `Airline: ${t.airline}`, `Route: ${t.route}`, `Departure: ${date(t.departAt)} ${time(t.departAt)}`, `Travellers: ${t.passengers.join(", ")}`, `E-tickets: ${t.tickets.join(", ") || "pending"}`, `Amount: ${money(t.amount, t.currency)}`, `Reference: ${t.key}`].join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" })); a.download = `flight-${t.pnr ?? t.key}.txt`; a.click(); URL.revokeObjectURL(a.href);
   };
-
-  const generateLiveWholesaleSchedules = (from: string, to: string, travelClass: string) => {
-    const multiplier = travelClass === "business" ? 2.8 : travelClass === "first" ? 4.5 : 1;
-    const isDomestic = (from === "LOS" && to === "ABV") || (from === "ABV" && to === "LOS");
-
-    const carriers = isDomestic
-      ? [
-          { code: "P4", name: "Air Peace", base: 145000, dep: "07:15 AM", arr: "08:30 AM", dur: "1h 15m", stops: 0 },
-          { code: "VM", name: "Max Air", base: 138000, dep: "10:30 AM", arr: "11:45 AM", dur: "1h 15m", stops: 0 },
-          { code: "QI", name: "Ibom Air", base: 165000, dep: "02:00 PM", arr: "03:10 PM", dur: "1h 10m", stops: 0 },
-          { code: "U4", name: "United Nigeria", base: 142000, dep: "05:45 PM", arr: "07:00 PM", dur: "1h 15m", stops: 0 },
-        ]
-      : [
-          { code: "P4", name: "Air Peace (Direct)", base: 890000, dep: "11:00 PM", arr: "05:30 AM", dur: "6h 30m", stops: 0 },
-          { code: "BA", name: "British Airways", base: 1420000, dep: "09:50 AM", arr: "04:40 PM", dur: "6h 50m", stops: 0 },
-          { code: "QR", name: "Qatar Airways", base: 1180000, dep: "02:10 PM", arr: "06:45 AM", dur: "12h 35m", stops: 1 },
-          { code: "EK", name: "Emirates Airline", base: 1350000, dep: "06:15 PM", arr: "11:20 AM", dur: "13h 05m", stops: 1 },
-          { code: "ET", name: "Ethiopian Airlines", base: 980000, dep: "01:25 PM", arr: "07:10 AM", dur: "14h 45m", stops: 1 },
-        ];
-
-    const generated: FlightOffer[] = carriers.map((c, i) => {
-      const priceNgn = Math.round(c.base * multiplier);
-      return {
-        id: `offer-${from}-${to}-${i}`,
-        airlineCode: c.code,
-        airlineName: c.name,
-        flightNumber: `${c.code}-${Math.floor(100 + Math.random() * 899)}`,
-        origin: from,
-        originCity: COMMON_AIRPORTS.find((a) => a.code === from)?.city || from,
-        destination: to,
-        destinationCity: COMMON_AIRPORTS.find((a) => a.code === to)?.city || to,
-        departureTime: c.dep,
-        arrivalTime: c.arr,
-        duration: c.dur,
-        stops: c.stops,
-        cabinClass: travelClass.toUpperCase(),
-        baggage: isDomestic ? "1 × 20kg Checked Bag" : "2 × 23kg Checked Bags",
-        priceNgn,
-        priceUsd: Math.round(priceNgn / 1400),
-      };
-    });
-
-    setOffers(generated);
-  };
-
-  const handleStartBooking = (offer: FlightOffer) => {
-    setSelectedOffer(offer);
-    const displayName = profile?.full_name || profile?.company_name;
-    if (displayName) {
-      setFirstName(displayName.split(" ")[0] || "Authorized");
-      setLastName(displayName.split(" ")[1] || "Traveler");
-    }
-  };
-
-  const handleConfirmOrder = async () => {
-    if (!selectedOffer) return;
-    if (!firstName.trim() || !lastName.trim()) {
-      toast.error("Please enter traveler's first and last name as on passport/ID");
-      return;
-    }
-
-    setBookingInProgress(true);
-    const pnrCode = `${selectedOffer.airlineCode}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    const orderId = `ORD-FLT-${Date.now().toString().slice(-7)}`;
-
-    const voidCutoff = new Date();
-    voidCutoff.setHours(voidCutoff.getHours() + 24);
-
-    const newOrder: FlightBookingOrder = {
-      orderId,
-      pnr: pnrCode,
-      bookingRef: `SLK-NDC-${Date.now().toString().slice(-6)}`,
-      airline: selectedOffer.airlineName,
-      flightNumber: selectedOffer.flightNumber,
-      origin: selectedOffer.origin,
-      destination: selectedOffer.destination,
-      departureDate,
-      passengerName: `${passengerTitle} ${firstName} ${lastName}`.trim(),
-      ...(passportNum ? { passportNumber: passportNum } : {}),
-      amountNgn: selectedOffer.priceNgn,
-      status: "CONFIRMED",
-      bookedAt: "Just now",
-      voidEligibleUntil: voidCutoff.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    try {
-      await fetch("/v1/flights/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          offerId: selectedOffer.id,
-          traveler: {
-            title: passengerTitle,
-            firstName,
-            lastName,
-            email,
-            phone: phoneNum,
-            passport: passportNum,
-            dob,
-          },
-        }),
-      }).catch(() => {});
-    } catch {}
-
-    setOrders((prev) => [newOrder, ...prev]);
-    setBookingInProgress(false);
-    setSelectedOffer(null);
-    setViewTicket(newOrder);
-    setTab("bookings");
-
-    toast.success(`E-Ticket Issued! PNR: ${pnrCode}`, {
-      description: `Confirmed on ${selectedOffer.airlineName}. Automated wallet debit: ${naira(selectedOffer.priceNgn)}.`,
-    });
-  };
-
-  const handleVoidOrder = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.orderId === orderId ? { ...o, status: "VOIDED" } : o))
-    );
-    toast.success("24-Hour IATA Void Executed!", {
-      description: "Reservation cancelled. 100% of airfare refunded to your wallet with zero penalty.",
-    });
-  };
+  const field = "mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-cobalt";
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-cyan/30 bg-gradient-to-r from-card via-card to-cyan/10 p-6 sm:p-8 shadow-xl">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-cyan/15 px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan border border-cyan/30">
-                450+ Airlines Wholesale NDC Rail
-              </span>
-              <span className="rounded-full bg-magenta/15 px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-magenta border border-magenta/30">
-                24H Instant IATA Void
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-mono text-success font-bold">
-                <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                {railHealth.status} ({railHealth.latency}ms)
-              </span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl flex items-center gap-2.5">
-              <Plane className="h-7 w-7 text-cyan" />
-              Wholesale Flight Reservation & E-Tickets
-            </h1>
-            <p className="max-w-2xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Book domestic and international flights directly on Air Peace, British Airways, Qatar Airways, Emirates, and 450+ carriers with instant PNR issuance and automated wallet settlement.
-            </p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3">
-            <a
-              href="https://docs.slikpay.online#api-flights"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl border border-border bg-card/80 px-3.5 py-2 text-xs font-mono font-bold text-foreground hover:bg-muted/50 transition flex items-center gap-1.5"
-            >
-              <Ticket className="h-4 w-4 text-cyan" />
-              Flight API Specs
-            </a>
-          </div>
+    <div className="space-y-5">
+      <section className="bg-navy-rail relative overflow-hidden rounded-3xl p-6 text-foreground shadow-xl sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-cyan/25 blur-3xl" /><div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-magenta/20 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan"><Plane className="h-4 w-4" />{role === "personal" ? "Travel" : "Business travel"}</p><h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">Fly anywhere, pay from your wallet</h1><p className="mt-2 max-w-xl text-sm text-muted-foreground">Live fares from global airlines. Tickets are paid from the wallet matching the fare currency, and you're only charged the price you confirm.</p></div>
+          <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${online ? "bg-success/20 text-success" : online === false ? "bg-destructive/20 text-foreground" : "bg-foreground/10"}`}><span className={`h-2 w-2 rounded-full ${online ? "bg-success animate-pulse" : online === false ? "bg-destructive" : "bg-muted-foreground"}`} />{online === null ? "Checking airlines…" : online ? "Airlines connected" : "Flight service unavailable"}{profile ? ` · ${profile.mode}` : ""}</span>
         </div>
-      </div>
+        <div className="relative mt-5 inline-flex rounded-full bg-foreground/10 p-1">
+          {(["search", "trips"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${tab === t ? "bg-background text-cobalt" : "text-foreground"}`}>{t === "search" ? "Search flights" : "My trips"}</button>)}
+        </div>
+      </section>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => setTab("search")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
-            tab === "search"
-              ? "border-cyan text-cyan"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Search className="h-4 w-4" />
-          Search Flights
-        </button>
-        <button
-          onClick={() => setTab("bookings")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
-            tab === "bookings"
-              ? "border-cyan text-cyan"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Ticket className="h-4 w-4" />
-          My Bookings & E-Tickets
-          {orders.length > 0 && (
-            <span className="rounded-full bg-cyan/20 px-2 py-0.5 text-xs font-bold text-cyan">
-              {orders.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* TAB 1: SEARCH & BOOK */}
-      {tab === "search" && (
-        <div className="space-y-6">
-          {/* Search Box */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
-            {/* Trip Type & Cabin Class Selection */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-background/50 p-1 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setTripType("oneway")}
-                  className={`rounded-lg px-3 py-1.5 transition-all ${
-                    tripType === "oneway"
-                      ? "bg-cyan text-slate-950 font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  One Way
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTripType("roundtrip")}
-                  className={`rounded-lg px-3 py-1.5 transition-all ${
-                    tripType === "roundtrip"
-                      ? "bg-cyan text-slate-950 font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Round Trip
-                </button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={cabinClass}
-                  onChange={(e) => setCabinClass(e.target.value)}
-                  className="field text-xs h-9 px-3"
-                >
-                  <option value="economy">Economy Class</option>
-                  <option value="premium">Premium Economy</option>
-                  <option value="business">Business Class</option>
-                  <option value="first">First Class</option>
-                </select>
-
-                <select
-                  value={adults}
-                  onChange={(e) => setAdults(Number(e.target.value))}
-                  className="field text-xs h-9 px-3"
-                >
-                  <option value={1}>1 Passenger</option>
-                  <option value={2}>2 Passengers</option>
-                  <option value={3}>3 Passengers</option>
-                  <option value={4}>4 Passengers</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Airport & Date Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              {/* Origin */}
-              <div>
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1 uppercase font-bold">
-                  Origin (From)
-                </label>
-                <select
-                  value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
-                  className="field w-full text-xs font-bold"
-                >
-                  {COMMON_AIRPORTS.map((a) => (
-                    <option key={a.code} value={a.code}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Destination with swap */}
-              <div className="relative">
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1 uppercase font-bold flex items-center justify-between">
-                  <span>Destination (To)</span>
-                  <button
-                    type="button"
-                    onClick={handleSwapAirports}
-                    className="text-cyan hover:underline flex items-center gap-0.5"
-                    title="Swap route"
-                  >
-                    <ArrowLeftRight className="h-3 w-3" />
-                    Swap
-                  </button>
-                </label>
-                <select
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="field w-full text-xs font-bold"
-                >
-                  {COMMON_AIRPORTS.map((a) => (
-                    <option key={a.code} value={a.code}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Departure Date */}
-              <div>
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1 uppercase font-bold">
-                  Departure Date
-                </label>
-                <input
-                  type="date"
-                  value={departureDate}
-                  onChange={(e) => setDepartureDate(e.target.value)}
-                  className="field w-full text-xs font-mono"
-                />
-              </div>
-
-              {/* Return Date or Action */}
-              <div>
-                {tripType === "roundtrip" ? (
-                  <>
-                    <label className="block text-[11px] font-mono text-muted-foreground mb-1 uppercase font-bold">
-                      Return Date
-                    </label>
-                    <input
-                      type="date"
-                      value={returnDate}
-                      onChange={(e) => setReturnDate(e.target.value)}
-                      className="field w-full text-xs font-mono"
-                    />
-                  </>
-                ) : (
-                  <Button
-                    onClick={handleSearchFlights}
-                    disabled={searching}
-                    className="w-full bg-cyan text-slate-950 font-black hover:bg-cyan/90 h-10"
-                  >
-                    {searching ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Querying GDS...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="mr-2 h-4 w-4" />
-                        Search Flight Deals
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {tripType === "roundtrip" && (
-              <div className="pt-2 flex justify-end">
-                <Button
-                  onClick={handleSearchFlights}
-                  disabled={searching}
-                  className="w-full sm:w-auto px-8 bg-cyan text-slate-950 font-black hover:bg-cyan/90 h-10"
-                >
-                  {searching ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Querying GDS...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Search Flight Deals
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+      {tab === "search" ? <>
+        <section className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex flex-wrap gap-2">{[false, true].map((r) => <button key={String(r)} onClick={() => setRoundTrip(r)} className={`rounded-full border px-4 py-1.5 text-xs font-bold ${roundTrip === r ? "border-cobalt bg-cobalt/10 text-cobalt" : "border-border"}`}>{r ? "Round trip" : "One way"}</button>)}</div>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
+            <AirportField label="From" value={from} onChange={setFrom} icon={PlaneTakeoff} />
+            <button aria-label="Swap airports" onClick={() => { setFrom(to); setTo(from); }} className="mx-auto grid h-10 w-10 place-items-center self-end rounded-full border border-border bg-background hover:border-cobalt"><ArrowLeftRight className="h-4 w-4 text-cobalt" /></button>
+            <AirportField label="To" value={to} onChange={setTo} icon={PlaneLanding} />
           </div>
-
-          {/* Results List */}
-          {hasSearched && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-extrabold text-foreground">
-                  Available Flight Offers ({offers.length} found)
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  Route: <strong>{origin}</strong> → <strong>{destination}</strong> ·{" "}
-                  {departureDate}
-                </span>
-              </div>
-
-              {offers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">
-                  <Plane className="mb-3 h-10 w-10 text-muted-foreground/60" />
-                  <h3 className="text-base font-bold text-foreground">No Direct Offers Found</h3>
-                  <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                    No seats available for this route on the selected date. Try selecting adjacent dates or a different cabin class.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {offers.map((offer) => (
-                    <div
-                      key={offer.id}
-                      className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 transition-all hover:border-cyan/50 md:flex-row md:items-center"
-                    >
-                      {/* Carrier & Itinerary */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                        {/* Carrier Logo Badge */}
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 font-black font-mono text-cyan">
-                          {offer.airlineCode}
-                        </div>
-
-                        {/* Times & Flight Route */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-foreground">{offer.airlineName}</span>
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                              {offer.flightNumber}
-                            </span>
-                            <span className="rounded bg-cyan/15 px-1.5 py-0.5 text-[10px] font-bold text-cyan">
-                              {offer.cabinClass}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm font-black text-foreground">
-                            <span>{offer.departureTime} ({offer.origin})</span>
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                              <span className="h-0.5 w-6 bg-border" />
-                              <Clock className="h-3 w-3" />
-                              <span>{offer.duration}</span>
-                              <span className="h-0.5 w-6 bg-border" />
-                            </div>
-                            <span>{offer.arrivalTime} ({offer.destination})</span>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>{offer.stops === 0 ? "Non-Stop" : `${offer.stops} Stop`}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1 text-[11px]">
-                              <Luggage className="h-3 w-3 text-cyan" />
-                              {offer.baggage}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Pricing & Book CTA */}
-                      <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border pt-3 md:border-none md:pt-0">
-                        <div className="text-left md:text-right">
-                          <p className="text-[11px] text-muted-foreground">Wholesale Fare</p>
-                          <p className="text-xl font-black text-foreground">{naira(offer.priceNgn)}</p>
-                          <p className="text-[11px] font-mono text-muted-foreground">${offer.priceUsd} USD</p>
-                        </div>
-
-                        <Button
-                          className="bg-cyan text-slate-950 font-black hover:bg-cyan/90 h-10 px-5"
-                          onClick={() => handleStartBooking(offer)}
-                        >
-                          Book Ticket
-                          <ArrowRight className="ml-1.5 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 2: MY BOOKINGS & E-TICKETS */}
-      {tab === "bookings" && (
-        <div className="space-y-4">
-          {orders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">
-              <Ticket className="mb-3 h-10 w-10 text-muted-foreground/60" />
-              <h3 className="text-base font-bold text-foreground">No Confirmed Flight Bookings</h3>
-              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                Your issued e-tickets, PNR records, and flight itineraries will appear here with instant receipt generation.
-              </p>
-              <Button
-                size="sm"
-                className="mt-4 bg-cyan text-slate-950 font-bold hover:bg-cyan/90"
-                onClick={() => setTab("search")}
-              >
-                Search Flights Now
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {orders.map((order) => (
-                <div
-                  key={order.orderId}
-                  className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 transition-all md:flex-row md:items-center"
-                >
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-base font-black text-cyan">
-                        PNR: {order.pnr}
-                      </span>
-                      <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground">
-                        {order.orderId}
-                      </span>
-                      {order.status === "CONFIRMED" ? (
-                        <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-bold text-success flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          CONFIRMED E-TICKET
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-xs font-bold text-destructive">
-                          VOIDED & REFUNDED
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-base font-extrabold text-foreground">
-                      {order.airline} · {order.flightNumber} ({order.origin} → {order.destination})
-                    </h3>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>Traveler: <strong className="text-foreground">{order.passengerName}</strong></span>
-                      <span>Departure: {order.departureDate}</span>
-                      <span>Paid: <strong>{naira(order.amountNgn)}</strong></span>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2 border-t border-border pt-3 md:border-none md:pt-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setViewTicket(order)}
-                    >
-                      <Ticket className="mr-1.5 h-3.5 w-3.5 text-cyan" />
-                      View Boarding Pass
-                    </Button>
-
-                    {order.status === "CONFIRMED" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-                        onClick={() => handleVoidOrder(order.orderId)}
-                      >
-                        24H Void & Refund
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* PASSENGER BOOKING MODAL */}
-      {selectedOffer && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"
-          onClick={() => setSelectedOffer(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="slik-popup w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Plane className="h-5 w-5 text-cyan" />
-                  Issue Electronic Ticket
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {selectedOffer.airlineName} · {selectedOffer.origin} → {selectedOffer.destination}
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedOffer(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Price Banner */}
-            <div className="rounded-xl border border-cyan/30 bg-cyan/5 p-4 flex items-center justify-between mb-4">
-              <div>
-                <span className="text-xs text-muted-foreground">Total Airfare & Taxes</span>
-                <p className="text-2xl font-black text-foreground">{naira(selectedOffer.priceNgn)}</p>
-              </div>
-              <span className="rounded bg-success/15 px-2 py-0.5 text-xs font-bold text-success">
-                Instant Auto-Debit
-              </span>
-            </div>
-
-            {/* Passenger Details Form */}
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Title</label>
-                  <select
-                    value={passengerTitle}
-                    onChange={(e) => setPassengerTitle(e.target.value)}
-                    className="field w-full text-xs font-bold"
-                  >
-                    <option>Mr</option>
-                    <option>Mrs</option>
-                    <option>Ms</option>
-                    <option>Dr</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">First Name</label>
-                  <input
-                    placeholder="e.g. Chukwudi"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="field w-full text-xs"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Last Name</label>
-                  <input
-                    placeholder="e.g. Eze"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="field w-full text-xs"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Email for E-Ticket</label>
-                  <input
-                    type="email"
-                    placeholder="passenger@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="field w-full text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Mobile Phone</label>
-                  <input
-                    placeholder="+234..."
-                    value={phoneNum}
-                    onChange={(e) => setPhoneNum(e.target.value)}
-                    className="field w-full text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Passport / NIN Number</label>
-                  <input
-                    placeholder="A12345678"
-                    value={passportNum}
-                    onChange={(e) => setPassportNum(e.target.value)}
-                    className="field w-full text-xs font-mono uppercase"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 font-bold">Date of Birth</label>
-                  <input
-                    type="date"
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    className="field w-full text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border bg-background/50 p-3 text-[11px] text-muted-foreground">
-                <strong>IATA Guarantee:</strong> If your schedule changes, you can void this ticket within 24 hours with a 100% full refund directly to your Slikpay wallet.
-              </div>
-
-              <Button
-                className="w-full bg-cyan text-slate-950 font-black hover:bg-cyan/90 h-11 text-sm mt-2"
-                onClick={handleConfirmOrder}
-                disabled={bookingInProgress}
-              >
-                {bookingInProgress ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Issuing E-Ticket & PNR...
-                  </>
-                ) : (
-                  <>
-                    Confirm & Pay {naira(selectedOffer.priceNgn)}
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Depart<input type="date" min={inDays(0)} value={depart} onChange={(e) => setDepart(e.target.value)} className={field} /></label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Return<input type="date" disabled={!roundTrip} min={depart} value={ret} onChange={(e) => setRet(e.target.value)} className={`${field} disabled:opacity-50`} /></label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Travellers<select value={adults} onChange={(e) => setAdults(Number(e.target.value))} className={field}>{Array.from({ length: 9 }, (_, i) => <option key={i} value={i + 1}>{i + 1} adult{i ? "s" : ""}</option>)}</select></label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Cabin<select value={cabin} onChange={(e) => setCabin(e.target.value as Cabin)} className={field}>{CABINS.map((c) => <option key={c} value={c}>{CABIN_LABEL[c]}</option>)}</select></label>
           </div>
-        </div>
-      )}
+          {error && <p role="alert" className="mt-3 text-sm font-semibold text-destructive">{error}</p>}
+          <Button className="mt-4 w-full sm:w-auto" size="lg" onClick={runSearch} disabled={busy}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}{busy ? "Searching airlines…" : "Search flights"}</Button>
+        </section>
 
-      {/* CONFIRMED E-TICKET RECEIPT MODAL */}
-      {viewTicket && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"
-          onClick={() => setViewTicket(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="slik-popup w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
-              <div className="flex items-center gap-2">
-                <Plane className="h-6 w-6 text-cyan" />
-                <div>
-                  <h2 className="text-base font-black text-foreground">ELECTRONIC BOARDING PASS</h2>
-                  <p className="text-[11px] text-muted-foreground">Central IATA Reservation Confirmation</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setViewTicket(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Ticket Card */}
-            <div className="rounded-2xl border border-cyan/40 bg-card p-6 space-y-4">
-              <div className="flex justify-between items-center border-b border-border/80 pb-3">
-                <div>
-                  <span className="text-[11px] text-muted-foreground">Passenger Name</span>
-                  <p className="text-base font-black text-foreground">{viewTicket.passengerName}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[11px] text-muted-foreground">Booking Reference (PNR)</span>
-                  <p className="font-mono text-xl font-black text-cyan">{viewTicket.pnr}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Carrier & Flight</span>
-                  <p className="font-bold text-foreground">{viewTicket.airline} · {viewTicket.flightNumber}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Route</span>
-                  <p className="font-bold text-foreground">{viewTicket.origin} → {viewTicket.destination}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Departure Date</span>
-                  <p className="font-bold text-foreground">{viewTicket.departureDate}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Total Fare Paid</span>
-                  <p className="font-bold text-foreground">{naira(viewTicket.amountNgn)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-border/80 pt-4">
-                <div className="flex items-center gap-2">
-                  <QrCode className="h-10 w-10 text-cyan" />
-                  <div className="text-[10px] text-muted-foreground">
-                    <p className="font-mono font-bold text-foreground">BARCODE VALIDATED</p>
-                    <p>Scan at airport kiosk</p>
-                  </div>
-                </div>
-                <span className="rounded bg-success/15 px-2 py-0.5 text-xs font-bold text-success">
-                  CONFIRMED
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-5 flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 text-xs"
-                onClick={() => window.print()}
-              >
-                <Printer className="mr-1.5 h-3.5 w-3.5" />
-                Print Ticket
-              </Button>
-              <Button
-                className="flex-1 bg-cyan text-slate-950 font-bold hover:bg-cyan/90 text-xs"
-                onClick={() => {
-                  toast.success("E-Ticket PDF downloaded", {
-                    description: `PNR: ${viewTicket.pnr}`,
-                  });
-                }}
-              >
-                <Download className="mr-1.5 h-3.5 w-3.5" />
-                Download PDF
-              </Button>
-            </div>
+        {busy && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-28 animate-pulse rounded-3xl bg-muted" />)}</div>}
+        {result && !busy && <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-bold">{shown.length} flight{shown.length === 1 ? "" : "s"} · {from?.code} → {to?.code}</p>
+            <div className="flex flex-wrap gap-2">{(["cheapest", "fastest", "earliest"] as const).map((s) => <button key={s} onClick={() => setSort(s)} className={`rounded-full border px-3 py-1 text-xs font-bold capitalize ${sort === s ? "border-cobalt bg-cobalt text-primary-foreground" : "border-border bg-card"}`}>{s}</button>)}<button onClick={() => setNonstop((v) => !v)} className={`rounded-full border px-3 py-1 text-xs font-bold ${nonstop ? "border-magenta bg-magenta/10 text-magenta" : "border-border bg-card"}`}>Non-stop only</button></div>
           </div>
+          {shown.length ? shown.map((o) => <OfferCard key={o.id} o={o} onSelect={() => choose(o)} />) : <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center"><Plane className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-2 font-bold">No flights found</p><p className="text-sm text-muted-foreground">Try other dates, airports or remove filters.</p></div>}
+        </section>}
+      </> : (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">My trips</h2><Button variant="outline" size="sm" onClick={loadTrips}><RefreshCw className="mr-2 h-3.5 w-3.5" />Refresh</Button></div>
+          {tripErr ? <p className="text-sm text-destructive">{tripErr}</p> : !tripList ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : !tripList.length ? <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center"><Ticket className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-2 font-bold">No bookings yet</p><p className="text-sm text-muted-foreground">Tickets you book appear here with their PNR.</p></div> : tripList.map((t) => (
+            <article key={t.key} className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 sm:flex-row sm:items-center">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-cobalt/10 text-cobalt"><Ticket className="h-5 w-5" /></span>
+              <div className="min-w-0 flex-1"><p className="font-bold">{t.route || "Flight"} · {t.airline}</p><p className="text-xs text-muted-foreground">{date(t.departAt)} {time(t.departAt)} · {t.passengers.join(", ")}</p><p className="mt-1 font-mono text-xs">PNR {t.pnr ?? "awaiting airline"}{t.tickets.length ? ` · e-ticket ${t.tickets.join(", ")}` : ""}</p></div>
+              <div className="flex items-center gap-3 sm:flex-col sm:items-end"><p className="font-extrabold">{money(t.amount, t.currency)}</p><span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${t.status === "succeeded" ? "bg-success/15 text-success" : t.status === "failed" ? "bg-destructive/15 text-destructive" : "bg-magenta/15 text-magenta"}`}>{t.status === "succeeded" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}{t.status === "succeeded" ? "Ticketed" : t.status === "failed" ? "Declined" : "Pending"}</span><button onClick={() => receipt(t)} className="flex items-center gap-1 text-xs font-bold text-cobalt"><Download className="h-3 w-3" />Receipt</button></div>
+            </article>))}
+          <p className="text-xs text-muted-foreground">Pending bookings keep funds reserved until the airline confirms. For changes or cancellations, contact support with your reference.</p>
+        </section>)}
+
+      {picked && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true">
+        <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-card p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-cobalt">Review & book</p><h3 className="text-xl font-extrabold">{picked.slices.map((s) => `${s.from} → ${s.to}`).join(" · ")}</h3><p className="text-sm text-muted-foreground">{picked.airline} · {date(picked.slices[0]!.departAt)} · {CABIN_LABEL[cabin]}</p></div><button aria-label="Close" onClick={() => !booking && setPicked(null)} className="rounded-full p-2 hover:bg-muted"><X className="h-4 w-4" /></button></div>
+          <div className="mt-4 space-y-4">{pax.map((p, i) => {
+            const set = (patch: Partial<Passenger>) => setPax((all) => all.map((x, j) => j === i ? { ...x, ...patch } : x));
+            return <fieldset key={i} className="rounded-2xl border border-border p-4"><legend className="flex items-center gap-1 px-1 text-xs font-bold"><Users className="h-3.5 w-3.5" />Traveller {i + 1} · as on passport</legend>
+              <div className="grid gap-2 sm:grid-cols-6">
+                <select aria-label="Title" value={p.title} onChange={(e) => set({ title: e.target.value as Passenger["title"] })} className={`${field} sm:col-span-1`}>{["mr", "ms", "mrs", "miss", "dr"].map((t) => <option key={t} value={t}>{t[0]!.toUpperCase() + t.slice(1)}</option>)}</select>
+                <input aria-label="First name" placeholder="First name" value={p.givenName} onChange={(e) => set({ givenName: e.target.value })} className={`${field} sm:col-span-2`} />
+                <input aria-label="Last name" placeholder="Last name" value={p.familyName} onChange={(e) => set({ familyName: e.target.value })} className={`${field} sm:col-span-3`} />
+                <label className="text-[11px] font-bold text-muted-foreground sm:col-span-2">Date of birth<input type="date" value={p.bornOn} onChange={(e) => set({ bornOn: e.target.value })} className={field} /></label>
+                <label className="text-[11px] font-bold text-muted-foreground sm:col-span-1">Gender<select value={p.gender} onChange={(e) => set({ gender: e.target.value as "m" | "f" })} className={field}><option value="m">Male</option><option value="f">Female</option></select></label>
+                <label className="text-[11px] font-bold text-muted-foreground sm:col-span-3">Passport no. (international)<input value={p.passport} onChange={(e) => set({ passport: e.target.value.toUpperCase() })} className={field} /></label>
+                <input aria-label="Email" type="email" placeholder="Email" value={p.email} onChange={(e) => set({ email: e.target.value })} className={`${field} sm:col-span-3`} />
+                <input aria-label="Phone" placeholder="+2348012345678" value={p.phone} onChange={(e) => set({ phone: e.target.value.replace(/[^\d+]/g, "") })} className={`${field} sm:col-span-3`} />
+              </div></fieldset>; })}
+          </div>
+          <div className="mt-4 rounded-2xl bg-muted/60 p-4 text-sm"><div className="flex justify-between"><span>Fare for {adults} traveller{adults > 1 ? "s" : ""}</span><span className="font-extrabold">{money(picked.amount, picked.currency)}</span></div><p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5 text-success" />Charged from your {picked.currency} wallet. If the airline changes the fare, nothing is charged.</p></div>
+          {live && <label className="mt-3 block text-sm font-semibold">Transaction PIN<input type="password" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} className={`${field} font-mono tracking-[0.5em]`} /></label>}
+          {bookErr && <p role="alert" className="mt-3 text-sm font-semibold text-destructive">{bookErr}</p>}
+          <Button className="mt-4 w-full" size="lg" onClick={confirm} disabled={booking}>{booking ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Issuing ticket…</> : <>Pay {money(picked.amount, picked.currency)} & book</>}</Button>
         </div>
-      )}
+      </div>}
     </div>
   );
 }
