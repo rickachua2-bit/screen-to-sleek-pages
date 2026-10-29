@@ -21,6 +21,33 @@ const STATUS_STYLE: Record<LinkStatus, { label: string; className: string }> = {
 
 const RAIL_LABEL: Record<DebitCurrency, string> = { USD: "US ACH", EUR: "EU SEPA", GBP: "UK Bacs" };
 
+interface BankFieldValues {
+  routingNumber: string; accountNumber: string; iban: string; sortCode: string;
+  setRoutingNumber: (v: string) => void; setAccountNumber: (v: string) => void; setIban: (v: string) => void; setSortCode: (v: string) => void;
+}
+
+export function bankFieldsValid(currency: DebitCurrency, v: { routingNumber: string; accountNumber: string; iban: string; sortCode: string }): boolean {
+  return currency === "USD" ? /^\d{9}$/.test(v.routingNumber) && /^\d{4,17}$/.test(v.accountNumber)
+    : currency === "EUR" ? /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v.iban)
+    : /^\d{6}$/.test(v.sortCode) && /^\d{4,17}$/.test(v.accountNumber);
+}
+
+function BankFields({ currency, idPrefix, v }: { currency: DebitCurrency; idPrefix: string; v: BankFieldValues }) {
+  if (currency === "EUR") return <div className="mt-3 space-y-1.5"><Label htmlFor={`${idPrefix}-iban`}>Customer IBAN</Label>
+    <Input id={`${idPrefix}-iban`} value={v.iban} maxLength={34} onChange={(e) => v.setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="DE89370400440532013000" autoComplete="off" required className="font-mono" />
+  </div>;
+  const sort = currency === "GBP";
+  return <div className="mt-3 grid gap-3 sm:grid-cols-2">
+    <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-a`}>{sort ? "Sort code" : "Routing number"}</Label>
+      <Input id={`${idPrefix}-a`} inputMode="numeric" value={sort ? v.sortCode : v.routingNumber} maxLength={sort ? 6 : 9}
+        onChange={(e) => (sort ? v.setSortCode : v.setRoutingNumber)(e.target.value.replace(/\D/g, ""))} placeholder={sort ? "200000" : "021000021"} autoComplete="off" required className="font-mono" />
+    </div>
+    <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-b`}>Account number</Label>
+      <Input id={`${idPrefix}-b`} inputMode="numeric" value={v.accountNumber} maxLength={17} onChange={(e) => v.setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
+    </div>
+  </div>;
+}
+
 function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => void }) {
   const createFn = useServerFn(createDirectDebit);
   const [name, setName] = useState("");
