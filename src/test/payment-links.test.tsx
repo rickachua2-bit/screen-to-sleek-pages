@@ -47,11 +47,11 @@ describe("payment links page", () => {
     expect(screen.getByText(/could not be loaded/i)).toBeTruthy();
   });
 
-  it("keeps invoices and catalog clearly marked as not connected", async () => {
+  it("renders real invoices and catalog panels", async () => {
     render(<PaymentLinks />);
     fireEvent.click(screen.getByRole("button", { name: /Invoices/i }));
-    expect(screen.getByText("Not connected yet")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("No invoices yet")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /Product catalog/i }));
-    expect(screen.getByText("Not connected yet")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Your catalog is empty")).toBeTruthy());
   });
 });
