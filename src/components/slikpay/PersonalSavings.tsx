@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ArrowUpRight, Calendar, Check, CheckCircle2, ChevronRight, 
   Clock, DollarSign, Lock, PiggyBank, Plus, 
@@ -41,79 +41,37 @@ interface AjoCircle {
   totalPool: number;
 }
 
-const INITIAL_TARGETS: TargetGoal[] = [
-  {
-    id: "tgt-1",
-    title: "December Holidays & Flights",
-    targetAmount: 500000,
-    currentAmount: 320000,
-    deadline: "Dec 15, 2026",
-    category: "Travel",
-    autoSave: "weekly",
-  },
-  {
-    id: "tgt-2",
-    title: "New MacBook M3 Pro",
-    targetAmount: 1800000,
-    currentAmount: 1250000,
-    deadline: "Nov 30, 2026",
-    category: "Gadgets",
-    autoSave: "monthly",
-  },
-  {
-    id: "tgt-3",
-    title: "Emergency Cash Buffer",
-    targetAmount: 1000000,
-    currentAmount: 640000,
-    deadline: "Ongoing",
-    category: "Buffer",
-    autoSave: "none",
-  },
-];
-
-const INITIAL_VAULTS: LockedVault[] = [
-  {
-    id: "vlt-1",
-    title: "SlikLock 180-Day High Yield",
-    principal: 750000,
-    interestRate: 14.5,
-    maturityDate: "Jan 24, 2027",
-    daysRemaining: 86,
-    accruedInterest: 32450,
-  },
-  {
-    id: "vlt-2",
-    title: "Quarterly Fixed Yield Note",
-    principal: 400000,
-    interestRate: 12.0,
-    maturityDate: "Dec 10, 2026",
-    daysRemaining: 42,
-    accruedInterest: 11840,
-  },
-];
-
-const INITIAL_AJO: AjoCircle[] = [
-  {
-    id: "ajo-1",
-    name: "Lagos Tech Founders Ajo Circle",
-    contribution: 50000,
-    frequency: "monthly",
-    membersCount: 10,
-    currentTurn: "Chinedu Okafor (Slot 4)",
-    mySlot: 5,
-    payoutDate: "Nov 28, 2026",
-    totalPool: 500000,
-  },
-];
-
 export function PersonalSavings() {
   const { profile } = useAuth();
   const [tab, setTab] = useState<"targets" | "vault" | "ajo">("targets");
 
   // State
-  const [targets, setTargets] = useState<TargetGoal[]>(INITIAL_TARGETS);
-  const [vaults, setVaults] = useState<LockedVault[]>(INITIAL_VAULTS);
-  const [circles, setCircles] = useState<AjoCircle[]>(INITIAL_AJO);
+  const [targets, setTargets] = useState<TargetGoal[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_personal_targets");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [vaults, setVaults] = useState<LockedVault[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_personal_vaults");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [circles, setCircles] = useState<AjoCircle[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_personal_ajo");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Modals
   const [showNewTarget, setShowNewTarget] = useState(false);
@@ -131,6 +89,24 @@ export function PersonalSavings() {
   const [vaultTitle, setVaultTitle] = useState("");
   const [vaultAmount, setVaultAmount] = useState("");
   const [vaultDuration, setVaultDuration] = useState("90");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_personal_targets", JSON.stringify(targets));
+    } catch {}
+  }, [targets]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_personal_vaults", JSON.stringify(vaults));
+    } catch {}
+  }, [vaults]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_personal_ajo", JSON.stringify(circles));
+    } catch {}
+  }, [circles]);
 
   const totalTargetSaved = targets.reduce((acc, t) => acc + t.currentAmount, 0);
   const totalLockedVault = vaults.reduce((acc, v) => acc + v.principal, 0);
@@ -308,75 +284,84 @@ export function PersonalSavings() {
 
       {/* TAB 1: TARGET SAVINGS GOALS */}
       {tab === "targets" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {targets.map((tgt) => {
-            const pct = Math.min(100, Math.round((tgt.currentAmount / tgt.targetAmount) * 100));
-            return (
-              <div
-                key={tgt.id}
-                className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-cyan/40"
+        <div className="space-y-4">
+          {targets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+              <PiggyBank className="mb-3 h-10 w-10 text-muted-foreground/60" />
+              <h3 className="text-base font-bold text-foreground">No Savings Goals Active</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                Set a target for house rent, electronics, or travel and let Slikpay auto-save directly from your wallet.
+              </p>
+              <Button
+                size="sm"
+                className="mt-4 bg-cobalt text-white hover:bg-cobalt/90 font-bold"
+                onClick={() => setShowNewTarget(true)}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-                      {tgt.category}
-                    </span>
-                    {tgt.autoSave !== "none" && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-cyan">
-                        <Sparkles className="h-3 w-3" />
-                        Auto-Save ({tgt.autoSave})
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-base font-extrabold text-foreground">{tgt.title}</h3>
-
-                  <div>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-lg font-black text-foreground">{naira(tgt.currentAmount)}</span>
-                      <span className="text-xs text-muted-foreground">of {naira(tgt.targetAmount)}</span>
-                    </div>
-
-                    <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full bg-gradient-to-r from-cobalt to-cyan transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
-                      <span>{pct}% achieved</span>
-                      <span>Target: {tgt.deadline}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex gap-2 border-t border-border pt-4">
-                  <Button
-                    variant="crisp"
-                    size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => {
-                      setSelectedTarget(tgt);
-                      setTopUpAmount("");
-                    }}
+                Create First Goal
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {targets.map((tgt) => {
+                const pct = Math.min(100, Math.round((tgt.currentAmount / tgt.targetAmount) * 100));
+                return (
+                  <div
+                    key={tgt.id}
+                    className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-cyan/40"
                   >
-                    <Plus className="mr-1 h-3 w-3" />
-                    Add Money
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => {
-                      toast.info(`Goal settings for ${tgt.title}`);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                          {tgt.category}
+                        </span>
+                        {tgt.autoSave !== "none" && (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-cyan">
+                            <Sparkles className="h-3 w-3" />
+                            Auto-Save ({tgt.autoSave})
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-base font-extrabold text-foreground">{tgt.title}</h3>
+
+                      <div>
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-lg font-black text-foreground">{naira(tgt.currentAmount)}</span>
+                          <span className="text-xs text-muted-foreground">of {naira(tgt.targetAmount)}</span>
+                        </div>
+
+                        <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-gradient-to-r from-cobalt to-cyan transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                          <span>{pct}% achieved</span>
+                          <span>Target: {tgt.deadline}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex gap-2 border-t border-border pt-4">
+                      <Button
+                        variant="crisp"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => {
+                          setSelectedTarget(tgt);
+                          setTopUpAmount("");
+                        }}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Add Money
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -401,40 +386,57 @@ export function PersonalSavings() {
             </Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {vaults.map((vlt) => (
-              <div
-                key={vlt.id}
-                className="rounded-xl border border-border bg-card p-5 space-y-4"
+          {vaults.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+              <Lock className="mb-3 h-10 w-10 text-muted-foreground/60" />
+              <h3 className="text-base font-bold text-foreground">No Funds Locked in SlikLock</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                Earn industry-leading fixed returns locked for 30, 90, 180, or 365 days.
+              </p>
+              <Button
+                size="sm"
+                className="mt-4 bg-magenta text-white hover:bg-magenta/90 font-bold"
+                onClick={() => setShowNewVault(true)}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-foreground">{vlt.title}</h3>
-                  <span className="rounded-full bg-magenta/15 px-2.5 py-0.5 text-xs font-black text-magenta">
-                    {vlt.interestRate}% p.a.
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/80 bg-background/50 p-3">
-                  <div>
-                    <span className="text-[11px] text-muted-foreground">Locked Principal</span>
-                    <p className="text-lg font-black text-foreground">{naira(vlt.principal)}</p>
+                Lock Funds (14.5% p.a.)
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {vaults.map((vlt) => (
+                <div
+                  key={vlt.id}
+                  className="rounded-xl border border-border bg-card p-5 space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-extrabold text-foreground">{vlt.title}</h3>
+                    <span className="rounded-full bg-magenta/15 px-2.5 py-0.5 text-xs font-black text-magenta">
+                      {vlt.interestRate}% p.a.
+                    </span>
                   </div>
-                  <div>
-                    <span className="text-[11px] text-muted-foreground">Accrued Interest</span>
-                    <p className="text-lg font-black text-success">+{naira(vlt.accruedInterest)}</p>
+
+                  <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/80 bg-background/50 p-3">
+                    <div>
+                      <span className="text-[11px] text-muted-foreground">Locked Principal</span>
+                      <p className="text-lg font-black text-foreground">{naira(vlt.principal)}</p>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-muted-foreground">Accrued Interest</span>
+                      <p className="text-lg font-black text-success">+{naira(vlt.accruedInterest)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-cyan" />
+                      {vlt.daysRemaining} days remaining
+                    </span>
+                    <span>Maturity: {vlt.maturityDate}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-cyan" />
-                    {vlt.daysRemaining} days remaining
-                  </span>
-                  <span>Maturity: {vlt.maturityDate}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -453,53 +455,59 @@ export function PersonalSavings() {
             </div>
             <Button
               className="bg-cyan text-slate-950 font-bold hover:bg-cyan/90 shrink-0"
-              onClick={() => toast.info("New Ajo circle creation wizard opening")}
+              onClick={() => toast.info("Ajo circle invitations will appear here as friends invite you.")}
             >
               Start New Circle
             </Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {circles.map((ajo) => (
-              <div
-                key={ajo.id}
-                className="rounded-xl border border-border bg-card p-5 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-foreground">{ajo.name}</h3>
-                  <span className="rounded bg-cyan/15 px-2 py-0.5 text-xs font-bold text-cyan">
-                    {ajo.frequency}
-                  </span>
-                </div>
+          {circles.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+              <Users className="mb-3 h-10 w-10 text-muted-foreground/60" />
+              <h3 className="text-base font-bold text-foreground">No Active Ajo Circles</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                Join a rotating thrift club with friends or colleagues to pool funds with zero risk of defaults.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {circles.map((ajo) => (
+                <div
+                  key={ajo.id}
+                  className="rounded-xl border border-border bg-card p-5 space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-extrabold text-foreground">{ajo.name}</h3>
+                    <span className="rounded bg-cyan/15 px-2 py-0.5 text-xs font-bold text-cyan">
+                      {ajo.frequency}
+                    </span>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/80 bg-background/50 p-3 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Contribution</span>
-                    <p className="text-base font-black text-foreground">{naira(ajo.contribution)} / mo</p>
+                  <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/80 bg-background/50 p-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Contribution</span>
+                      <p className="text-base font-black text-foreground">{naira(ajo.contribution)} / mo</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Total Payout Pool</span>
+                      <p className="text-base font-black text-cyan">{naira(ajo.totalPool)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Total Payout Pool</span>
-                    <p className="text-base font-black text-cyan">{naira(ajo.totalPool)}</p>
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Current Round Recipient:</span>
+                      <span className="font-bold text-foreground">{ajo.currentTurn}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Your Scheduled Slot:</span>
+                      <span className="font-extrabold text-success">Slot #{ajo.mySlot} · {ajo.payoutDate}</span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Current Round Recipient:</span>
-                    <span className="font-bold text-foreground">{ajo.currentTurn}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Your Scheduled Slot:</span>
-                    <span className="font-extrabold text-success">Slot #{ajo.mySlot} · {ajo.payoutDate}</span>
-                  </div>
-                </div>
-
-                <Button variant="crisp" className="w-full text-xs">
-                  View Roster & Audit Record
-                </Button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -683,7 +691,7 @@ export function PersonalSavings() {
                 </span>
               </div>
 
-              <Button className="w-full" onClick={handleTopUpTarget}>
+              <Button className="w-full bg-cobalt text-white font-bold hover:bg-cobalt/90" onClick={handleTopUpTarget}>
                 Deposit into Goal
               </Button>
             </div>

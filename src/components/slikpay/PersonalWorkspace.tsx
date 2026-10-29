@@ -2,7 +2,7 @@ import { GoLive, PaddleConsole, useBankingProfile } from "./PaddleConsole";
 import { ServicesHub } from "./ServicesHub";
 import { personalTier } from "@/lib/go-live";
 import { useState } from "react";
-import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
+import { ArrowLeftRight, BadgeCheck, CheckCircle2, Copy, CreditCard, Eye, EyeOff, Fingerprint, Gift, Landmark, Lock, PiggyBank, Plane, QrCode, Search, Send, Share2, Smartphone, Snowflake, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { naira, type Txn } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,7 @@ import { BrandSelect } from "./BrandSelect";
 import type { ActionKind } from "./ActionModal";
 import { PersonalSavings } from "./PersonalSavings";
 import { PersonalRewards } from "./PersonalRewards";
+import { FlightBooking } from "./FlightBooking";
 
 const fmt = (d: string) => {
   const dt = new Date(d);
@@ -83,7 +84,7 @@ function spendBreakdown(txns: Txn[]) {
     { label: "Transfers & P2P", ch: ["NIP"], cls: "stroke-cobalt", dot: "bg-cobalt" },
     { label: "Bills & Airtime", ch: ["Bills"], cls: "stroke-navy", dot: "bg-navy" },
     { label: "Card spend", ch: ["Card"], cls: "stroke-magenta", dot: "bg-magenta" },
-    { label: "Other", ch: ["SoftPOS", "Treasury Sweep", "SlikTag"], cls: "stroke-cyan", dot: "bg-cyan" },
+    { label: "Other", ch: ["SoftPOS", "Treasury Sweep", "SlikTag", "Flights"], cls: "stroke-cyan", dot: "bg-cyan" },
   ];
   return { total, data: groups.map((g) => ({ label: g.label, cls: g.cls, dot: g.dot, pct: total ? Math.round((debits.filter((t) => g.ch.includes(t.channel)).reduce((a, t) => a + t.amount, 0) / total) * 100) : 0 })) };
 }
@@ -114,8 +115,9 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
           {spend.total ? <DonutChart data={spend.data} center={naira(spend.total).split(".")[0]!} sub="Total spent" /> : <p className="py-10 text-center text-sm font-semibold text-muted-foreground">No spending yet. Your breakdown appears after your first payment.</p>}
         </Panel>
       </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <QuickAction icon={Send} title="Send Money" sub="To bank or @SlikTag" tone="bg-cobalt" onClick={() => open("send")} />
+        <QuickAction icon={Plane} title="Book Flights" sub="450+ airlines & instant PNR" tone="bg-cyan/90 text-slate-950" onClick={() => { window.location.href = "/personal?module=flights"; }} />
         <QuickAction icon={Smartphone} title="Airtime & Data" sub="MTN, Airtel, Glo, 9mobile" tone="bg-gradient-brand" onClick={() => open("airtime")} />
         <QuickAction icon={Zap} title="Pay Utilities" sub="Electricity & Cable TV" tone="bg-magenta/80" onClick={() => open("bills")} />
         <QuickAction icon={CreditCard} title="USD Virtual Card" sub="Top up in dollars" tone="bg-magenta" onClick={() => open("fund")} />
@@ -200,6 +202,7 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "airtime": return <AirtimeModule />;
     case "bills": return <BillsModule />;
     case "cards": return <CardsModule />;
+    case "flights": return <FlightBooking role="personal" />;
     case "savings": return <PersonalSavings />;
     case "rewards": return <PersonalRewards />;
     case "profile": return <ProfileModule />;

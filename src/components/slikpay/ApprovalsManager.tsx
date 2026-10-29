@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Check, CheckCircle2, Clock, Eye, FileText, 
   HelpCircle, Lock, Plus, RotateCcw, 
@@ -27,81 +27,36 @@ export interface ApprovalRequest {
   rejectionReason?: string;
 }
 
-const INITIAL_REQUESTS: ApprovalRequest[] = [
-  {
-    id: "APR-9102",
-    reference: "REQ-TR-88120",
-    title: "Treasury Sweep to External Bank",
-    category: "treasury",
-    makerName: "Tunde Bakare",
-    makerRole: "Operations Lead",
-    makerEmail: "tunde@merchant.com",
-    amount: 5200000,
-    recipient: "Zenith Bank · 1018294401 · Main Corporate",
-    createdAt: "Today, 10:14 AM",
-    thresholdTrigger: "Exceeds ₦1,000,000 Single Payout Policy",
-    details: "Daily end-of-trade sweep of merchant POS float into corporate yield treasury.",
-    status: "PENDING",
-  },
-  {
-    id: "APR-9101",
-    reference: "REQ-PAY-4412",
-    title: "Monthly Operations Payroll Batch (18 Staff)",
-    category: "payroll",
-    makerName: "Amina Yusuf",
-    makerRole: "HR & Payroll Specialist",
-    makerEmail: "amina@merchant.com",
-    amount: 3840000,
-    recipient: "18 Nigerian Bank Accounts",
-    createdAt: "Today, 08:30 AM",
-    thresholdTrigger: "Exceeds ₦2,000,000 Batch Transfer Limit",
-    details: "Salary disbursement for branch retail attendants and security crew.",
-    status: "PENDING",
-  },
-  {
-    id: "APR-9088",
-    reference: "REQ-SEC-0912",
-    title: "Production Webhook URL Update",
-    category: "security",
-    makerName: "David Okon",
-    makerRole: "Lead Developer",
-    makerEmail: "david@merchant.com",
-    createdAt: "Yesterday, 4:20 PM",
-    thresholdTrigger: "Critical API Security Configuration",
-    details: "Changing event callback URL to https://api.slikmerchant.ng/v2/webhooks",
-    status: "APPROVED",
-    checkerName: "Boma Peters (Finance Director)",
-    checkedAt: "Yesterday, 5:02 PM",
-  },
-  {
-    id: "APR-9074",
-    reference: "REQ-MAN-1192",
-    title: "Manual Vendor Settlement Overwrite",
-    category: "compliance",
-    makerName: "Emeka Chidi",
-    makerRole: "Finance Officer",
-    makerEmail: "emeka@merchant.com",
-    amount: 1450000,
-    recipient: "Kuda Bank · 2001928410",
-    createdAt: "Oct 26, 2:15 PM",
-    thresholdTrigger: "Unverified Vendor Beneficiary",
-    details: "Expedited contractor deposit for emergency branch generator repairs.",
-    status: "REJECTED",
-    checkerName: "Boma Peters (Finance Director)",
-    checkedAt: "Oct 26, 3:30 PM",
-    rejectionReason: "Incomplete CAC registration invoice. Vendor must submit approved purchase order.",
-  },
-];
-
 export function ApprovalsManager() {
+  const [requests, setRequests] = useState<ApprovalRequest[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_governance_requests");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [tab, setTab] = useState<"pending" | "history" | "policies">("pending");
-  const [requests, setRequests] = useState<ApprovalRequest[]>(INITIAL_REQUESTS);
   const [selectedReq, setSelectedReq] = useState<ApprovalRequest | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
   const [pin, setPin] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [policyThreshold, setPolicyThreshold] = useState("1000000");
   const [dualControlActive, setDualControlActive] = useState(true);
+
+  // New proposal modal
+  const [showProposeModal, setShowProposeModal] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newRecipient, setNewRecipient] = useState("");
+  const [newDetails, setNewDetails] = useState("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_governance_requests", JSON.stringify(requests));
+    } catch {}
+  }, [requests]);
 
   const pendingList = requests.filter((r) => r.status === "PENDING");
   const historyList = requests.filter((r) => r.status !== "PENDING");
@@ -159,6 +114,40 @@ export function ApprovalsManager() {
     setRejectReason("");
   };
 
+  const handleCreateProposal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle) {
+      toast.error("Please enter a title for the proposal");
+      return;
+    }
+
+    const created: ApprovalRequest = {
+      id: `APR-${Date.now().toString().slice(-4)}`,
+      reference: `REQ-${Date.now().toString().slice(-6)}`,
+      title: newTitle,
+      category: "treasury",
+      makerName: "Operations Officer",
+      makerRole: "Maker",
+      makerEmail: "finance@slikmerchant.ng",
+      amount: newAmount ? Number(newAmount) : undefined,
+      recipient: newRecipient || "External Bank / Rail",
+      createdAt: "Just now",
+      thresholdTrigger: "Dual Control Policy Threshold Breached",
+      details: newDetails || "Sensitive high-value disbursement submitted for 4-Eyes review.",
+      status: "PENDING",
+    };
+
+    setRequests([created, ...requests]);
+    setShowProposeModal(false);
+    setNewTitle("");
+    setNewAmount("");
+    setNewRecipient("");
+    setNewDetails("");
+    toast.success("Governance Proposal Submitted", {
+      description: "Queued for secondary Checker authorization.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header and Telemetry */}
@@ -172,9 +161,19 @@ export function ApprovalsManager() {
             CBN dual-control authorization engine. Sensitive transfers and configuration edits require 4-Eyes sign-off.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-cyan/30 bg-cyan/10 px-3 py-2 text-xs font-bold text-cyan">
-          <ShieldCheck className="h-4 w-4" />
-          Dual Control: {dualControlActive ? "Active (Strict)" : "Single Approval"}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setShowProposeModal(true)}
+            className="bg-cobalt text-white hover:bg-cobalt/90 font-bold"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Propose Dual-Control Action
+          </Button>
+          <div className="flex items-center gap-2 rounded-xl border border-cyan/30 bg-cyan/10 px-3 py-2 text-xs font-bold text-cyan">
+            <ShieldCheck className="h-4 w-4" />
+            {dualControlActive ? "Dual Control: Active (Strict)" : "Single Approval"}
+          </div>
         </div>
       </div>
 
@@ -350,63 +349,69 @@ export function ApprovalsManager() {
       {/* TAB 2: AUTHORIZATION HISTORY */}
       {tab === "history" && (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="border-b border-border text-xs text-muted-foreground">
-              <tr>
-                <th className="p-4">Action / Request</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Maker</th>
-                <th className="p-4">Checker</th>
-                <th className="p-4">Decision Date</th>
-                <th className="p-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {historyList.map((req) => (
-                <tr key={req.id} className="hover:bg-muted/30">
-                  <td className="p-4">
-                    <div className="font-bold text-foreground">{req.title}</div>
-                    <div className="font-mono text-xs text-muted-foreground">{req.id} · {req.reference}</div>
-                    {req.rejectionReason && (
-                      <div className="mt-1 text-xs text-destructive">
-                        Reason: {req.rejectionReason}
-                      </div>
-                    )}
-                  </td>
-                  <td className="p-4 font-mono font-bold text-foreground">
-                    {req.amount ? naira(req.amount) : "—"}
-                  </td>
-                  <td className="p-4 text-xs text-muted-foreground">
-                    <div>{req.makerName}</div>
-                    <div>{req.makerRole}</div>
-                  </td>
-                  <td className="p-4 text-xs">
-                    {req.checkerName ? (
-                      <span className="font-semibold text-foreground">{req.checkerName}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-xs text-muted-foreground">
-                    {req.checkedAt || req.createdAt}
-                  </td>
-                  <td className="p-4">
-                    {req.status === "APPROVED" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-xs font-bold text-success">
-                        <Check className="h-3 w-3" />
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
-                        <X className="h-3 w-3" />
-                        Rejected
-                      </span>
-                    )}
-                  </td>
+          {historyList.length === 0 ? (
+            <div className="py-12 text-center text-xs text-muted-foreground">
+              No authorization decisions recorded yet.
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="border-b border-border text-xs text-muted-foreground">
+                <tr>
+                  <th className="p-4">Action / Request</th>
+                  <th className="p-4">Amount</th>
+                  <th className="p-4">Maker</th>
+                  <th className="p-4">Checker</th>
+                  <th className="p-4">Decision Date</th>
+                  <th className="p-4">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {historyList.map((req) => (
+                  <tr key={req.id} className="hover:bg-muted/30">
+                    <td className="p-4">
+                      <div className="font-bold text-foreground">{req.title}</div>
+                      <div className="font-mono text-xs text-muted-foreground">{req.id} · {req.reference}</div>
+                      {req.rejectionReason && (
+                        <div className="mt-1 text-xs text-destructive">
+                          Reason: {req.rejectionReason}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4 font-mono font-bold text-foreground">
+                      {req.amount ? naira(req.amount) : "—"}
+                    </td>
+                    <td className="p-4 text-xs text-muted-foreground">
+                      <div>{req.makerName}</div>
+                      <div>{req.makerRole}</div>
+                    </td>
+                    <td className="p-4 text-xs">
+                      {req.checkerName ? (
+                        <span className="font-semibold text-foreground">{req.checkerName}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-xs text-muted-foreground">
+                      {req.checkedAt || req.createdAt}
+                    </td>
+                    <td className="p-4">
+                      {req.status === "APPROVED" ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-xs font-bold text-success">
+                          <Check className="h-3 w-3" />
+                          Approved
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                          <X className="h-3 w-3" />
+                          Rejected
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
@@ -456,13 +461,10 @@ export function ApprovalsManager() {
                 <option value="5000000">₦5,000,000 (Corporate Enterprise)</option>
                 <option value="10000000">₦10,000,000 (Institutional Only)</option>
               </select>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Any payout, transfer, or settlement higher than this sum automatically enters the Checker approval desk.
-              </p>
             </div>
 
             <Button
-              className="w-full"
+              className="w-full bg-cobalt text-white hover:bg-cobalt/90 font-bold"
               onClick={() => toast.success("Governance policies saved successfully")}
             >
               Update Policy Rules
@@ -474,10 +476,6 @@ export function ApprovalsManager() {
               <Users className="h-4 w-4 text-cobalt" />
               Authorized Checker Roles
             </h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              The following team roles possess Checker authorization privileges to sign off on queued actions:
-            </p>
-
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between rounded-lg border border-border/80 bg-background/50 p-3">
                 <div>
@@ -498,21 +496,78 @@ export function ApprovalsManager() {
                   Active
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="flex items-center justify-between rounded-lg border border-border/80 bg-background/50 p-3">
-                <div>
-                  <p className="font-bold text-foreground">Compliance Officer</p>
-                  <p className="text-muted-foreground">Authorized for tier verification & vendor overrides</p>
-                </div>
-                <span className="rounded bg-success/15 px-2 py-0.5 text-xs font-extrabold text-success">
-                  Active
-                </span>
+      {/* PROPOSAL MODAL */}
+      {showProposeModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"
+          onClick={() => setShowProposeModal(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="slik-popup w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-bold text-foreground">Propose Dual-Control Action</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowProposeModal(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleCreateProposal} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-foreground font-bold mb-1">Proposal Title</label>
+                <input
+                  placeholder="e.g. Treasury Sweep to External Bank"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="field w-full text-xs"
+                  required
+                />
               </div>
-            </div>
 
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-500">
-              <strong>Notice:</strong> Makers cannot approve their own transactions under any circumstances.
-            </div>
+              <div>
+                <label className="block text-foreground font-bold mb-1">Disbursement Amount (NGN)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 5000000"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(e.target.value)}
+                  className="field w-full text-xs font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-bold mb-1">Destination Beneficiary</label>
+                <input
+                  placeholder="e.g. Zenith Bank Corporate Treasury"
+                  value={newRecipient}
+                  onChange={(e) => setNewRecipient(e.target.value)}
+                  className="field w-full text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-bold mb-1">Rationale & Notes</label>
+                <textarea
+                  rows={3}
+                  placeholder="State the operational justification for this disbursement..."
+                  value={newDetails}
+                  onChange={(e) => setNewDetails(e.target.value)}
+                  className="field w-full text-xs"
+                />
+              </div>
+
+              <Button type="submit" className="w-full bg-cobalt text-white font-bold hover:bg-cobalt/90">
+                Submit Proposal to Checker Gate
+              </Button>
+            </form>
           </div>
         </div>
       )}
@@ -569,14 +624,6 @@ export function ApprovalsManager() {
                   <span className="font-black text-cyan text-sm">{naira(selectedReq.amount)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Maker:</span>
-                <span className="text-foreground">{selectedReq.makerName} ({selectedReq.makerEmail})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Trigger Reason:</span>
-                <span className="text-amber-500 font-bold">{selectedReq.thresholdTrigger}</span>
-              </div>
             </div>
 
             {actionType === "approve" ? (
@@ -593,9 +640,6 @@ export function ApprovalsManager() {
                   onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                   className="field text-center font-mono text-xl tracking-widest"
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Your electronic signature and IP will be stamped to the immutable audit vault.
-                </p>
                 <Button className="w-full bg-success text-white hover:bg-success/90" onClick={handleApprove}>
                   Confirm & Release Funds
                 </Button>
@@ -607,7 +651,7 @@ export function ApprovalsManager() {
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Explain why this request is rejected or what documentation is missing..."
+                  placeholder="Explain why this request is rejected..."
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   className="field w-full text-xs"

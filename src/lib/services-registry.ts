@@ -151,7 +151,7 @@ export const SERVICES: ServiceDef[] = [
   { id: "treasury", label: "Treasury & FX", category: "grow", keywords: "treasury savings yield fx", icon: "PiggyBank", module: "treasury" },
   { id: "stocks", label: "US & Nigerian stocks", category: "grow", keywords: "invest stocks shares apple tesla ngx equities", icon: "TrendingUp", module: "developer", note: "Opens in the advanced console while the guided screen is built." },
   // Travel
-  { id: "flights", label: "Flights", category: "travel", keywords: "flight ticket travel airline book", icon: "Plane", module: "developer", note: "Opens in the advanced console while the guided screen is built." },
+  { id: "flights", label: "Flights", category: "travel", keywords: "flight ticket travel airline book", icon: "Plane", module: "flights" },
   // Business
   { id: "approvals", label: "Approvals", category: "business", keywords: "approve maker checker team", icon: "UserCheck", module: "approvals", businessOnly: true },
   { id: "statements", label: "Statements", category: "business", keywords: "statement audit export csv pdf", icon: "FileText", module: "statements" },

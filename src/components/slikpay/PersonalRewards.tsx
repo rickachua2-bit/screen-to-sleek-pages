@@ -10,18 +10,51 @@ import { naira } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export function PersonalRewards() {
-  const { user } = useAuth();
+  const { user, txns } = useAuth();
 
-  const referralCode = user?.name 
-    ? `SLK-${user.name.split(" ")[0].toUpperCase()}-${(user.email || "99").slice(0, 3).toUpperCase()}`
-    : "SLK-FRIEND-772";
+  const [referralCode, setReferralCode] = useState(() => {
+    return user?.name 
+      ? `SLK-${user.name.split(" ")[0].toUpperCase()}-${(user.email || "99").slice(0, 3).toUpperCase()}`
+      : "SLK-FRIEND-772";
+  });
 
-  const shareUrl = `https://slikpay.online/join?ref=${referralCode}`;
-
-  const [cashbackBalance, setCashbackBalance] = useState(8450);
-  const [totalReferralEarned, setTotalReferralEarned] = useState(12500);
-  const [friendsJoined, setFriendsJoined] = useState(25);
+  const [shareUrl, setShareUrl] = useState(() => `https://slikpay.online/join?ref=${referralCode}`);
+  const [totalReferralEarned, setTotalReferralEarned] = useState(0);
+  const [friendsJoined, setFriendsJoined] = useState(0);
   const [claiming, setClaiming] = useState(false);
+
+  // Calculate real cashback from successful debit transactions (1.5% cashback)
+  const eligibleTxns = txns.filter(
+    (t) => t.direction === "debit" && t.status === "Successful" && (t.channel === "Bills" || t.channel === "Card")
+  );
+  const calculatedCashback = Math.round(
+    eligibleTxns.reduce((sum, t) => sum + t.amount * 0.015, 0)
+  );
+
+  const [cashbackBalance, setCashbackBalance] = useState(() => {
+    try {
+      const saved = localStorage.getItem("slikpay_claimed_cashback");
+      const alreadyClaimed = saved ? Number(saved) : 0;
+      return Math.max(0, calculatedCashback - alreadyClaimed);
+    } catch {
+      return calculatedCashback;
+    }
+  });
+
+  // Fetch real referral data from API
+  useEffect(() => {
+    fetch("/api/user/referrals")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success) {
+          if (res.referralCode) setReferralCode(res.referralCode);
+          if (res.shareUrl) setShareUrl(res.shareUrl);
+          if (res.friendsJoined !== undefined) setFriendsJoined(res.friendsJoined);
+          if (res.totalEarned !== undefined) setTotalReferralEarned(res.totalEarned);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleCopyCode = async () => {
     try {
@@ -49,6 +82,11 @@ export function PersonalRewards() {
     setClaiming(true);
     setTimeout(() => {
       const claimed = cashbackBalance;
+      try {
+        const saved = localStorage.getItem("slikpay_claimed_cashback");
+        const prev = saved ? Number(saved) : 0;
+        localStorage.setItem("slikpay_claimed_cashback", String(prev + claimed));
+      } catch {}
       setCashbackBalance(0);
       setClaiming(false);
       toast.success(`Claimed ${naira(claimed)} directly to your Main Wallet!`, {
@@ -62,6 +100,9 @@ export function PersonalRewards() {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  // Tier calculation based on real friend count
+  const tier = friendsJoined >= 50 ? "Platinum" : friendsJoined >= 21 ? "Gold" : friendsJoined >= 6 ? "Silver" : "Bronze";
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -72,12 +113,12 @@ export function PersonalRewards() {
             Rewards, Cashback & Referral Hub
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Earn ₦500 for every friend who joins Slikpay, plus up to 2% instant cashback on all bill payments and card purchases.
+            Earn ₦500 for every friend who joins Slikpay, plus 1.5% instant cashback on all bill payments and card purchases.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-magenta/30 bg-magenta/10 px-3 py-2 text-xs font-bold text-magenta">
           <Award className="h-4 w-4" />
-          Ambassador Status: Silver Tier
+          Ambassador Status: {tier} Tier
         </div>
       </div>
 
@@ -107,7 +148,7 @@ export function PersonalRewards() {
             <Sparkles className="h-4 w-4 text-magenta" />
           </div>
           <p className="mt-2 text-2xl font-black text-foreground">{naira(totalReferralEarned)}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">Paid out directly to wallet</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">₦500 per verified friend</p>
         </div>
 
         {/* Friends Onboarded */}
@@ -117,7 +158,7 @@ export function PersonalRewards() {
             <Users className="h-4 w-4 text-cobalt" />
           </div>
           <p className="mt-2 text-2xl font-black text-cobalt">{friendsJoined}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">Verified Tier 1 users</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Active referral network</p>
         </div>
 
         {/* Active Cashback Rate */}
@@ -127,7 +168,7 @@ export function PersonalRewards() {
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
           <p className="mt-2 text-2xl font-black text-success">1.5%</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">On bills, airtime & cards</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">On bills & card spending</p>
         </div>
       </div>
 
@@ -138,7 +179,7 @@ export function PersonalRewards() {
           Your Unique Referral Link & Code
         </h2>
         <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          Share your personal link with friends, family, or business partners. When they register and verify their account, both of you receive instant cash rewards.
+          Share your personal link with friends or colleagues. When they register and verify their account, both of you receive instant cash rewards.
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -214,7 +255,7 @@ export function PersonalRewards() {
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Bronze */}
-          <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2 opacity-80">
+          <div className={`rounded-xl border p-4 space-y-2 ${tier === "Bronze" ? "border-cyan bg-cyan/5" : "border-border bg-background/40 opacity-80"}`}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-muted-foreground">Tier 1</span>
               <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -230,10 +271,12 @@ export function PersonalRewards() {
           </div>
 
           {/* Silver */}
-          <div className="rounded-xl border border-cyan bg-cyan/5 p-4 space-y-2 relative">
-            <span className="absolute -top-2.5 right-3 rounded-full bg-cyan px-2 py-0.5 text-[10px] font-black text-slate-950">
-              CURRENT TIER
-            </span>
+          <div className={`rounded-xl border p-4 space-y-2 relative ${tier === "Silver" ? "border-cyan bg-cyan/5" : "border-border bg-background/40 opacity-80"}`}>
+            {tier === "Silver" && (
+              <span className="absolute -top-2.5 right-3 rounded-full bg-cyan px-2 py-0.5 text-[10px] font-black text-slate-950">
+                CURRENT TIER
+              </span>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-cyan">Tier 2</span>
               <span className="rounded bg-cyan/20 px-2 py-0.5 text-[10px] font-bold text-cyan">
@@ -249,7 +292,12 @@ export function PersonalRewards() {
           </div>
 
           {/* Gold */}
-          <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2">
+          <div className={`rounded-xl border p-4 space-y-2 relative ${tier === "Gold" ? "border-cyan bg-cyan/5" : "border-border bg-background/40 opacity-80"}`}>
+            {tier === "Gold" && (
+              <span className="absolute -top-2.5 right-3 rounded-full bg-cyan px-2 py-0.5 text-[10px] font-black text-slate-950">
+                CURRENT TIER
+              </span>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-muted-foreground">Tier 3</span>
               <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -265,7 +313,12 @@ export function PersonalRewards() {
           </div>
 
           {/* Platinum */}
-          <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2">
+          <div className={`rounded-xl border p-4 space-y-2 relative ${tier === "Platinum" ? "border-cyan bg-cyan/5" : "border-border bg-background/40 opacity-80"}`}>
+            {tier === "Platinum" && (
+              <span className="absolute -top-2.5 right-3 rounded-full bg-cyan px-2 py-0.5 text-[10px] font-black text-slate-950">
+                CURRENT TIER
+              </span>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-muted-foreground">Tier 4</span>
               <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -285,39 +338,26 @@ export function PersonalRewards() {
       {/* Recent Rewards History */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-base font-extrabold text-foreground">Recent Cashback & Referral Activity</h2>
-        <div className="mt-4 divide-y divide-border text-xs">
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-bold text-foreground">Referral Bonus: Fatima Aliu</p>
-              <p className="text-muted-foreground">Friend registered & completed Tier 1 KYC</p>
-            </div>
-            <span className="font-black text-success">+₦500.00</span>
+        {eligibleTxns.length === 0 ? (
+          <p className="mt-4 py-8 text-center text-xs text-muted-foreground">
+            No bill or card transactions yet. When you pay electricity, cable TV, airtime, or spend on your virtual card, your 1.5% cashback will accrue here.
+          </p>
+        ) : (
+          <div className="mt-4 divide-y divide-border text-xs">
+            {eligibleTxns.slice(0, 5).map((t) => {
+              const cb = Math.round(t.amount * 0.015);
+              return (
+                <div key={t.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="font-bold text-foreground">1.5% Cashback · {t.customer}</p>
+                    <p className="text-muted-foreground">{t.date}</p>
+                  </div>
+                  <span className="font-black text-success">+{naira(cb)}</span>
+                </div>
+              );
+            })}
           </div>
-
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-bold text-foreground">1.5% Electricity Bill Cashback</p>
-              <p className="text-muted-foreground">IKEDC Prepaid Token ₦20,000 Recharge</p>
-            </div>
-            <span className="font-black text-cyan">+₦300.00</span>
-          </div>
-
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-bold text-foreground">Referral Bonus: Kenechukwu Obi</p>
-              <p className="text-muted-foreground">Friend activated virtual card</p>
-            </div>
-            <span className="font-black text-success">+₦500.00</span>
-          </div>
-
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-bold text-foreground">1.5% MTN Airtime Cashback</p>
-              <p className="text-muted-foreground">₦10,000 VTU Top Up</p>
-            </div>
-            <span className="font-black text-cyan">+₦150.00</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

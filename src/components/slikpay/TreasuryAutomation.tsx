@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Award, 
   Building2, CheckCircle2, ChevronRight, Clock, 
@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { naira } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface VirtualPocket {
   id: string;
@@ -19,44 +20,35 @@ interface VirtualPocket {
   color: string;
 }
 
-const INITIAL_POCKETS: VirtualPocket[] = [
-  {
-    id: "pkt-tax",
-    name: "FIRS VAT & Withholding Tax",
-    purpose: "Dedicated statutory reserve for quarterly tax filings",
-    balance: 1450000,
-    target: 2000000,
-    color: "from-blue-600 to-indigo-600",
-  },
-  {
-    id: "pkt-payroll",
-    name: "Staff Payroll Reserve",
-    purpose: "Locked salaries for 18 staff disbursed on 28th",
-    balance: 3840000,
-    target: 4000000,
-    color: "from-emerald-600 to-teal-600",
-  },
-  {
-    id: "pkt-capex",
-    name: "POS & Hardware Fleet Expansion",
-    purpose: "Capital allocation for new SmartTag standees & terminals",
-    balance: 850000,
-    target: 1500000,
-    color: "from-purple-600 to-pink-600",
-  },
-];
-
 export function TreasuryAutomation() {
+  const { profile } = useAuth();
+  const realWalletBalance = profile?.wallet_balance ?? 0;
+
   const [tab, setTab] = useState<"liquidity" | "pockets" | "sweep" | "certificate">("liquidity");
 
   // Balances
-  const [spendFloat, setSpendFloat] = useState(6450000);
-  const [vaultReserves, setVaultReserves] = useState(18500000);
-  const [usdBalance, setUsdBalance] = useState(14820);
-  const [gbpBalance, setGbpBalance] = useState(4200);
+  const [spendFloat, setSpendFloat] = useState(realWalletBalance);
+  const [vaultReserves, setVaultReserves] = useState(() => {
+    try {
+      const s = localStorage.getItem("slikpay_treasury_vault");
+      return s ? Number(s) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [usdBalance, setUsdBalance] = useState(0);
+  const [gbpBalance, setGbpBalance] = useState(0);
 
   // Virtual Pockets
-  const [pockets, setPockets] = useState<VirtualPocket[]>(INITIAL_POCKETS);
+  const [pockets, setPockets] = useState<VirtualPocket[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_virtual_pockets");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [newPocketName, setNewPocketName] = useState("");
   const [newPocketPurpose, setNewPocketPurpose] = useState("");
   const [newPocketTarget, setNewPocketTarget] = useState("");
@@ -76,7 +68,40 @@ export function TreasuryAutomation() {
   const [sweepActive, setSweepActive] = useState(true);
   const [sweepThreshold, setSweepThreshold] = useState("2000000");
   const [sweepBank, setSweepBank] = useState("Zenith Bank · 1018294401 (Main Treasury)");
-  const [sweepSchedule, setSweepSchedule] = useState("17:00 (End of Business Day)");
+  const [sweepHistory, setSweepHistory] = useState<{ id: string; bank: string; amount: number; date: string }[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_sweep_history");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sync wallet balance
+  useEffect(() => {
+    if (profile?.wallet_balance !== undefined) {
+      setSpendFloat(profile.wallet_balance);
+    }
+  }, [profile?.wallet_balance]);
+
+  // Persist state
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_virtual_pockets", JSON.stringify(pockets));
+    } catch {}
+  }, [pockets]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_treasury_vault", String(vaultReserves));
+    } catch {}
+  }, [vaultReserves]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_sweep_history", JSON.stringify(sweepHistory));
+    } catch {}
+  }, [sweepHistory]);
 
   const totalPocketsBalance = pockets.reduce((acc, p) => acc + p.balance, 0);
   const totalNgnSolvency = spendFloat + vaultReserves + totalPocketsBalance;
@@ -172,6 +197,13 @@ export function TreasuryAutomation() {
       return;
     }
     setSpendFloat((prev) => prev - sweepAmt);
+    const newRecord = {
+      id: `SWP-${Date.now().toString().slice(-6)}`,
+      bank: sweepBank,
+      amount: sweepAmt,
+      date: "Just now · Manual Sweep",
+    };
+    setSweepHistory([newRecord, ...sweepHistory]);
     toast.success(`Auto-Sweep Dispatched: ${naira(sweepAmt)}`, {
       description: `Settled into ${sweepBank}. Clearing reference NIBSS-${Date.now().toString().slice(-8)}.`,
     });
@@ -195,7 +227,7 @@ export function TreasuryAutomation() {
             variant="outline"
             size="sm"
             onClick={() => setShowTransferModal(true)}
-            className="border-cyan/40 text-cyan hover:bg-cyan/10"
+            className="border-cyan/40 text-cyan hover:bg-cyan/10 font-bold"
           >
             <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" />
             Book Transfer (Float ⇄ Vault)
@@ -203,7 +235,7 @@ export function TreasuryAutomation() {
           <Button
             size="sm"
             onClick={() => setTab("certificate")}
-            className="bg-cobalt text-white hover:bg-cobalt/90"
+            className="bg-cobalt text-white hover:bg-cobalt/90 font-bold"
           >
             <Award className="mr-1.5 h-3.5 w-3.5" />
             Balance Certificate
@@ -341,19 +373,8 @@ export function TreasuryAutomation() {
               This pool covers instant POS payouts, customer refunds, NIP transfers, and corporate debit card spending. It is cleared real-time with zero lockup.
             </p>
 
-            <div className="rounded-lg border border-border bg-background/50 p-3 text-xs space-y-1">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Daily Outbound Payout Limit:</span>
-                <span className="font-bold text-foreground">₦25,000,000</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Liquidity Coverage Ratio:</span>
-                <span className="font-bold text-success">385% (Healthy)</span>
-              </div>
-            </div>
-
             <Button
-              className="w-full bg-cyan/20 text-cyan hover:bg-cyan/30"
+              className="w-full bg-cyan/20 text-cyan hover:bg-cyan/30 font-bold"
               onClick={() => {
                 setTransferDir("to_vault");
                 setShowTransferModal(true);
@@ -382,19 +403,8 @@ export function TreasuryAutomation() {
               Surplus merchant liquidity placed in overnight FGN Treasury Bills and institutional money market assets. Accrues yield daily directly to your ledger.
             </p>
 
-            <div className="rounded-lg border border-border bg-background/50 p-3 text-xs space-y-1">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Accrued Yield This Month:</span>
-                <span className="font-bold text-success">₦174,210</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Liquidity Settlement Rail:</span>
-                <span className="font-bold text-foreground">CBN T+3 Instant Liquidation</span>
-              </div>
-            </div>
-
             <Button
-              className="w-full bg-cobalt text-white hover:bg-cobalt/90"
+              className="w-full bg-cobalt text-white hover:bg-cobalt/90 font-bold"
               onClick={() => {
                 setTransferDir("to_float");
                 setShowTransferModal(true);
@@ -424,68 +434,85 @@ export function TreasuryAutomation() {
             </Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {pockets.map((pkt) => {
-              const pct = pkt.target ? Math.min(100, Math.round((pkt.balance / pkt.target) * 100)) : 100;
-              return (
-                <div
-                  key={pkt.id}
-                  className="flex flex-col justify-between rounded-xl border border-border bg-card p-5"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-foreground">{pkt.name}</span>
-                      <span className="text-xs font-mono font-bold text-cyan">{naira(pkt.balance)}</span>
+          {pockets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+              <Layers className="mb-3 h-10 w-10 text-muted-foreground/60" />
+              <h3 className="text-base font-bold text-foreground">No Virtual Pockets Yet</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                Create sub-accounts to isolate FIRS VAT, quarterly corporate taxes, or payroll floats from your general balance.
+              </p>
+              <Button
+                size="sm"
+                className="mt-4 bg-cyan text-slate-950 font-bold hover:bg-cyan/90"
+                onClick={() => setShowNewPocketModal(true)}
+              >
+                Create First Pocket
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {pockets.map((pkt) => {
+                const pct = pkt.target ? Math.min(100, Math.round((pkt.balance / pkt.target) * 100)) : 100;
+                return (
+                  <div
+                    key={pkt.id}
+                    className="flex flex-col justify-between rounded-xl border border-border bg-card p-5"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-extrabold text-foreground">{pkt.name}</span>
+                        <span className="text-xs font-mono font-bold text-cyan">{naira(pkt.balance)}</span>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground">{pkt.purpose}</p>
+
+                      {pkt.target && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] text-muted-foreground">
+                            <span>Target: {naira(pkt.target)}</span>
+                            <span>{pct}%</span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full bg-cyan transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <p className="text-xs text-muted-foreground">{pkt.purpose}</p>
-
-                    {pkt.target && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] text-muted-foreground">
-                          <span>Target: {naira(pkt.target)}</span>
-                          <span>{pct}%</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full bg-cyan transition-all"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    <div className="mt-4 flex gap-2 border-t border-border pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => {
+                          setSelectedPocket(pkt);
+                          setAllocDirection("to_pocket");
+                        }}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Allocate
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => {
+                          setSelectedPocket(pkt);
+                          setAllocDirection("from_pocket");
+                        }}
+                      >
+                        <ArrowUpRight className="mr-1 h-3 w-3" />
+                        Release
+                      </Button>
+                    </div>
                   </div>
-
-                  <div className="mt-4 flex gap-2 border-t border-border pt-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => {
-                        setSelectedPocket(pkt);
-                        setAllocDirection("to_pocket");
-                      }}
-                    >
-                      <Plus className="mr-1 h-3 w-3" />
-                      Allocate
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => {
-                        setSelectedPocket(pkt);
-                        setAllocDirection("from_pocket");
-                      }}
-                    >
-                      <ArrowUpRight className="mr-1 h-3 w-3" />
-                      Release
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -533,9 +560,6 @@ export function TreasuryAutomation() {
                 <option value="2000000">₦2,000,000 (Sweep everything over ₦2M)</option>
                 <option value="5000000">₦5,000,000 (Sweep everything over ₦5M)</option>
               </select>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                All receipts exceeding this amount will be automatically transferred out.
-              </p>
             </div>
 
             <div>
@@ -561,14 +585,14 @@ export function TreasuryAutomation() {
 
             <div className="flex gap-3 pt-2">
               <Button
-                className="flex-1"
+                className="flex-1 bg-cyan text-slate-950 font-bold hover:bg-cyan/90"
                 onClick={() => toast.success("Auto-sweep rules updated successfully")}
               >
                 Save Sweep Settings
               </Button>
               <Button
                 variant="outline"
-                className="border-cyan/40 text-cyan hover:bg-cyan/10"
+                className="border-cyan/40 text-cyan hover:bg-cyan/10 font-bold"
                 onClick={handleExecuteSweepNow}
               >
                 Sweep Now
@@ -582,38 +606,24 @@ export function TreasuryAutomation() {
               Recent Sweep Telemetry
             </h2>
             <div className="space-y-3 text-xs">
-              <div className="rounded-lg border border-border/70 bg-background/50 p-3 space-y-1">
-                <div className="flex justify-between font-bold text-foreground">
-                  <span>Zenith Bank Payout</span>
-                  <span className="text-success">+₦3,410,000</span>
+              {sweepHistory.length === 0 ? (
+                <div className="py-12 text-center text-xs text-muted-foreground">
+                  No automated sweeps executed yet. Triggered sweeps will be recorded here with NIBSS clearing references.
                 </div>
-                <div className="flex justify-between text-muted-foreground text-[11px]">
-                  <span>Yesterday at 17:00 · Sentinel Daily Batch</span>
-                  <span className="text-success font-semibold">NIBSS Cleared</span>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border/70 bg-background/50 p-3 space-y-1">
-                <div className="flex justify-between font-bold text-foreground">
-                  <span>Zenith Bank Payout</span>
-                  <span className="text-success">+₦4,120,000</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground text-[11px]">
-                  <span>Oct 27 at 17:00 · Sentinel Daily Batch</span>
-                  <span className="text-success font-semibold">NIBSS Cleared</span>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border/70 bg-background/50 p-3 space-y-1">
-                <div className="flex justify-between font-bold text-foreground">
-                  <span>Zenith Bank Payout</span>
-                  <span className="text-success">+₦2,890,000</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground text-[11px]">
-                  <span>Oct 26 at 17:00 · Sentinel Daily Batch</span>
-                  <span className="text-success font-semibold">NIBSS Cleared</span>
-                </div>
-              </div>
+              ) : (
+                sweepHistory.map((h) => (
+                  <div key={h.id} className="rounded-lg border border-border/70 bg-background/50 p-3 space-y-1">
+                    <div className="flex justify-between font-bold text-foreground">
+                      <span>{h.bank}</span>
+                      <span className="text-success">+{naira(h.amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground text-[11px]">
+                      <span>{h.date}</span>
+                      <span className="text-success font-semibold">NIBSS Cleared</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -726,10 +736,6 @@ export function TreasuryAutomation() {
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-4">
-              Atomic double-entry transfer between your operational float and yield-bearing vault reserves.
-            </p>
-
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -837,7 +843,7 @@ export function TreasuryAutomation() {
                 />
               </div>
 
-              <Button className="w-full" onClick={handleCreatePocket}>
+              <Button className="w-full bg-cyan text-slate-950 font-bold hover:bg-cyan/90" onClick={handleCreatePocket}>
                 Create Pocket
               </Button>
             </div>
@@ -884,7 +890,7 @@ export function TreasuryAutomation() {
                 </span>
               </div>
 
-              <Button className="w-full" onClick={handleAllocate}>
+              <Button className="w-full bg-cyan text-slate-950 font-bold hover:bg-cyan/90" onClick={handleAllocate}>
                 Confirm Transfer
               </Button>
             </div>

@@ -27,6 +27,7 @@ import { StatementsManager } from "./StatementsManager";
 import { CashierShiftsManager } from "./CashierShiftsManager";
 import { ApprovalsManager } from "./ApprovalsManager";
 import { TreasuryAutomation } from "./TreasuryAutomation";
+import { FlightBooking } from "./FlightBooking";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
 
@@ -50,6 +51,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (!item) return null;
   if (module === "services") return <ServicesHub role="merchant" />;
   if (module === "settings") return <TeamSecurity />;
+  if (module === "flights" || module === "svc-flights") return <FlightBooking role="merchant" />;
   if (module === "svc-escrow") return <Escrow />;
   if (module === "svc-airtime") return <Airtime />;
   if (module === "svc-data") return <MobileData />;

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  AlertTriangle, Check, Clock, Download, FileText, 
+  AlertTriangle, Check, CheckCircle2, Clock, Download, FileText, 
   HelpCircle, MessageSquare, Plus, RefreshCw, Scale, 
   ShieldAlert, ShieldCheck, Upload, X 
 } from "lucide-react";
@@ -21,65 +21,49 @@ interface DisputeCase {
   evidenceSubmitted?: boolean;
 }
 
-const INITIAL_CASES: DisputeCase[] = [
-  {
-    id: "DSP-8921",
-    reference: "SLK-TX-90182",
-    customer: "Chukwudi Eze",
-    amount: 45000,
-    reason: "Goods not received / service unrendered",
-    status: "evidence_required",
-    dueDate: "Tomorrow, 5:00 PM",
-    channel: "SmartTag Tap POS",
-    summary: "Customer claims POS terminal charged twice but goods were delivered once.",
-    evidenceSubmitted: false,
-  },
-  {
-    id: "DSP-8919",
-    reference: "SLK-TX-88412",
-    customer: "Bisi Adeleke",
-    amount: 125000,
-    reason: "Unauthorized / fraudulent card charge",
-    status: "under_review",
-    dueDate: "3 days remaining",
-    channel: "Virtual Terminal",
-    summary: "Mastercard issuer chargeback claim regarding 3D-Secure liability shift.",
-    evidenceSubmitted: true,
-  },
-  {
-    id: "DSP-8802",
-    reference: "SLK-TX-79210",
-    customer: "Alhaji Musa Bello",
-    amount: 82000,
-    reason: "Duplicate debit on NIP transfer",
-    status: "resolved",
-    dueDate: "Closed Oct 24",
-    channel: "NIP Commercial Transfer",
-    summary: "Issuer session dispute matched NIBSS settlement trace. Won by merchant.",
-    evidenceSubmitted: true,
-  },
-];
-
 export function DisputesManager() {
-  const [cases, setCases] = useState<DisputeCase[]>(INITIAL_CASES);
+  const [cases, setCases] = useState<DisputeCase[]>(() => {
+    try {
+      const s = localStorage.getItem("slikpay_merchant_disputes");
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [tab, setTab] = useState<"active" | "review" | "resolved">("active");
   const [selectedCase, setSelectedCase] = useState<DisputeCase | null>(null);
-  const [evidenceNote, setEvidenceNote] = useState("");
-  const [trackingNumber, setTrackingNumber] = useState("");
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false);
+  const [showNewDisputeModal, setShowNewDisputeModal] = useState(false);
+  const [evidenceText, setEvidenceText] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  // New dispute form state
+  const [newCust, setNewCust] = useState("");
+  const [newTxRef, setNewTxRef] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newReason, setNewReason] = useState("Goods or service unrendered");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("slikpay_merchant_disputes", JSON.stringify(cases));
+    } catch {}
+  }, [cases]);
+
   const activeCases = cases.filter((c) => c.status === "evidence_required");
-  const reviewCases = cases.filter((c) => c.status === "under_review");
+  const underReviewCases = cases.filter((c) => c.status === "under_review");
   const resolvedCases = cases.filter((c) => c.status === "resolved" || c.status === "conceded");
 
-  const displayed = tab === "active" ? activeCases : tab === "review" ? reviewCases : resolvedCases;
-  const totalDisputed = cases.filter((c) => c.status !== "resolved").reduce((a, b) => a + b.amount, 0);
+  const totalAtRisk = activeCases.reduce((acc, c) => acc + c.amount, 0);
 
-  const handleEvidenceSubmit = (e: React.FormEvent) => {
+  const handleSubmitEvidence = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCase) return;
-    setUploading(true);
+    if (!selectedCase || !evidenceText) {
+      toast.error("Please enter a summary of evidence.");
+      return;
+    }
 
+    setUploading(true);
     setTimeout(() => {
       setCases((prev) =>
         prev.map((c) =>
@@ -89,255 +73,388 @@ export function DisputesManager() {
         )
       );
       setUploading(false);
-      setSelectedCase(null);
-      setEvidenceNote("");
-      setTrackingNumber("");
-      toast.success("Dispute evidence submitted successfully", {
-        description: "Bank dispute desk and card network notified. Case moved to review.",
+      setShowEvidenceModal(false);
+      setEvidenceText("");
+      toast.success("Evidence Transmitted to Card Scheme / CBN Rail", {
+        description: `Case ${selectedCase.id} is now under regulatory arbitration.`,
       });
-    }, 900);
+    }, 700);
   };
 
   const handleConcede = (c: DisputeCase) => {
-    if (confirm(`Are you sure you want to accept this chargeback of ${naira(c.amount)}? Funds will be refunded to the buyer.`)) {
-      setCases((prev) =>
-        prev.map((item) => (item.id === c.id ? { ...item, status: "conceded" } : item))
-      );
-      toast.info("Dispute conceded", {
-        description: `Refund of ${naira(c.amount)} released to cardholder. Case closed.`,
-      });
+    setCases((prev) =>
+      prev.map((item) => (item.id === c.id ? { ...item, status: "conceded" } : item))
+    );
+    toast.info("Dispute Conceded & Refund Released", {
+      description: `Refunded ${naira(c.amount)} to customer card. Case closed.`,
+    });
+  };
+
+  const handleCreateDispute = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCust || !newTxRef || !newAmount) {
+      toast.error("Please fill in customer name, reference and amount");
+      return;
     }
+
+    const created: DisputeCase = {
+      id: `DSP-${Date.now().toString().slice(-4)}`,
+      reference: newTxRef,
+      customer: newCust,
+      amount: Number(newAmount),
+      reason: newReason,
+      status: "evidence_required",
+      dueDate: "3 days remaining",
+      channel: "Card / POS Payment",
+      summary: `Customer filed chargeback claim for transaction ${newTxRef}.`,
+      evidenceSubmitted: false,
+    };
+
+    setCases([created, ...cases]);
+    setShowNewDisputeModal(false);
+    setNewCust("");
+    setNewTxRef("");
+    setNewAmount("");
+    toast.success(`Dispute logged: ${created.id}`);
   };
 
   return (
-    <section className="space-y-6">
-      {/* Top Banner & Telemetry */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <span className="text-xs font-semibold text-muted-foreground">Action Required</span>
-          <p className="mt-1 text-2xl font-black text-destructive">{activeCases.length} cases</p>
-          <span className="mt-1 flex items-center gap-1 text-[11px] text-destructive">
-            <Clock className="h-3 w-3" /> Response due within 48h
-          </span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-black tracking-tight text-foreground sm:text-2xl flex items-center gap-2">
+            <Scale className="h-6 w-6 text-cobalt" />
+            Dispute & Chargeback Resolution Desk
+          </h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Defend against chargebacks, submit proof of delivery, and track CBN / Mastercard arbitration timelines.
+          </p>
         </div>
-
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <span className="text-xs font-semibold text-muted-foreground">At-Risk Funds</span>
-          <p className="mt-1 text-2xl font-black text-foreground">{naira(totalDisputed)}</p>
-          <span className="mt-1 text-[11px] text-muted-foreground">Locked in vault buffer</span>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <span className="text-xs font-semibold text-muted-foreground">Merchant Win Rate</span>
-          <p className="mt-1 text-2xl font-black text-success">98.4%</p>
-          <span className="mt-1 text-[11px] text-success">Above industry average</span>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <span className="text-xs font-semibold text-muted-foreground">Network Liability</span>
-          <p className="mt-1 text-2xl font-black text-cyan">Protected</p>
-          <span className="mt-1 text-[11px] text-muted-foreground">3D-Secure & PIN verified</span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setShowNewDisputeModal(true)}
+            className="bg-cobalt text-white hover:bg-cobalt/90 font-bold"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Log Dispute Claim
+          </Button>
         </div>
       </div>
 
-      {/* Tabs & Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-2">
-        <div className="flex gap-2">
-          <Button
-            variant={tab === "active" ? "brand" : "ghost"}
-            size="sm"
-            onClick={() => setTab("active")}
-            className="rounded-full"
-          >
-            <ShieldAlert className="h-4 w-4" /> Open Cases ({activeCases.length})
-          </Button>
-          <Button
-            variant={tab === "review" ? "brand" : "ghost"}
-            size="sm"
-            onClick={() => setTab("review")}
-            className="rounded-full"
-          >
-            <Clock className="h-4 w-4" /> In Review ({reviewCases.length})
-          </Button>
-          <Button
-            variant={tab === "resolved" ? "brand" : "ghost"}
-            size="sm"
-            onClick={() => setTab("resolved")}
-            className="rounded-full"
-          >
-            <Check className="h-4 w-4" /> Resolved ({resolvedCases.length})
-          </Button>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-wider">Open Disputes</span>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </div>
+          <p className="mt-2 text-2xl font-black text-destructive">{activeCases.length}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Action required</p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={() => toast.info("Dispute queue synced with NIBSS and Visa/Mastercard")}>
-          <RefreshCw className="h-3.5 w-3.5" /> Sync Cases
-        </Button>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-wider">Amount At Risk</span>
+            <Scale className="h-4 w-4 text-amber-500" />
+          </div>
+          <p className="mt-2 text-2xl font-black text-amber-500">{naira(totalAtRisk)}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">In escrow pending proof</p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-wider">Under Arbitration</span>
+            <Clock className="h-4 w-4 text-cyan" />
+          </div>
+          <p className="mt-2 text-2xl font-black text-cyan">{underReviewCases.length}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Awaiting scheme verdict</p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-wider">Dispute Win Rate</span>
+            <ShieldCheck className="h-4 w-4 text-success" />
+          </div>
+          <p className="mt-2 text-2xl font-black text-success">
+            {cases.length === 0 ? "100%" : "98.4%"}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Liability protected</p>
+        </div>
       </div>
 
-      {/* Disputes Table */}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full min-w-[700px] text-left text-sm">
-          <thead className="border-b border-border bg-muted/30 text-xs font-bold text-muted-foreground">
-            <tr>
-              <th className="p-4">Case ID & Transaction</th>
-              <th className="p-4">Customer & Channel</th>
-              <th className="p-4">Disputed Amount</th>
-              <th className="p-4">Reason & Status</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border font-medium">
-            {displayed.map((c) => (
-              <tr key={c.id} className="transition-colors hover:bg-muted/20">
-                <td className="p-4">
-                  <span className="font-mono font-bold text-foreground">{c.id}</span>
-                  <span className="block font-mono text-xs text-muted-foreground">{c.reference}</span>
-                </td>
-                <td className="p-4">
-                  <span className="font-semibold text-foreground">{c.customer}</span>
-                  <span className="block text-xs text-muted-foreground">{c.channel}</span>
-                </td>
-                <td className="p-4">
-                  <span className="font-extrabold text-foreground">{naira(c.amount)}</span>
-                </td>
-                <td className="p-4">
-                  <span className="block text-xs font-semibold text-foreground">{c.reason}</span>
-                  <span
-                    className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                      c.status === "evidence_required"
-                        ? "border border-destructive/40 bg-destructive/10 text-destructive"
-                        : c.status === "under_review"
-                        ? "border border-cyan/40 bg-cyan/10 text-cyan"
-                        : c.status === "resolved"
-                        ? "border border-success/40 bg-success-soft text-success"
-                        : "border border-muted text-muted-foreground"
-                    }`}
-                  >
-                    {c.status.replace("_", " ")} · {c.dueDate}
+      {/* Tabs */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setTab("active")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
+            tab === "active"
+              ? "border-cyan text-cyan"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Evidence Required ({activeCases.length})
+        </button>
+        <button
+          onClick={() => setTab("review")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
+            tab === "review"
+              ? "border-cyan text-cyan"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Clock className="h-4 w-4" />
+          Under Arbitration ({underReviewCases.length})
+        </button>
+        <button
+          onClick={() => setTab("resolved")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
+            tab === "resolved"
+              ? "border-cyan text-cyan"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Closed & Resolved ({resolvedCases.length})
+        </button>
+      </div>
+
+      {/* Cases List */}
+      <div className="space-y-4">
+        {(tab === "active" ? activeCases : tab === "review" ? underReviewCases : resolvedCases).length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+            <CheckCircle2 className="mb-3 h-10 w-10 text-success" />
+            <h3 className="text-base font-bold text-foreground">
+              {tab === "active" ? "All Clear! Zero Open Disputes" : "No Disputes in this View"}
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+              {tab === "active"
+                ? "Your merchant account currently has zero chargebacks or customer retrieval requests. All POS taps, cards, and NIP transfers are settled cleanly."
+                : "No past or pending arbitration claims found in this category."}
+            </p>
+          </div>
+        ) : (
+          (tab === "active" ? activeCases : tab === "review" ? underReviewCases : resolvedCases).map((c) => (
+            <div
+              key={c.id}
+              className="flex flex-col justify-between gap-4 rounded-xl border border-border bg-card p-5 transition-all hover:border-border/80 md:flex-row md:items-center"
+            >
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-cyan">{c.id}</span>
+                  <span className="text-xs text-muted-foreground">· Ref: {c.reference}</span>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                    {c.channel}
                   </span>
-                </td>
-                <td className="p-4 text-right">
-                  {c.status === "evidence_required" && (
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="brand"
-                        onClick={() => setSelectedCase(c)}
-                        className="shine bg-gradient-tri text-xs font-bold"
-                      >
-                        <Upload className="h-3.5 w-3.5" /> Submit Evidence
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleConcede(c)}
-                        className="text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        Accept
-                      </Button>
-                    </div>
-                  )}
-                  {c.status === "under_review" && (
-                    <span className="text-xs font-semibold text-cyan">Awaiting Bank Decision</span>
-                  )}
-                  {c.status === "resolved" && (
-                    <span className="text-xs font-semibold text-success">Won · Funds Credited</span>
-                  )}
-                  {c.status === "conceded" && (
-                    <span className="text-xs font-semibold text-muted-foreground">Refunded</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {!displayed.length && (
-              <tr>
-                <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                  <Scale className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
-                  <p className="font-semibold">No cases in this queue</p>
-                  <p className="text-xs">Your chargeback rate is 0.00% within acceptable network thresholds.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  <span className="text-xs font-semibold text-amber-500">
+                    Deadline: {c.dueDate}
+                  </span>
+                </div>
+
+                <h3 className="text-base font-extrabold text-foreground">
+                  {c.customer} — {naira(c.amount)}
+                </h3>
+
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                  {c.summary}
+                </p>
+
+                <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Reason: {c.reason}
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2 border-t border-border pt-3 md:border-none md:pt-0">
+                {c.status === "evidence_required" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/10 text-xs"
+                      onClick={() => handleConcede(c)}
+                    >
+                      Concede & Refund
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-cobalt text-white hover:bg-cobalt/90 text-xs"
+                      onClick={() => {
+                        setSelectedCase(c);
+                        setShowEvidenceModal(true);
+                      }}
+                    >
+                      <Upload className="mr-1.5 h-3.5 w-3.5" />
+                      Submit Evidence
+                    </Button>
+                  </>
+                )}
+
+                {c.status === "under_review" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan/15 px-3 py-1 text-xs font-bold text-cyan">
+                    <Clock className="h-3.5 w-3.5" />
+                    Under Scheme Review
+                  </span>
+                )}
+
+                {c.status === "resolved" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-bold text-success">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Resolved (Won by Merchant)
+                  </span>
+                )}
+
+                {c.status === "conceded" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">
+                    Conceded & Refunded
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Evidence Submission Modal */}
-      {selectedCase && (
+      {/* EVIDENCE SUBMISSION MODAL */}
+      {showEvidenceModal && selectedCase && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 slik-overlay-backdrop backdrop-blur-sm"
-          onClick={() => setSelectedCase(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"
+          onClick={() => setShowEvidenceModal(false)}
         >
           <div
-            className="w-full max-w-lg rounded-3xl border border-border bg-background p-6 shadow-2xl space-y-4"
+            role="dialog"
+            aria-modal="true"
+            className="slik-popup w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="font-extrabold text-foreground">Prepare Dispute Defense Evidence</h2>
-                <span className="font-mono text-xs text-muted-foreground">Case {selectedCase.id} · {naira(selectedCase.amount)}</span>
+                <h2 className="text-base font-bold text-foreground">Submit Dispute Evidence</h2>
+                <p className="text-xs text-muted-foreground font-mono">Case: {selectedCase.id}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedCase(null)}>
+              <Button variant="ghost" size="icon" onClick={() => setShowEvidenceModal(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            <div className="rounded-xl border border-cobalt/20 bg-cobalt/5 p-3 text-xs text-body space-y-1">
-              <p className="font-bold text-foreground">Dispute Reason: {selectedCase.reason}</p>
-              <p className="text-muted-foreground">{selectedCase.summary}</p>
-            </div>
-
-            <form onSubmit={handleEvidenceSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-foreground">Tracking Number / Dispatch Ref (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. GIG-LOGISTICS-910283"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  className="field mt-1 w-full text-xs"
-                />
+            <form onSubmit={handleSubmitEvidence} className="space-y-4 text-xs">
+              <div className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>Customer:</span>
+                  <span>{selectedCase.customer}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="font-black text-cyan">{naira(selectedCase.amount)}</span>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-foreground">Merchant Statement / Rebuttal</label>
+                <label className="block text-foreground font-bold mb-1">
+                  Defense Statement & Proof of Fulfillment
+                </label>
                 <textarea
-                  rows={3}
+                  rows={4}
+                  placeholder="Detail invoice number, delivery note confirmation, POS audit trace, or CCTV confirmation..."
+                  value={evidenceText}
+                  onChange={(e) => setEvidenceText(e.target.value)}
+                  className="field w-full text-xs"
                   required
-                  placeholder="Explain proof of fulfillment, delivery date, customer communication, or authorization log..."
-                  value={evidenceNote}
-                  onChange={(e) => setEvidenceNote(e.target.value)}
-                  className="field mt-1 w-full text-xs resize-none"
                 />
               </div>
 
-              <div className="rounded-xl border border-dashed border-border p-4 text-center cursor-pointer hover:border-cyan/50 transition-colors">
-                <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
-                <p className="mt-2 text-xs font-bold text-foreground">Upload Signed Delivery Note, Invoice or Chats</p>
-                <p className="text-[11px] text-muted-foreground">PDF, PNG, JPG up to 10MB each</p>
+              <div>
+                <label className="block text-foreground font-bold mb-1">
+                  Upload Receipts, Invoices or Signatures (PDF / JPG)
+                </label>
+                <input type="file" className="field w-full text-xs" />
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectedCase(null)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={uploading || !evidenceNote}
-                  className="flex-1 shine bg-gradient-tri font-bold"
-                >
-                  {uploading ? "Submitting to Bank..." : "Submit to Dispute Desk"}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                className="w-full bg-cobalt text-white hover:bg-cobalt/90 font-bold"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Transmitting Evidence...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Submit to Scheme Arbitration
+                  </>
+                )}
+              </Button>
             </form>
           </div>
         </div>
       )}
-    </section>
+
+      {/* NEW DISPUTE MODAL */}
+      {showNewDisputeModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"
+          onClick={() => setShowNewDisputeModal(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="slik-popup w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-bold text-foreground">Log Dispute Claim</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowNewDisputeModal(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleCreateDispute} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-foreground font-bold mb-1">Customer Name</label>
+                <input
+                  placeholder="e.g. John Doe"
+                  value={newCust}
+                  onChange={(e) => setNewCust(e.target.value)}
+                  className="field w-full text-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-bold mb-1">Transaction Reference</label>
+                <input
+                  placeholder="e.g. SLK-TX-90182"
+                  value={newTxRef}
+                  onChange={(e) => setNewTxRef(e.target.value)}
+                  className="field w-full text-xs font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-bold mb-1">Disputed Amount (NGN)</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(e.target.value)}
+                  className="field w-full text-xs font-mono"
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full bg-cobalt text-white font-bold hover:bg-cobalt/90">
+                Register Dispute
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
