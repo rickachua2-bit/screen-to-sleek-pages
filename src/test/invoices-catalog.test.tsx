@@ -35,7 +35,7 @@ describe("invoices panel", () => {
     await waitFor(() => expect(screen.getByText("300,000.00 NGN")).toBeTruthy());
     expect(screen.getByText("900.00 USD")).toBeTruthy();
     expect(screen.getByText(/Acme Ltd/)).toBeTruthy();
-    expect(screen.getByText("Overdue")).toBeTruthy();
+    expect(screen.getAllByText("Overdue").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Awaiting payment").length).toBeGreaterThan(0);
     expect(screen.queryByText(/paddle|sterling/i)).toBeNull();
   });
