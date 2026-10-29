@@ -297,24 +297,23 @@ function ProductCheckoutDialog({ product, onClose, onCreated }: { product: Produ
   </Dialog>;
 }
 
-export function CatalogPanel({ previewProducts }: { previewProducts?: ProductView[] }) {
+export function CatalogPanel() {
   const listFn = useServerFn(listProducts);
   const deleteFn = useServerFn(deleteProduct);
-  const [products, setProducts] = useState<ProductView[] | null>(previewProducts ?? null);
+  const [products, setProducts] = useState<ProductView[] | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!previewProducts);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const [checkout, setCheckout] = useState<ProductView | null>(null);
   const [createdUrl, setCreatedUrl] = useState("");
 
   const load = useCallback(async () => {
-    if (previewProducts) return;
     setLoading(true); setError("");
     try { const r = await listFn(); setProducts(r.products); }
     catch (e) { setError(e instanceof Error ? e.message : "Your catalog could not be loaded. Try again."); }
     finally { setLoading(false); }
-  }, [listFn, previewProducts]);
+  }, [listFn]);
   useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
