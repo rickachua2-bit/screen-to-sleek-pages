@@ -24,7 +24,7 @@ describe("cross-border payment composer", () => {
   it("quotes the exact fee-inclusive total from live inputs", async () => {
     render(<InternationalServices />);
     fillForm();
-    await waitFor(() => expect(mocks.quote).toHaveBeenCalledWith(expect.objectContaining({ sourceCurrency: "NGN", country: "US", amount: 100 })));
+    await waitFor(() => expect(mocks.quote).toHaveBeenCalledWith({ data: expect.objectContaining({ sourceCurrency: "NGN", country: "US", amount: 100 }) }));
     await waitFor(() => expect(screen.getAllByText("177,500.00 NGN").length).toBeGreaterThan(0));
   });
 
