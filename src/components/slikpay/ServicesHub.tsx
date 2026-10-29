@@ -152,7 +152,7 @@ export function GuidedService({ service, live, onClose, onDone }: { service: Ser
   </Dialog>;
 }
 
-function FieldInput({ field, value, values, onChange }: { field: FlowField; value: string; values: Record<string, string>; onChange: (v: string, item?: Record<string, unknown>) => void }) {
+export function FieldInput({ field, value, values, onChange }: { field: FlowField; value: string; values: Record<string, string>; onChange: (v: string, item?: Record<string, unknown>) => void }) {
   const run = useServerFn(runPaddleOperation);
   const [opts, setOpts] = useState<OptionItem[] | null>(field.choices ? field.choices.map((c) => ({ ...c, item: {} })) : null);
   const [err, setErr] = useState("");
