@@ -24,13 +24,13 @@ export async function flightAirports(search: string) {
 }
 
 export async function flightSearchRun(input: z.infer<typeof flightSearch>) {
-  const ctx = await travelUser();
+  const ctx = await bankingUser();
   const r = await callPaddle(ctx.mode, "POST", "/v1/flights/search", { ...input, waitForResults: true, timeoutMs: 15000 });
   return parseSearch(r.data);
 }
 
 export async function flightSearchPoll(searchId: string) {
-  const ctx = await travelUser();
+  const ctx = await bankingUser();
   const r = await callPaddle(ctx.mode, "GET", `/v1/flights/search/${encodeURIComponent(searchId)}`);
   const res = parseSearch(r.data);
   return { ...res, searchId: res.searchId ?? searchId };

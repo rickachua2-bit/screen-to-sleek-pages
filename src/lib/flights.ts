@@ -79,35 +79,149 @@ export function parseAirports(data: unknown): Airport[] {
   return out;
 }
 
-function place(v: unknown) { const p = obj(v); return { code: str(p["iata_code"], p["code"], typeof v === "string" ? v : "").toUpperCase(), city: str(p["city_name"], p["city"], p["name"]) }; }
+function place(v: unknown) {
+  if (typeof v === "string") {
+    const code = v.trim().toUpperCase();
+    return { code, city: "" };
+  }
+  const p = obj(v);
+  return {
+    code: str(p["iata_code"], p["iataCode"], p["code"], p["iata"]).toUpperCase(),
+    city: str(p["city_name"], p["cityName"], p["city"], obj(p["city"])["name"], p["name"])
+  };
+}
 
 function parseSlice(raw: unknown): FlightSlice | null {
   const s = obj(raw);
-  const segs = (Array.isArray(s["segments"]) ? s["segments"] : []).map((x): FlightSegment => {
-    const g = obj(x); const c = obj(g["marketing_carrier"] ?? g["operating_carrier"]);
-    const code = str(c["iata_code"], g["carrierCode"]);
-    return { from: place(g["origin"]).code, to: place(g["destination"]).code, departAt: str(g["departing_at"], g["departureTime"]), arriveAt: str(g["arriving_at"], g["arrivalTime"]), carrier: str(c["name"], g["carrier"]) || code, flightNumber: `${code}${str(g["marketing_carrier_flight_number"], g["flightNumber"])}` };
+  const rawSegs = Array.isArray(s["segments"]) ? s["segments"] : [];
+
+  const segs = rawSegs.map((x): FlightSegment => {
+    const g = obj(x);
+    const rawMc = g["marketing_carrier"] ?? g["carrier"] ?? g["airline"];
+    const rawOc = g["operating_carrier"];
+    const mcObj = typeof rawMc === "object" ? obj(rawMc) : null;
+    const ocObj = typeof rawOc === "object" ? obj(rawOc) : null;
+
+    const carrierCode = str(
+      mcObj ? mcObj["iata_code"] : null,
+      typeof rawMc === "string" ? rawMc : null,
+      g["carrierCode"],
+      g["carrier_code"],
+      ocObj ? ocObj["iata_code"] : null,
+      typeof rawOc === "string" ? rawOc : null
+    ).toUpperCase();
+
+    const carrierName = str(
+      mcObj ? mcObj["name"] : null,
+      g["carrier_name"],
+      g["carrierName"],
+      g["airline_name"],
+      g["airlineName"],
+      ocObj ? ocObj["name"] : null
+    ) || carrierCode;
+
+    const rawFlightNum = str(
+      g["flight_number"],
+      g["flightNumber"],
+      g["marketing_carrier_flight_number"],
+      g["marketingCarrierFlightNumber"],
+      g["number"]
+    );
+
+    const flightNumber = !rawFlightNum
+      ? carrierCode
+      : carrierCode && rawFlightNum.toUpperCase().startsWith(carrierCode)
+        ? rawFlightNum.toUpperCase()
+        : `${carrierCode}${rawFlightNum}`.trim();
+
+    const fromPlace = place(g["origin"]);
+    const toPlace = place(g["destination"]);
+
+    const departAt = str(g["departing_at"], g["departAt"], g["departureTime"], g["departure_time"]);
+    const arriveAt = str(g["arriving_at"], g["arriveAt"], g["arrivalTime"], g["arrival_time"]);
+
+    return {
+      from: fromPlace.code || str(g["origin_code"], g["from"]).toUpperCase(),
+      to: toPlace.code || str(g["destination_code"], g["to"]).toUpperCase(),
+      departAt,
+      arriveAt,
+      carrier: carrierName,
+      flightNumber
+    };
   });
-  const o = place(s["origin"]), d = place(s["destination"]);
-  const departAt = str(segs[0]?.departAt, s["departing_at"]), arriveAt = str(segs[segs.length - 1]?.arriveAt, s["arriving_at"]);
-  if (!o.code || !d.code || !departAt || !arriveAt) return null;
-  return { from: o.code, fromCity: o.city, to: d.code, toCity: d.city, departAt, arriveAt, duration: str(s["duration"]) || null, stops: Math.max(0, segs.length - 1), segments: segs };
+
+  const o = place(s["origin"]);
+  const d = place(s["destination"]);
+
+  const fromCode = o.code || (segs.length > 0 ? segs[0]?.from : "") || "";
+  const fromCity = o.city || "";
+  const toCode = d.code || (segs.length > 0 ? segs[segs.length - 1]?.to : "") || "";
+  const toCity = d.city || "";
+
+  const departAt = str(s["departing_at"], s["departAt"], segs[0]?.departAt);
+  const arriveAt = str(s["arriving_at"], s["arriveAt"], segs.length > 0 ? segs[segs.length - 1]?.arriveAt : null);
+
+  if (!fromCode || !toCode) return null;
+
+  const duration = str(s["duration"], s["flight_duration"]) || null;
+  const stops = typeof s["stops"] === "number" ? s["stops"] : Math.max(0, segs.length - 1);
+
+  return {
+    from: fromCode,
+    fromCity,
+    to: toCode,
+    toCity,
+    departAt: departAt || new Date().toISOString(),
+    arriveAt: arriveAt || new Date().toISOString(),
+    duration,
+    stops,
+    segments: segs
+  };
 }
 
 export function parseOffer(raw: unknown): FlightOffer | null {
   const f = obj(raw);
   const id = str(f["id"], f["offer_id"], f["offerId"]);
   const price = obj(f["price"]);
-  const amount = num(f["total_amount"], f["totalAmount"], f["amount"], price["total"]);
-  const currency = str(f["total_currency"], f["totalCurrency"], f["currency"], price["currency"]).toUpperCase();
+  const amount = num(f["total_amount"], f["totalAmount"], f["amount"], price["total"], f["base_amount"]);
+  const currency = str(f["total_currency"], f["totalCurrency"], f["currency"], price["currency"], f["base_currency"]).toUpperCase();
   if (!id || !(amount > 0) || !/^[A-Z]{3,4}$/.test(currency)) return null;
-  const slices = (Array.isArray(f["slices"]) ? f["slices"] : []).map(parseSlice);
-  if (!slices.length || slices.some((s) => !s)) return null;
-  const owner = obj(f["owner"]);
+
+  const rawSlices = Array.isArray(f["slices"]) ? f["slices"] : [];
+  const slices = rawSlices.map(parseSlice).filter((s): s is FlightSlice => s !== null);
+  if (!slices.length) return null;
+
+  const rawOwner = f["owner"];
+  const ownerObj = typeof rawOwner === "object" ? obj(rawOwner) : null;
+  const ownerName = typeof rawOwner === "string" ? rawOwner : str(ownerObj?.["name"]);
+  const ownerCode = ownerObj ? str(ownerObj["iata_code"], ownerObj["code"]) : "";
+
+  const firstSliceSeg = slices[0]?.segments[0];
+  const airline = str(
+    ownerName,
+    f["airline"],
+    f["airlineName"],
+    f["carrier"],
+    f["carrier_name"],
+    firstSliceSeg?.carrier
+  ) || "Global Carrier";
+
+  const airlineCode = str(
+    ownerCode,
+    f["airlineCode"],
+    f["airline_code"],
+    f["carrierCode"],
+    f["carrier_code"],
+    firstSliceSeg?.flightNumber?.slice(0, 2)
+  ).toUpperCase() || (slices[0]?.segments[0]?.flightNumber?.slice(0, 2) || "FL");
+
   const rawSeg = obj((obj((f["slices"] as unknown[])[0])["segments"] as unknown[] | undefined)?.[0]);
   const rawPax = obj((rawSeg["passengers"] as unknown[] | undefined)?.[0]);
   const bags = rawPax["baggages"];
   const bagCount = Array.isArray(bags) ? bags.reduce((n: number, b) => n + (num(obj(b)["quantity"]) || 0), 0) : NaN;
+  const baggagePolicy = str(f["baggagePolicy"], f["baggage"], f["baggage_policy"]);
+  const baggage = baggagePolicy || (Number.isFinite(bagCount) ? (bagCount > 0 ? `${bagCount} bag${bagCount > 1 ? "s" : ""} included` : "No checked bag") : null);
+
   const conv = obj(f["convertedAmounts"]);
   const convertedAmounts = conv ? {
     ngn: num(conv["ngn"], f["ngnEquivalent"]) || undefined,
@@ -117,26 +231,52 @@ export function parseOffer(raw: unknown): FlightOffer | null {
     usdt: num(conv["usdt"], f["usdtEquivalent"]) || undefined,
   } : undefined;
 
+  const pList = Array.isArray(f["passengers"]) ? f["passengers"] : [];
+  const passengerIds = pList.map((p) => {
+    if (typeof p === "string") return p;
+    return str(obj(p)["id"]);
+  }).filter(Boolean);
+
   return {
-    id, amount, currency,
-    airline: str(owner["name"], f["airlineName"], f["airline"]) || (slices[0]!.segments[0]?.carrier ?? ""),
-    airlineCode: str(owner["iata_code"], f["carrierCode"], f["airlineCode"]),
-    slices: slices as FlightSlice[],
-    baggage: str(f["baggagePolicy"], f["baggage"]) || (Number.isFinite(bagCount) ? (bagCount > 0 ? `${bagCount} bag${bagCount > 1 ? "s" : ""} included` : "No checked bag") : null),
+    id,
+    amount,
+    currency,
+    airline,
+    airlineCode,
+    slices,
+    baggage,
     expiresAt: str(f["expires_at"], f["expiresAt"]) || null,
-    passengerIds: (Array.isArray(f["passengers"]) ? f["passengers"] : []).map((p) => str(obj(p)["id"])).filter(Boolean),
+    passengerIds,
     convertedAmounts,
-    logoUrl: str(f["logoUrl"], f["logoFallbackUrl"]) || null,
+    logoUrl: str(f["logoUrl"], f["logo_url"], f["logoFallbackUrl"]) || null,
   };
 }
 
 export function parseSearch(data: unknown): FlightSearchResult {
-  const d = obj(data);
-  const list = Array.isArray(d["offers"]) ? d["offers"] : Array.isArray(d["flights"]) ? d["flights"] : Array.isArray(data) ? data : [];
+  const root = obj(data);
+  const inner = obj(root["data"]);
+
+  const list = Array.isArray(root["offers"]) ? root["offers"]
+    : Array.isArray(root["flights"]) ? root["flights"]
+    : Array.isArray(inner["offers"]) ? inner["offers"]
+    : Array.isArray(inner["flights"]) ? inner["flights"]
+    : Array.isArray(root["data"]) ? root["data"]
+    : Array.isArray(data) ? data
+    : [];
+
   const offers = (list as unknown[]).map(parseOffer).filter((o): o is FlightOffer => !!o).sort((a, b) => a.amount - b.amount);
-  const status = str(d["status"]).toLowerCase();
-  const searchId = str(d["searchId"], d["search_id"], d["offer_request_id"], d["id"]) || null;
-  const complete = ["complete", "completed", "done", "finished", "success", "succeeded"].includes(status) || (!status && (list as unknown[]).length > 0) || (!searchId);
+  const status = str(root["status"], inner["status"]).toLowerCase();
+  const searchId = str(
+    root["searchId"],
+    root["search_id"],
+    inner["searchId"],
+    inner["search_id"],
+    root["offer_request_id"],
+    inner["offer_request_id"],
+    root["id"],
+    inner["id"]
+  ) || null;
+  const complete = ["complete", "completed", "done", "finished", "success", "succeeded"].includes(status) || (!status && list.length > 0) || (!searchId);
   return { searchId, complete, offers };
 }
 

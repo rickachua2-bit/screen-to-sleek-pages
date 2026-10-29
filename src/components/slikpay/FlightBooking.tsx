@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { 
   AlertCircle, ArrowLeftRight, Check, CheckCircle2, Clock, 
-  Coins, Copy, DollarSign, Download, Globe, Info, Loader2, 
+  Coins, Copy, DollarSign, Download, Filter, Globe, Info, Loader2, 
   Luggage, Plane, PlaneLanding, PlaneTakeoff, Printer, QrCode, 
-  RefreshCw, Search, ShieldCheck, Sparkles, Ticket, Users, 
+  RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Ticket, Users, 
   Utensils, Wallet, Wifi, X, Zap 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -354,7 +354,10 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [result, setResult] = useState<{ searchId: string | null; offers: FlightOffer[] } | null>(null);
   const [sort, setSort] = useState<"cheapest" | "fastest" | "earliest">("cheapest");
-  const [nonstop, setNonstop] = useState(false);
+  const [stopsFilter, setStopsFilter] = useState<"all" | "direct" | "1stop">("all");
+  const [selectedAirline, setSelectedAirline] = useState<string>("all");
+  const [departureWindow, setDepartureWindow] = useState<"all" | "morning" | "afternoon" | "evening">("all");
+  const [maxPriceCap, setMaxPriceCap] = useState<number | null>(null);
   const [picked, setPicked] = useState<FlightOffer | null>(null);
   const [pax, setPax] = useState<Passenger[]>([blankPax()]);
   const [pin, setPin] = useState("");
@@ -441,8 +444,75 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
     }
   };
 
+  const availableAirlines = useMemo(() => {
+    if (!result?.offers) return [];
+    const map = new Map<string, number>();
+    for (const o of result.offers) {
+      const name = o.airline || "Unknown Carrier";
+      map.set(name, (map.get(name) ?? 0) + 1);
+    }
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }, [result?.offers]);
+
+  const priceStats = useMemo(() => {
+    if (!result?.offers || !result.offers.length) return { min: 0, max: 0 };
+    let min = Infinity, max = -Infinity;
+    for (const o of result.offers) {
+      const val = convertCurrency(o.amount, o.currency, selectedCurrency, liveRates).amount;
+      if (val < min) min = val;
+      if (val > max) max = val;
+    }
+    return { min: Math.floor(min), max: Math.ceil(max) };
+  }, [result?.offers, selectedCurrency, liveRates]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (stopsFilter !== "all") count++;
+    if (selectedAirline !== "all") count++;
+    if (departureWindow !== "all") count++;
+    if (maxPriceCap !== null && priceStats.max > 0 && maxPriceCap < priceStats.max) count++;
+    return count;
+  }, [stopsFilter, selectedAirline, departureWindow, maxPriceCap, priceStats.max]);
+
+  const resetAllFilters = () => {
+    setStopsFilter("all");
+    setSelectedAirline("all");
+    setDepartureWindow("all");
+    setMaxPriceCap(null);
+  };
+
   const shown = useMemo(() => {
-    const list = (result?.offers ?? []).filter((o) => !nonstop || o.slices.every((s) => s.stops === 0));
+    if (!result?.offers) return [];
+    let list = result.offers;
+
+    if (stopsFilter === "direct") {
+      list = list.filter((o) => o.slices.every((s) => s.stops === 0));
+    } else if (stopsFilter === "1stop") {
+      list = list.filter((o) => o.slices.every((s) => s.stops <= 1));
+    }
+
+    if (selectedAirline !== "all") {
+      list = list.filter((o) => (o.airline || "Unknown Carrier") === selectedAirline);
+    }
+
+    if (departureWindow !== "all") {
+      list = list.filter((o) => {
+        const d = new Date(o.slices[0]!.departAt);
+        const hrs = d.getHours();
+        if (departureWindow === "morning") return hrs >= 0 && hrs < 12;
+        if (departureWindow === "afternoon") return hrs >= 12 && hrs < 18;
+        if (departureWindow === "evening") return hrs >= 18 && hrs <= 23;
+        return true;
+      });
+    }
+
+    if (maxPriceCap !== null && maxPriceCap > 0 && priceStats.max > 0 && maxPriceCap < priceStats.max) {
+      list = list.filter((o) => {
+        const val = convertCurrency(o.amount, o.currency, selectedCurrency, liveRates).amount;
+        return val <= maxPriceCap;
+      });
+    }
+
     return [...list].sort((a, b) => {
       if (sort === "cheapest") {
         const aConv = convertCurrency(a.amount, a.currency, selectedCurrency, liveRates).amount;
@@ -452,7 +522,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
       if (sort === "fastest") return minutes(a) - minutes(b);
       return Date.parse(a.slices[0]!.departAt) - Date.parse(b.slices[0]!.departAt);
     });
-  }, [result, sort, nonstop, selectedCurrency, liveRates]);
+  }, [result, sort, stopsFilter, selectedAirline, departureWindow, maxPriceCap, priceStats.max, selectedCurrency, liveRates]);
 
   const choose = (o: FlightOffer) => { 
     setPicked(o); 
@@ -802,48 +872,183 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
             </div>
           )}
 
-          {/* Offer Results */}
+          {/* Offer Results & Comprehensive Search Filters */}
           {result && !busy && (
             <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 p-3.5 rounded-2xl border border-border">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-bold text-foreground">
-                    <span className="text-cobalt font-black">{shown.length} live offers</span> · {from?.code} → {to?.code}
+              {/* Summary Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-border p-4 rounded-3xl shadow-xs">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <p className="text-sm font-extrabold text-foreground">
+                    <span className="text-cobalt font-black text-base">{shown.length}</span> of {result.offers.length} flight{result.offers.length === 1 ? "" : "s"}
                   </p>
+                  <span className="text-xs font-mono font-bold text-muted-foreground">·</span>
+                  <span className="text-xs font-mono font-bold text-foreground">
+                    {from?.code} → {to?.code}
+                  </span>
                   {searchLatencyMs !== null && (
-                    <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-black text-emerald-500 border border-emerald-500/20">
-                      ⚡ Populated in {searchLatencyMs}ms
+                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-black text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      ⚡ {searchLatencyMs}ms
                     </span>
                   )}
-                  <span className="rounded-md bg-cobalt/10 px-2 py-0.5 text-[11px] font-bold text-cobalt">
-                    Priced in {selectedCurrency}
+                  <span className="rounded-full bg-cobalt/10 px-2.5 py-0.5 text-[11px] font-bold text-cobalt border border-cobalt/20">
+                    {selectedCurrency} Pricing
                   </span>
                 </div>
 
+                {/* Sort Actions */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground mr-1">Sort:</span>
+                  <span className="text-xs font-bold text-muted-foreground">Sort:</span>
                   {(["cheapest", "fastest", "earliest"] as const).map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => setSort(s)} 
-                      className={`rounded-full border px-3.5 py-1 text-xs font-bold capitalize transition-colors ${
-                        sort === s ? "border-cobalt bg-cobalt text-white shadow-xs font-black" : "border-border bg-card text-foreground hover:bg-muted"
+                      className={`rounded-xl border px-3.5 py-1 text-xs font-bold capitalize transition-all ${
+                        sort === s 
+                          ? "border-cobalt bg-cobalt text-white shadow-xs font-black scale-102" 
+                          : "border-border bg-card text-foreground hover:bg-muted"
                       }`}
                     >
-                      {s}
+                      {s === "cheapest" ? "💰 Cheapest" : s === "fastest" ? "⚡ Fastest" : "🕒 Earliest"}
                     </button>
                   ))}
-                  <button 
-                    onClick={() => setNonstop((v) => !v)} 
-                    className={`rounded-full border px-3.5 py-1 text-xs font-bold transition-colors ${
-                      nonstop ? "border-magenta bg-magenta/15 text-magenta" : "border-border bg-card text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    Direct Only
-                  </button>
                 </div>
               </div>
 
+              {/* Filter Deck */}
+              <div className="rounded-3xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4 text-cobalt" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-foreground">
+                      Filter Flight Results
+                    </span>
+                    {activeFiltersCount > 0 && (
+                      <span className="rounded-full bg-magenta/20 px-2 py-0.5 text-[10px] font-black text-magenta border border-magenta/30">
+                        {activeFiltersCount} active
+                      </span>
+                    )}
+                  </div>
+                  {activeFiltersCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={resetAllFilters}
+                      className="flex items-center gap-1 text-xs font-bold text-magenta hover:underline transition-all"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Reset all
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Stops Filter */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                      Stops
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { id: "all", label: "All Flights" },
+                        { id: "direct", label: "Non-stop (0)" },
+                        { id: "1stop", label: "Max 1 Stop" }
+                      ].map((st) => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => setStopsFilter(st.id as typeof stopsFilter)}
+                          className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                            stopsFilter === st.id
+                              ? "border-cobalt bg-cobalt text-white shadow-xs font-black"
+                              : "border-border bg-muted/40 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Departure Window Filter */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                      Departure Window
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { id: "all", label: "Any" },
+                        { id: "morning", label: "🌅 Morning" },
+                        { id: "afternoon", label: "☀️ Aft" },
+                        { id: "evening", label: "🌙 Eve" },
+                      ].map((w) => (
+                        <button
+                          key={w.id}
+                          type="button"
+                          onClick={() => setDepartureWindow(w.id as typeof departureWindow)}
+                          className={`rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all ${
+                            departureWindow === w.id
+                              ? "border-cobalt bg-cobalt text-white shadow-xs font-black"
+                              : "border-border bg-muted/40 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Airline Selector Filter */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                      Airline Carrier
+                    </label>
+                    <select
+                      value={selectedAirline}
+                      onChange={(e) => setSelectedAirline(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs font-bold text-foreground outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/20"
+                    >
+                      <option value="all">All Airlines ({result.offers.length} offers)</option>
+                      {availableAirlines.map((air) => (
+                        <option key={air.name} value={air.name}>
+                          {air.name} ({air.count} {air.count === 1 ? "flight" : "flights"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Price Range Slider */}
+                {priceStats.max > priceStats.min && (
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-muted-foreground uppercase tracking-wider text-[11px]">
+                        Max Fare Budget
+                      </span>
+                      <span className="font-black text-cobalt text-sm">
+                        Up to {formatPriceWithSymbol(maxPriceCap ?? priceStats.max, selectedCurrency)}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <span className="text-[11px] font-mono font-bold text-muted-foreground">
+                        {formatPriceWithSymbol(priceStats.min, selectedCurrency)}
+                      </span>
+                      <input
+                        type="range"
+                        min={priceStats.min}
+                        max={priceStats.max}
+                        step={Math.max(1, Math.round((priceStats.max - priceStats.min) / 100))}
+                        value={maxPriceCap ?? priceStats.max}
+                        onChange={(e) => setMaxPriceCap(Number(e.target.value))}
+                        className="flex-1 accent-cobalt h-2 bg-muted rounded-lg cursor-pointer"
+                      />
+                      <span className="text-[11px] font-mono font-bold text-muted-foreground">
+                        {formatPriceWithSymbol(priceStats.max, selectedCurrency)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Offer Cards List or Empty state */}
               {shown.length ? (
                 shown.map((o) => (
                   <OfferCard 
@@ -857,10 +1062,18 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
               ) : (
                 <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
                   <Plane className="mx-auto h-10 w-10 text-muted-foreground/60" />
-                  <p className="mt-3 font-extrabold text-lg text-foreground">No flights found for this search</p>
+                  <p className="mt-3 font-extrabold text-lg text-foreground">No flights match your active filters</p>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
-                    Try adjusting your dates, unchecking "Direct Only", or searching alternative regional airports.
+                    Try expanding your price range, clearing airline selections, or resetting stops.
                   </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={resetAllFilters} 
+                    className="mt-4 rounded-xl font-bold"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" /> Reset all filters
+                  </Button>
                 </div>
               )}
             </section>
