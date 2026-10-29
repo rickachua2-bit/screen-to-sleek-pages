@@ -2,8 +2,12 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { bettingCustomer, bettingCustomerBody } from "@/lib/betting";
 import { useBettingCustomer } from "@/lib/betting-verification";
+import { scopeOf } from "@/lib/paddle-policy";
 afterEach(() => vi.useRealTimers());
 const body = { operator: "SPORTY", customerId: "001234" };
+it("treats betting customer lookup as an inquiry, not resource creation", () => {
+  expect(scopeOf({ method: "POST", path: "/v1/bills/betting/validate" })).toBe("reference");
+});
 it("requires a returned customer identity and rejects explicit failures", () => {
   expect(bettingCustomer({ valid: true }, body)).toBeNull();
   expect(bettingCustomer({ customerName: "Ada", valid: false }, body)).toBeNull();

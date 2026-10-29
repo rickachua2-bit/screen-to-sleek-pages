@@ -129,7 +129,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
 
     try {
       const result = await callPaddle(mode, endpoint.method, path, endpoint.method === "GET" ? data.body : data.body, money ? data.idempotencyKey : undefined);
-      if (scopeOf(endpoint) === "create" || scopeOf(endpoint) === "sandbox") {
+      if (!isBetting && (scopeOf(endpoint) === "create" || scopeOf(endpoint) === "sandbox")) {
         const ids = [...resourceIds(result.data)];
         if (ids.length) await db.from("paddle_resources").upsert(ids.map((resource_id) => ({ user_id: user.id, mode, resource_id, operation })), { onConflict: "mode,resource_id", ignoreDuplicates: true });
       }

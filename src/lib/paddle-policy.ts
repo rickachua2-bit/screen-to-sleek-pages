@@ -39,7 +39,7 @@ const MONEY = /\/(payouts|cards\/create|cards$|fund|withdraw|topup|recharge|rene
 
 export function scopeOf(e: Pick<PaddleEndpoint, "method" | "path">): Scope {
   // Authenticated customer inquiry; never register returned identifiers as owned resources.
-  if (e.method === "POST" && e.path === CABLE_VALIDATE.path) return "reference";
+  if (e.method === "POST" && (e.path === CABLE_VALIDATE.path || e.path === "/v1/bills/betting/validate")) return "reference";
   if (INTERNAL.test(e.path)) return "internal";
   if (SANDBOX_ONLY.test(e.path)) return "sandbox";
   if (e.method === "GET" && REFERENCE.test(e.path)) return "reference";

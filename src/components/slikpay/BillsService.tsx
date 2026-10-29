@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { runPaddleOperation } from "@/lib/paddle.functions";
-import { paymentFeedback } from "@/lib/payment-feedback";
+import { paymentFeedback, paymentFailureReason } from "@/lib/payment-feedback";
 import { naira } from "@/lib/api";
 import { SERVICES, reviewTotal, type FlowField, type ServiceDef } from "@/lib/services-registry";
 import { useBankingProfile } from "./PaddleConsole";
@@ -147,7 +147,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
       if (status === "succeeded") remember();
       if (status === "pending") setUncertain(true);
       setStep("done");
-    } catch (e) { setError(paymentFeedback(e, "transfer")); if (betting) setUncertain(true); } finally { setBusy(false); }
+    } catch (e) { setError(paymentFeedback(e, "transfer")); if (betting && ["uncertain", "used_reference"].includes(paymentFailureReason(e))) setUncertain(true); } finally { setBusy(false); }
   };
 
   const summary = fields.filter((f) => f.kind !== "amount").map((f) => [f.label, f.kind === "select" ? (f.choices?.find((c) => c.value === values[f.name])?.label ?? str(picked[f.name]?.["shortName"] ?? picked[f.name]?.["name"] ?? values[f.name])) : values[f.name]] as const);
@@ -246,7 +246,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
       </div>}
 
       {step === "done" && result && <div className="space-y-5 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-tri text-primary-foreground"><Check className="h-7 w-7" /></span>
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-foreground">{result.status === "succeeded" ? <Check className="h-7 w-7 text-chart-2" /> : result.status === "failed" ? <Icons.X className="h-7 w-7 text-destructive" /> : <Icons.Clock className="h-7 w-7 text-muted-foreground" />}</span>
         <div>
           <p className="text-lg font-extrabold">{result.status === "succeeded" ? `${flow.pay.verb} successful` : result.status === "failed" ? "Payment declined" : "Payment awaiting confirmation"}</p>
           {result.status === "pending" && <p className="mt-2 text-sm text-muted-foreground">Check your ledger for updates. Do not fund this account again while confirmation is pending.</p>}
