@@ -115,25 +115,7 @@ function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => voi
         </div>
       </div>
     </div>
-    {currency === "USD" && <div className="mt-3 grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label htmlFor="dd-routing">Routing number</Label>
-        <Input id="dd-routing" inputMode="numeric" value={routingNumber} maxLength={9} onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, ""))} placeholder="021000021" autoComplete="off" required className="font-mono" />
-      </div>
-      <div className="space-y-1.5"><Label htmlFor="dd-account">Account number</Label>
-        <Input id="dd-account" inputMode="numeric" value={accountNumber} maxLength={17} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
-      </div>
-    </div>}
-    {currency === "EUR" && <div className="mt-3 space-y-1.5"><Label htmlFor="dd-iban">Customer IBAN</Label>
-      <Input id="dd-iban" value={iban} maxLength={34} onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="DE89370400440532013000" autoComplete="off" required className="font-mono" />
-    </div>}
-    {currency === "GBP" && <div className="mt-3 grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label htmlFor="dd-sort">Sort code</Label>
-        <Input id="dd-sort" inputMode="numeric" value={sortCode} maxLength={6} onChange={(e) => setSortCode(e.target.value.replace(/\D/g, ""))} placeholder="200000" autoComplete="off" required className="font-mono" />
-      </div>
-      <div className="space-y-1.5"><Label htmlFor="dd-account-uk">Account number</Label>
-        <Input id="dd-account-uk" inputMode="numeric" value={accountNumber} maxLength={17} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
-      </div>
-    </div>}
+    <BankFields currency={currency} idPrefix="dd" v={{ routingNumber, accountNumber, iban, sortCode, setRoutingNumber, setAccountNumber, setIban, setSortCode }} />
     <div className="mt-3 space-y-1.5"><Label htmlFor="dd-desc">Description <span className="text-muted-foreground">(optional)</span></Label>
       <Input id="dd-desc" value={description} maxLength={140} onChange={(e) => setDescription(e.target.value)} placeholder="October subscription" autoComplete="off" />
     </div>
