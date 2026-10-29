@@ -20,6 +20,18 @@ export interface DirectDebitView {
 
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/;
 
+function bankDetailRefine(v: { currency: string; routingNumber?: string | undefined; accountNumber?: string | undefined; iban?: string | undefined; sortCode?: string | undefined }, ctx: z.RefinementCtx) {
+  if (v.currency === "USD" && (!v.routingNumber || !v.accountNumber)) {
+    ctx.addIssue({ code: "custom", message: "US debits need a 9-digit routing number and account number." });
+  }
+  if (v.currency === "EUR" && !v.iban) {
+    ctx.addIssue({ code: "custom", message: "EU debits need the customer's IBAN." });
+  }
+  if (v.currency === "GBP" && (!v.sortCode || !v.accountNumber)) {
+    ctx.addIssue({ code: "custom", message: "UK debits need a 6-digit sort code and account number." });
+  }
+}
+
 const createSchema = z
   .object({
     customerName: z.string().trim().min(2).max(120),
