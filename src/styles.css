@@ -1003,3 +1003,27 @@ html { scroll-behavior: smooth; }
 .developer-studio-workspace { padding: 30px; min-width: 0; }
 @media (max-width: 1100px) { .developer-studio { grid-template-columns: 185px minmax(0, 1fr); } .developer-studio-workspace { padding: 24px 18px; } .developer-studio-rail { padding: 24px 14px; } }
 @media (max-width: 760px) { .developer-studio { grid-template-columns: minmax(0, 1fr); } .developer-studio-rail { border-radius: 8px 8px 0 0; padding: 20px; } .developer-studio-rail > svg, .developer-studio-rail > p:first-child, .developer-studio-readiness, .developer-studio-rail > button { display: none; } .developer-studio-rail h2 { margin-top: 0; font-size: 22px; } .developer-studio-rail > div.my-6 { margin-block: 16px; } .developer-studio-navigation { flex-direction: row; overflow-x: auto; padding-bottom: 4px; } .developer-studio-nav { flex-shrink: 0; padding-inline: 12px; } .developer-studio-workspace { padding: 24px 16px; } }
+
+/* Mission Control keeps the shell's sidebar and gives developers a bright telemetry workspace. */
+.mission-control { min-width: 0; background: var(--card); color: var(--foreground); letter-spacing: 0; }
+.mission-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.mission-navigation { --foreground: var(--transfer-on-night); --accent: color-mix(in oklab, var(--cyan) 12%, var(--navy)); --accent-foreground: var(--foreground); display: flex; gap: 4px; overflow-x: auto; padding: 7px; margin-top: 18px; background: var(--navy); color: var(--foreground); border-radius: 8px; }
+.mission-nav { color: var(--foreground); flex-shrink: 0; font-size: 11px; height: 39px; padding-inline: 12px; }
+.mission-nav[aria-current="page"] { background: var(--cobalt); color: var(--transfer-on-night); }
+.mission-workspace { min-width: 0; padding-block: 26px; }
+.mission-metric { position: relative; min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 18px; background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 3%, var(--card)), var(--card)); }
+.mission-metric-icon { display: inline-flex; border-radius: 6px; padding: 9px; margin-bottom: 14px; color: var(--primary); background: color-mix(in oklab, var(--primary) 9%, var(--card)); }
+.mission-metric[data-tone="success"] .mission-metric-icon { color: var(--success); background: var(--success-soft); }
+.mission-metric[data-tone="magenta"] .mission-metric-icon { color: var(--magenta); background: color-mix(in oklab, var(--magenta) 8%, var(--card)); }
+.mission-activity-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; }
+.mission-bottom-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+.mission-section { min-width: 0; padding: 20px 0; border-top: 1px solid var(--border); }
+.mission-empty { height: 100%; min-height: 210px; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: 12px; text-align: center; }
+.mission-key-list { display: grid; gap: 12px; }
+.mission-key-row { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in oklab, var(--primary) 2%, var(--card)); }
+.mission-keys-compact .mission-key-row { padding: 12px; }
+.mission-code { --foreground: var(--transfer-on-night); --accent: color-mix(in oklab, var(--cyan) 12%, var(--navy)); --accent-foreground: var(--foreground); position: relative; min-width: 0; padding: 18px; background: var(--navy); color: var(--foreground); border-radius: 8px; min-height: 145px; }
+.mission-keys > .mission-key-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mission-webhook-metric { min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+@media (max-width: 1100px) { .mission-activity-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .mission-bottom-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .mission-activity-grid, .mission-keys > .mission-key-list { grid-template-columns: minmax(0, 1fr); } .mission-metric { padding: 14px; } .mission-metric strong { font-size: 26px; } .mission-workspace { padding-block: 22px; } .mission-section { padding-block: 18px; } .mission-key-row > div:last-child { flex-wrap: wrap; } }
