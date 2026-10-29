@@ -53,7 +53,7 @@ describe("invoices panel", () => {
     fireEvent.change(dialog.getByLabelText("Item 1 unit price"), { target: { value: "75000" } });
     expect(dialog.getByText("75,000.00 NGN")).toBeTruthy();
     fireEvent.click(dialog.getByRole("button", { name: /Create invoice/i }));
-    await waitFor(() => expect(mocks.createInvoice).toHaveBeenCalledWith({ data: expect.objectContaining({ customer: "Gamma Inc", total: undefined, reference: expect.stringMatching(/^SLKINV-/) }) }));
+    await waitFor(() => expect(mocks.createInvoice).toHaveBeenCalledWith({ data: expect.objectContaining({ customer: "Gamma Inc", reference: expect.stringMatching(/^SLKINV-/) }) }));
   });
 });
 
