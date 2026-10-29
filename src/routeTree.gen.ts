@@ -14,6 +14,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
+import { Route as ApiPublicBusinessV1BalancesRouteImport } from './routes/api/public/business/v1/balances'
+import { Route as ApiPublicBusinessV1BanksRouteImport } from './routes/api/public/business/v1/banks'
+import { Route as ApiPublicBusinessV1ReceiptsRouteImport } from './routes/api/public/business/v1/receipts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +43,24 @@ const ApiPublicPaddleWebhookRoute = ApiPublicPaddleWebhookRouteImport.update({
   path: '/api/public/paddle-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBusinessV1BalancesRoute =
+  ApiPublicBusinessV1BalancesRouteImport.update({
+    id: '/api/public/business/v1/balances',
+    path: '/api/public/business/v1/balances',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBusinessV1BanksRoute =
+  ApiPublicBusinessV1BanksRouteImport.update({
+    id: '/api/public/business/v1/banks',
+    path: '/api/public/business/v1/banks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBusinessV1ReceiptsRoute =
+  ApiPublicBusinessV1ReceiptsRouteImport.update({
+    id: '/api/public/business/v1/receipts',
+    path: '/api/public/business/v1/receipts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +68,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
+  '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
+  '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
+  '/api/public/business/v1/receipts': typeof ApiPublicBusinessV1ReceiptsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +78,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
+  '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
+  '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
+  '/api/public/business/v1/receipts': typeof ApiPublicBusinessV1ReceiptsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +89,31 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
+  '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
+  '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
+  '/api/public/business/v1/receipts': typeof ApiPublicBusinessV1ReceiptsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/dashboard' | '/personal' | '/api/public/paddle-webhook'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/personal'
+    | '/api/public/paddle-webhook'
+    | '/api/public/business/v1/balances'
+    | '/api/public/business/v1/banks'
+    | '/api/public/business/v1/receipts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/personal' | '/api/public/paddle-webhook'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/personal'
+    | '/api/public/paddle-webhook'
+    | '/api/public/business/v1/balances'
+    | '/api/public/business/v1/banks'
+    | '/api/public/business/v1/receipts'
   id:
     | '__root__'
     | '/'
@@ -76,6 +121,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/personal'
     | '/api/public/paddle-webhook'
+    | '/api/public/business/v1/balances'
+    | '/api/public/business/v1/banks'
+    | '/api/public/business/v1/receipts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -84,6 +132,9 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   PersonalRoute: typeof PersonalRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
+  ApiPublicBusinessV1BalancesRoute: typeof ApiPublicBusinessV1BalancesRoute
+  ApiPublicBusinessV1BanksRoute: typeof ApiPublicBusinessV1BanksRoute
+  ApiPublicBusinessV1ReceiptsRoute: typeof ApiPublicBusinessV1ReceiptsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,6 +174,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaddleWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/business/v1/balances': {
+      id: '/api/public/business/v1/balances'
+      path: '/api/public/business/v1/balances'
+      fullPath: '/api/public/business/v1/balances'
+      preLoaderRoute: typeof ApiPublicBusinessV1BalancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/business/v1/banks': {
+      id: '/api/public/business/v1/banks'
+      path: '/api/public/business/v1/banks'
+      fullPath: '/api/public/business/v1/banks'
+      preLoaderRoute: typeof ApiPublicBusinessV1BanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/business/v1/receipts': {
+      id: '/api/public/business/v1/receipts'
+      path: '/api/public/business/v1/receipts'
+      fullPath: '/api/public/business/v1/receipts'
+      preLoaderRoute: typeof ApiPublicBusinessV1ReceiptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +204,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   PersonalRoute: PersonalRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,
+  ApiPublicBusinessV1BalancesRoute: ApiPublicBusinessV1BalancesRoute,
+  ApiPublicBusinessV1BanksRoute: ApiPublicBusinessV1BanksRoute,
+  ApiPublicBusinessV1ReceiptsRoute: ApiPublicBusinessV1ReceiptsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
