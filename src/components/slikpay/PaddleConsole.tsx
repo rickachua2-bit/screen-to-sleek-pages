@@ -10,6 +10,7 @@ import { getBankingProfile, runPaddleOperation, submitIdentityCheck } from "@/li
 import { consoleReceiptMessage, whiteLabelConsoleText } from "@/lib/console-safety";
 import { paymentFeedback } from "@/lib/payment-feedback";
 import { WebhookMonitor } from "./WebhookMonitor";
+import { BusinessApiKeys, BusinessApiDocs } from "./BusinessApiKeys";
 
 type Profile = Awaited<ReturnType<typeof getBankingProfile>>;
 
@@ -202,13 +203,8 @@ export function PaddleConsole({ role }: { role: Role }) {
       <Button variant="outline" className="mt-6 w-full" onClick={() => void refresh()}><RefreshCw />Refresh account</Button>
     </aside>
     <div className="developer-studio-workspace space-y-6">
-    {tab === "keys" && <section className="space-y-6"><header className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-bold">API keys and access</h2><p className="mt-2 text-sm text-muted-foreground">Business credentials · separate sandbox and live access</p></div><Button disabled title="Business key issuance is not connected"><KeyRound />Create key</Button></header>
-      <div className="divide-y divide-border">{[ { name: "Sandbox secret key", detail: "Testing and development", icon: FlaskConical, tone: "text-primary bg-primary/10" }, { name: "Live secret key", detail: "Production access", icon: Radio, tone: "text-magenta bg-magenta/10" }].map(({ name, detail, icon: Icon, tone }) => <article key={name} className="flex flex-wrap items-center gap-4 py-6"><span className={`rounded-md p-3 ${tone}`}><Icon className="size-5" /></span><div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{name}</h3><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div><div className="text-right"><p className="text-sm font-semibold">Not issued</p><p className="mt-1 text-xs text-muted-foreground">Key management not connected</p></div><Lock className="size-4 text-muted-foreground" /></article>)}</div>
-      <div className="grid gap-6 border-y border-border py-6 sm:grid-cols-3">{[{ icon: ShieldCheck, title: "Key permissions", value: "Not configured" }, { icon: RefreshCw, title: "Rotation & expiry", value: "Not configured" }, { icon: Lock, title: "IP restrictions", value: "Not configured" }].map(({ icon: Icon, title, value }) => <div key={title}><Icon className="mb-3 size-5 text-primary" /><p className="text-sm font-semibold">{title}</p><p className="mt-2 text-xs text-muted-foreground">{value}</p></div>)}</div>
-      <section className="flex flex-wrap items-start justify-between gap-4 py-2"><div className="flex gap-3"><Webhook className="mt-1 size-6 text-primary" /><div><h3 className="font-bold">Webhook delivery history</h3><p className="mt-2 text-xs text-muted-foreground">Incoming signed events and reconciliation for your receiving accounts.</p></div></div><Button variant="outline" onClick={() => setTab("webhooks")}>View deliveries<ArrowUpRight /></Button></section>
-      <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0 text-primary" />Platform banking credentials stay private and are never shared as business API keys.</p>
-    </section>}
-    {tab === "docs" && <section className="space-y-6"><BookOpen className="size-8 text-primary" /><h2 className="text-2xl font-bold">Developer documentation</h2><p className="text-sm text-muted-foreground">Public Slikpay API documentation is not published yet. Business API endpoints and credentials are not available.</p><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => setTab("explorer")}><Code2 />Browse connected operations</Button><Button variant="outline" onClick={() => setTab("webhooks")}><Webhook />Check incoming events</Button></div></section>}
+    {tab === "keys" && <BusinessApiKeys />}
+    {tab === "docs" && <BusinessApiDocs />}
     {error && <p role="alert" className="text-sm text-destructive">Account information is unavailable. Refresh before making a request.</p>}
     {tab === "webhooks" && <WebhookMonitor />}
     {tab === "explorer" && <>
