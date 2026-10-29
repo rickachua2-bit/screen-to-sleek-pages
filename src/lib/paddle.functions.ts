@@ -57,6 +57,10 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     if (!endpoint) throw new Error("Unknown service.");
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { db, user, role, mode, review } = await bankingUser();
+    if (["post-bills-firs-pay", "post-bills-remita-pay"].includes(endpoint.id)) {
+      const { executeGovernment } = await import("./government-payments.server");
+      return executeGovernment(endpoint.id === "post-bills-firs-pay" ? "firs" : "remita", data.body, data.idempotencyKey, data.pin);
+    }
     if (isUnverifiedInternationalPayout(endpoint.path)) throw new Error(INTERNATIONAL_NOT_ACTIVE);
     if (endpoint.path === "/v1/crypto/swap") {
       throw new Error("Use the wallet conversion screen for protected conversion and recovery.");
