@@ -117,8 +117,8 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
     <div className="flex items-start gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><ArrowLeftRight className="h-5 w-5" /></span><div><h2 className="text-xl font-bold text-foreground">Crypto to bank</h2><p className="mt-1 text-sm text-muted-foreground">USDT or USDC → NGN → bank account</p></div></div>
     <div className="space-y-3 border-b border-border pb-5"><p className="text-sm font-semibold text-foreground">Recipient · NGN bank account</p>
       {(!payment || ["ready", "converted", "conversion_pending"].includes(payment.stage)) && <>
-        <RecipientBankPicker banks={banks} bank={bank} error={bankError} onRetry={loadBanks} onSelect={setBank} />
-        <label className="block text-sm font-semibold text-foreground">Account number<input aria-label="Cash-out recipient account number" inputMode="numeric" autoComplete="off" maxLength={10} className="field mt-2" value={account} onChange={(e) => setAccount(e.target.value.replace(/\D/g, ""))} /></label>
+        <RecipientBankPicker banks={banks} bank={bank} error={bankError} onRetry={loadBanks} onSelect={(selected) => { setDestination(null); setBank(selected); }} />
+        <label className="block text-sm font-semibold text-foreground">Account number<input aria-label="Cash-out recipient account number" inputMode="numeric" autoComplete="off" maxLength={10} className="field mt-2" value={account} onChange={(e) => { setDestination(null); setAccount(e.target.value.replace(/\D/g, "")); }} /></label>
       </>}
       {lookup && <p role="status" className="text-sm text-muted-foreground">{lookup}</p>}
       {destination && <p className="text-sm font-semibold text-primary">{destination.accountName} · {bank?.name} · {destination.accountNumber}</p>}
