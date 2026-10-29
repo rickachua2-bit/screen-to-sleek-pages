@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeCheck, Building2, CalendarClock, Clock3, Landmark, Loader2, Lock, RefreshCw, Repeat, Search, TriangleAlert, Wallet } from "lucide-react";
+import { BadgeCheck, Building2, CalendarClock, Clock3, Landmark, Loader2, Lock, Pause, Play, PlayCircle, RefreshCw, Repeat, Search, Trash2, TriangleAlert, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createDirectDebit, listDirectDebits, DEBIT_CURRENCIES, type DebitCurrency, type DirectDebitView } from "@/lib/mandates.functions";
+import { createDirectDebit, createSchedule, deleteSchedule, listDirectDebits, listSchedules, runSchedule, setScheduleActive, DEBIT_CURRENCIES, SCHEDULE_FREQUENCIES, type BillingScheduleView, type DebitCurrency, type DirectDebitView } from "@/lib/mandates.functions";
 import type { LinkStatus } from "@/lib/checkout-links.server";
 import { useBankingProfile } from "./PaddleConsole";
 import hero from "@/assets/direct-debit-hero.jpg";
@@ -20,6 +20,33 @@ const STATUS_STYLE: Record<LinkStatus, { label: string; className: string }> = {
 };
 
 const RAIL_LABEL: Record<DebitCurrency, string> = { USD: "US ACH", EUR: "EU SEPA", GBP: "UK Bacs" };
+
+interface BankFieldValues {
+  routingNumber: string; accountNumber: string; iban: string; sortCode: string;
+  setRoutingNumber: (v: string) => void; setAccountNumber: (v: string) => void; setIban: (v: string) => void; setSortCode: (v: string) => void;
+}
+
+export function bankFieldsValid(currency: DebitCurrency, v: { routingNumber: string; accountNumber: string; iban: string; sortCode: string }): boolean {
+  return currency === "USD" ? /^\d{9}$/.test(v.routingNumber) && /^\d{4,17}$/.test(v.accountNumber)
+    : currency === "EUR" ? /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v.iban)
+    : /^\d{6}$/.test(v.sortCode) && /^\d{4,17}$/.test(v.accountNumber);
+}
+
+function BankFields({ currency, idPrefix, v }: { currency: DebitCurrency; idPrefix: string; v: BankFieldValues }) {
+  if (currency === "EUR") return <div className="mt-3 space-y-1.5"><Label htmlFor={`${idPrefix}-iban`}>Customer IBAN</Label>
+    <Input id={`${idPrefix}-iban`} value={v.iban} maxLength={34} onChange={(e) => v.setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="DE89370400440532013000" autoComplete="off" required className="font-mono" />
+  </div>;
+  const sort = currency === "GBP";
+  return <div className="mt-3 grid gap-3 sm:grid-cols-2">
+    <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-a`}>{sort ? "Sort code" : "Routing number"}</Label>
+      <Input id={`${idPrefix}-a`} inputMode="numeric" value={sort ? v.sortCode : v.routingNumber} maxLength={sort ? 6 : 9}
+        onChange={(e) => (sort ? v.setSortCode : v.setRoutingNumber)(e.target.value.replace(/\D/g, ""))} placeholder={sort ? "200000" : "021000021"} autoComplete="off" required className="font-mono" />
+    </div>
+    <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-b`}>Account number</Label>
+      <Input id={`${idPrefix}-b`} inputMode="numeric" value={v.accountNumber} maxLength={17} onChange={(e) => v.setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
+    </div>
+  </div>;
+}
 
 function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => void }) {
   const createFn = useServerFn(createDirectDebit);
@@ -37,10 +64,7 @@ function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => voi
 
   const amountValid = /^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) > 0;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const bankValid =
-    currency === "USD" ? /^\d{9}$/.test(routingNumber) && /^\d{4,17}$/.test(accountNumber)
-    : currency === "EUR" ? /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban)
-    : /^\d{6}$/.test(sortCode) && /^\d{4,17}$/.test(accountNumber);
+  const bankValid = bankFieldsValid(currency, { routingNumber, accountNumber, iban, sortCode });
   const valid = name.trim().length >= 2 && emailValid && amountValid && bankValid;
 
   const submit = async (e: React.FormEvent) => {
@@ -91,25 +115,7 @@ function CreateDebitCard({ onCreated }: { onCreated: (d: DirectDebitView) => voi
         </div>
       </div>
     </div>
-    {currency === "USD" && <div className="mt-3 grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label htmlFor="dd-routing">Routing number</Label>
-        <Input id="dd-routing" inputMode="numeric" value={routingNumber} maxLength={9} onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, ""))} placeholder="021000021" autoComplete="off" required className="font-mono" />
-      </div>
-      <div className="space-y-1.5"><Label htmlFor="dd-account">Account number</Label>
-        <Input id="dd-account" inputMode="numeric" value={accountNumber} maxLength={17} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
-      </div>
-    </div>}
-    {currency === "EUR" && <div className="mt-3 space-y-1.5"><Label htmlFor="dd-iban">Customer IBAN</Label>
-      <Input id="dd-iban" value={iban} maxLength={34} onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="DE89370400440532013000" autoComplete="off" required className="font-mono" />
-    </div>}
-    {currency === "GBP" && <div className="mt-3 grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label htmlFor="dd-sort">Sort code</Label>
-        <Input id="dd-sort" inputMode="numeric" value={sortCode} maxLength={6} onChange={(e) => setSortCode(e.target.value.replace(/\D/g, ""))} placeholder="200000" autoComplete="off" required className="font-mono" />
-      </div>
-      <div className="space-y-1.5"><Label htmlFor="dd-account-uk">Account number</Label>
-        <Input id="dd-account-uk" inputMode="numeric" value={accountNumber} maxLength={17} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0284719283" autoComplete="off" required className="font-mono" />
-      </div>
-    </div>}
+    <BankFields currency={currency} idPrefix="dd" v={{ routingNumber, accountNumber, iban, sortCode, setRoutingNumber, setAccountNumber, setIban, setSortCode }} />
     <div className="mt-3 space-y-1.5"><Label htmlFor="dd-desc">Description <span className="text-muted-foreground">(optional)</span></Label>
       <Input id="dd-desc" value={description} maxLength={140} onChange={(e) => setDescription(e.target.value)} placeholder="October subscription" autoComplete="off" />
     </div>
@@ -136,6 +142,185 @@ function DebitRow({ d }: { d: DirectDebitView }) {
       <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${st.className}`}>{st.label}</span>
     </div>
   </li>;
+}
+
+function ScheduleRow({ s, busy, onRun, onToggle, onDelete }: { s: BillingScheduleView; busy: boolean; onRun: (s: BillingScheduleView) => void; onToggle: (s: BillingScheduleView) => void; onDelete: (s: BillingScheduleView) => void }) {
+  const next = new Date(s.nextRun);
+  const due = s.active && next.getTime() <= Date.now();
+  return <li className="rounded-xl border border-border bg-card px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${s.active ? "bg-magenta/10" : "bg-muted/60"}`}><CalendarClock className={`h-4 w-4 ${s.active ? "text-magenta" : "text-muted-foreground"}`} /></span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold">{s.customerName} <span className="font-normal text-muted-foreground">· {s.accountHint}</span></p>
+          <p className="text-[11px] text-muted-foreground">{s.frequency === "weekly" ? "Every week" : "Every month"} · {s.runs} run{s.runs === 1 ? "" : "s"} so far{due ? " · due now" : ` · next ${next.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-extrabold tabular-nums">{money(s.amount, s.currency)}</p>
+        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${s.active ? "border-success/40 bg-success/10 text-success" : "border-border bg-muted/50 text-muted-foreground"}`}>{s.active ? "Active" : "Paused"}</span>
+      </div>
+    </div>
+    <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
+      <Button variant="brand" size="sm" disabled={busy || !s.active} onClick={() => onRun(s)}><PlayCircle className="h-3.5 w-3.5" />{due ? "Run due debit" : "Run now"}</Button>
+      <Button variant="outline" size="sm" disabled={busy} onClick={() => onToggle(s)}>{s.active ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}{s.active ? "Pause" : "Resume"}</Button>
+      <Button variant="outline" size="sm" disabled={busy} aria-label={`Delete schedule for ${s.customerName}`} onClick={() => onDelete(s)}><Trash2 className="h-3.5 w-3.5" />Delete</Button>
+    </div>
+  </li>;
+}
+
+function SchedulesPanel({ onDebit }: { onDebit: (d: DirectDebitView) => void }) {
+  const listFn = useServerFn(listSchedules);
+  const createFn = useServerFn(createSchedule);
+  const runFn = useServerFn(runSchedule);
+  const toggleFn = useServerFn(setScheduleActive);
+  const deleteFn = useServerFn(deleteSchedule);
+  const [schedules, setSchedules] = useState<BillingScheduleView[] | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<DebitCurrency>("USD");
+  const [description, setDescription] = useState("");
+  const [frequency, setFrequency] = useState<"weekly" | "monthly">("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [iban, setIban] = useState("");
+  const [sortCode, setSortCode] = useState("");
+
+  const amountValid = /^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) > 0;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const valid = name.trim().length >= 2 && emailValid && amountValid && !!startDate && bankFieldsValid(currency, { routingNumber, accountNumber, iban, sortCode });
+
+  const load = useCallback(async () => {
+    setError("");
+    try { const r = await listFn(); setSchedules(r.schedules); }
+    catch (e) { setError(e instanceof Error ? e.message : "Your billing schedules could not be loaded. Try again."); }
+  }, [listFn]);
+  useEffect(() => { void load(); }, [load]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valid || busy) return;
+    setBusy(true); setError("");
+    try {
+      const s = await createFn({
+        data: {
+          customerName: name.trim(), customerEmail: email.trim(), amount: Number(amount), currency,
+          description: description.trim() || undefined, frequency, startDate,
+          routingNumber: currency === "USD" ? routingNumber : undefined,
+          accountNumber: currency !== "EUR" ? accountNumber : undefined,
+          iban: currency === "EUR" ? iban : undefined,
+          sortCode: currency === "GBP" ? sortCode : undefined,
+        },
+      });
+      toast.success(`Schedule created for ${s.customerName}`);
+      setSchedules((prev) => (prev ? [s, ...prev] : prev));
+      setName(""); setEmail(""); setAmount(""); setDescription(""); setStartDate(""); setRoutingNumber(""); setAccountNumber(""); setIban(""); setSortCode("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The schedule could not be created. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  const run = async (s: BillingScheduleView) => {
+    if (busy) return;
+    setBusy(true); setError("");
+    try {
+      const r = await runFn({ data: { id: s.id } });
+      setSchedules((prev) => prev?.map((x) => (x.id === r.schedule.id ? r.schedule : x)) ?? prev);
+      onDebit(r.debit);
+      toast.success(`Debit of ${money(r.debit.amount, r.debit.currency)} started for ${s.customerName}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "This run could not be started. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  const toggle = async (s: BillingScheduleView) => {
+    if (busy) return;
+    setBusy(true); setError("");
+    try {
+      const updated = await toggleFn({ data: { id: s.id, active: !s.active } });
+      setSchedules((prev) => prev?.map((x) => (x.id === updated.id ? updated : x)) ?? prev);
+      toast.success(updated.active ? "Schedule resumed" : "Schedule paused");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The schedule could not be updated. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  const remove = async (s: BillingScheduleView) => {
+    if (busy) return;
+    setBusy(true); setError("");
+    try {
+      await deleteFn({ data: { id: s.id } });
+      setSchedules((prev) => prev?.filter((x) => x.id !== s.id) ?? prev);
+      toast.success("Schedule deleted");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The schedule could not be deleted. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  return <div className="space-y-4">
+    <form className="rounded-2xl border border-border bg-card p-5 shadow-sm" onSubmit={(e) => void submit(e)} aria-label="Create billing schedule">
+      <h3 className="font-bold">Create a billing schedule</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">Save a customer's bank details once, then collect weekly or monthly. Each run is a real direct debit you trigger from here — due schedules are flagged so you never miss one.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label htmlFor="sc-name">Customer name</Label>
+          <Input id="sc-name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Johnathan Edwards" autoComplete="off" required />
+        </div>
+        <div className="space-y-1.5"><Label htmlFor="sc-email">Customer email</Label>
+          <Input id="sc-email" type="email" value={email} maxLength={160} onChange={(e) => setEmail(e.target.value)} placeholder="customer@domain.com" autoComplete="off" required />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div className="space-y-1.5"><Label htmlFor="sc-amount">Amount per run</Label>
+          <Input id="sc-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoComplete="off" required className="h-11 font-bold tabular-nums" />
+        </div>
+        <div className="space-y-1.5"><Label id="sc-currency-label">Rail & currency</Label>
+          <div className="flex gap-1.5" role="group" aria-labelledby="sc-currency-label">
+            {DEBIT_CURRENCIES.map((c) => <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
+              className={`h-11 rounded-lg border px-3 text-xs font-bold transition-colors ${currency === c ? "border-cobalt bg-cobalt text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-cobalt/50"}`}>
+              {c}<span className="ml-1 hidden font-normal opacity-70 sm:inline">{RAIL_LABEL[c]}</span>
+            </button>)}
+          </div>
+        </div>
+      </div>
+      <BankFields currency={currency} idPrefix="sc" v={{ routingNumber, accountNumber, iban, sortCode, setRoutingNumber, setAccountNumber, setIban, setSortCode }} />
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5"><Label id="sc-freq-label">Frequency</Label>
+          <div className="flex gap-1.5" role="group" aria-labelledby="sc-freq-label">
+            {SCHEDULE_FREQUENCIES.map((f) => <button key={f} type="button" aria-pressed={frequency === f} onClick={() => setFrequency(f)}
+              className={`h-11 flex-1 rounded-lg border px-3 text-xs font-bold capitalize transition-colors ${frequency === f ? "border-magenta bg-magenta text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-magenta/50"}`}>{f}</button>)}
+          </div>
+        </div>
+        <div className="space-y-1.5"><Label htmlFor="sc-start">First run</Label>
+          <Input id="sc-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required className="h-11" />
+        </div>
+        <div className="space-y-1.5"><Label htmlFor="sc-desc">Description <span className="text-muted-foreground">(optional)</span></Label>
+          <Input id="sc-desc" value={description} maxLength={140} onChange={(e) => setDescription(e.target.value)} placeholder="Monthly retainer" autoComplete="off" className="h-11" />
+        </div>
+      </div>
+      {error && <p role="alert" className="mt-3 text-xs text-destructive">{error}</p>}
+      <Button type="submit" variant="brand" className="mt-4 w-full" disabled={!valid || busy}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarClock className="h-4 w-4" />}{busy ? "Saving…" : "Create schedule"}
+      </Button>
+    </form>
+
+    <div className="rounded-xl border border-cyan/30 bg-cyan/5 p-3.5 text-xs text-muted-foreground">
+      <p className="flex items-start gap-2"><Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan" />Schedules run when you trigger them — open this page and press Run on anything due. Bank details are stored securely on your account and never shown again.</p>
+    </div>
+
+    {schedules === null && !error && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your schedules…</p>}
+    {schedules && !schedules.length && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-magenta/10"><CalendarClock className="h-6 w-6 text-magenta" /></span>
+      <h3 className="mt-4 font-bold">No billing schedules yet</h3>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">Create your first schedule above — perfect for retainers, subscriptions and rent collection.</p>
+    </div>}
+    <ul className="space-y-3">
+      {(schedules ?? []).map((s) => <ScheduleRow key={s.id} s={s} busy={busy} onRun={(x) => void run(x)} onToggle={(x) => void toggle(x)} onDelete={(x) => void remove(x)} />)}
+    </ul>
+  </div>;
 }
 
 const TABS = [
@@ -196,11 +381,7 @@ export function DirectDebits({ preview }: { preview?: { debits: DirectDebitView[
           {TABS.map((t) => <Button key={t.id} variant={tab === t.id ? "default" : "outline"} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}><t.icon />{t.label}</Button>)}
         </div>
 
-        {tab === "schedules" && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-magenta/10"><CalendarClock className="h-6 w-6 text-magenta" /></span>
-          <h3 className="mt-4 font-bold">Recurring schedules are not connected yet</h3>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">Automatic weekly or monthly debits will appear here once the scheduling service is available. Until then, start each debit from the Direct debits tab — nothing is charged automatically.</p>
-        </div>}
+        {tab === "schedules" && <SchedulesPanel onDebit={(d) => setDebits((prev) => (prev ? [d, ...prev] : prev))} />}
 
         {tab === "debits" && <>
           <CreateDebitCard onCreated={(d) => setDebits((prev) => (prev ? [d, ...prev] : prev))} />
