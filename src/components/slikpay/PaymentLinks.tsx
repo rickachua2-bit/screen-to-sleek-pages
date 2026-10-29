@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createPaymentLink, listPaymentLinks, type PaymentLinkView } from "@/lib/payment-links.functions";
 import { useBankingProfile } from "./PaddleConsole";
+import { CatalogPanel, InvoicesPanel } from "./InvoiceCatalog";
 
 const money = (n: number, currency: string) => `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 const CURRENCIES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"];
@@ -96,14 +97,6 @@ function CreatedPanel({ link, onDone }: { link: PaymentLinkView; onDone: () => v
   </div>;
 }
 
-function ComingSoon({ icon: Icon, title, text }: { icon: typeof FileText; title: string; text: string }) {
-  return <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
-    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cobalt/10"><Icon className="h-6 w-6 text-cobalt" /></span>
-    <h3 className="mt-4 font-bold">{title}</h3>
-    <p className="mt-2 max-w-sm text-sm text-muted-foreground">{text}</p>
-    <p className="mt-4 rounded-full border border-magenta/40 bg-magenta/5 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-magenta">Not connected yet</p>
-  </div>;
-}
 
 export function PaymentLinks() {
   const listFn = useServerFn(listPaymentLinks);
