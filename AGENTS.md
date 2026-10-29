@@ -34,4 +34,5 @@
 - Only owner-confirmed USDT/USDC-to-NGN swaps execute through executeVerifiedSwap; generic catalog swaps stay blocked. Completed toAmount is net of fee; owned same-key receipts recover pending conversions without reserving twice, and transactional settlement posts NGN once.
 - Crypto cash-out previews use authenticated crypto/rates sell and wholesale pairs; their difference is the embedded provider spread, not an extra charge. Rate previews never authorize conversion.
 - CryptoBankFunding uses swapCurrency then protected runPaddleOperation NIP transfers to any resolved NGN recipient with separate approval; pending conversions resume original receipt keys, pairs and amounts. Bank payouts never auto-retry and retain uncertain holds.
-- Payment failure presentation uses the shared paymentFeedback allowlist; never echo raw errors or treat uncertain dispatch as a confirmed decline, because messages must remain white-labelled and cannot establish settlement.
+- Payment errors use paymentFeedback; never echo raw errors or equate uncertain dispatch with decline.
+- BulkImport maps/corrects files before server preparation; saved row keys and protected payment execution remain unchanged to prevent duplicates.
