@@ -1,6 +1,6 @@
 import { accountAdmin, digest } from "./merchant-verification.server";
 import { validBusinessKey } from "./business-api";
-import { callPaddle, providerBalances } from "./paddle.server";
+import { callPaddle } from "./paddle.server";
 import { redactConsole } from "./developer-console";
 
 export async function businessApi(request: Request, operation: "balances" | "receipts" | "banks") {
