@@ -4,6 +4,7 @@ import {
   ShieldCheck, Smartphone, Users, Wallet, Zap, type LucideIcon,
 } from "lucide-react";
 import { Logo } from "./Logo";
+import { DOCS_URL } from "@/lib/business-api";
 
 const Eyebrow = ({ children }: { children: React.ReactNode }) => (
   <span className="inline-flex items-center gap-1.5 rounded-full border border-cobalt/20 bg-cobalt/5 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt">{children}</span>
@@ -23,7 +24,7 @@ export function TopNav() {
           <span className="hidden items-center gap-1.5 rounded-full border border-success/30 bg-success-soft px-3 py-1.5 text-xs font-bold text-success md:inline-flex">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> All systems live
           </span>
-          <a href="#how" className="hidden rounded-full border-2 border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:border-cobalt sm:inline-flex">Developer Docs</a>
+          <a href={DOCS_URL} target="_blank" rel="noreferrer noopener" className="hidden rounded-full border-2 border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:border-cobalt sm:inline-flex">Developer Docs</a>
           <a href="#signin" className="shine rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90">Get Mobile App</a>
         </div>
       </div>
@@ -319,7 +320,7 @@ export function Footer() {
           <span className="text-xs font-semibold text-muted-foreground">© 2026 Slikpay Technologies Ltd.</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-5 text-xs font-bold text-body">
-          {["Features", "KYC / KYB", "How It Works", "Developer Docs", "Terms", "Privacy"].map((l) => <a key={l} href="#offer" className="hover:text-cobalt">{l}</a>)}
+          {[["Features", "#offer"], ["KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Developer Docs", DOCS_URL], ["Terms", "#legal"], ["Privacy", "#legal"]].map(([l, h]) => <a key={l} href={h} {...(h.startsWith("http") ? { target: "_blank", rel: "noreferrer noopener" } : {})} className="hover:text-cobalt">{l}</a>)}
         </nav>
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-muted-foreground"><ArrowLeftRight className="h-3 w-3" /> PCI-DSS L1 · TLS 1.3</span>
       </div>
