@@ -13,6 +13,7 @@ import { SERVICES, reviewTotal, serviceStatus, type FlowField, type OptionItem, 
 import { useBankingProfile } from "./PaddleConsole";
 import { ServicesCatalog } from "./ServicesCatalog";
 import { InternationalServices } from "./InternationalServices";
+import { GovernmentPayments } from "./GovernmentPayments";
 
 const PERSONAL_MODULES: Record<string, string> = { banking: "send", cards: "cards", treasury: "savings" };
 const naira = (n: number) => `₦${n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -63,6 +64,11 @@ export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?
 type Step = "details" | "review" | "done";
 
 export function GuidedService({ service, live, onClose, onDone }: { service: ServiceDef; live: boolean; onClose: () => void; onDone: (label: string) => void }) {
+  if (service.id === "firs" || service.id === "remita") return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>{service.label}</DialogTitle></DialogHeader><GovernmentPayments service={service.id} /></DialogContent></Dialog>;
+  return <StandardGuidedService service={service} live={live} onClose={onClose} onDone={onDone} />;
+}
+
+function StandardGuidedService({ service, live, onClose, onDone }: { service: ServiceDef; live: boolean; onClose: () => void; onDone: (label: string) => void }) {
   const flow = service.flow;
   const run = useServerFn(runPaddleOperation);
   const [values, setValues] = useState<Record<string, string>>({});
