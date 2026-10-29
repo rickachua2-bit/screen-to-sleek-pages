@@ -13,6 +13,7 @@ import { baasService } from "@/lib/baas.functions";
 import { listBanks } from "@/lib/transfers.functions";
 import { RecipientBankPicker, type RecipientBank } from "./RecipientBankPicker";
 import coins from "@/assets/crypto-bank-coins.jpg";
+import { paymentFeedback } from "@/lib/payment-feedback";
 
 export function CryptoBankFunding({ balances }: { balances?: Record<string, number> | undefined }) {
   const [coin, setCoin] = useState<"USDT" | "USDC">("USDT"); const [amount, setAmount] = useState("");
@@ -52,6 +53,7 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
       id: "post-payouts-transfer", params: {}, currency: "NGN", pin: data.pin, idempotencyKey: data.idempotencyKey,
       body: { amount: data.amount, destinationBankCode: data.recipient.bankCode, destinationAccountNumber: data.recipient.accountNumber, destinationAccountName: data.recipient.accountName, narration: "Slikpay crypto cash-out" },
     } });
+    if (result.receipt?.status === "failed") throw new Error("The bank declined this withdrawal.");
     if (result.receipt?.status !== "succeeded") throw new Error("Bank payment is awaiting confirmation. Check your ledger.");
     return result;
   };
@@ -75,7 +77,7 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
         id: () => crypto.randomUUID(), changed: setPayment,
       });
       await flow.current.convert(coin, Number(amount), pin);
-    } catch (e) { setError(e instanceof Error ? e.message : "Unable to prepare conversion."); }
+    } catch (e) { setError(paymentFeedback(e, "conversion")); }
     finally { setPin(""); setPreparing(false); }
   }
   async function pay() {
@@ -85,7 +87,7 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
       if (!destination) throw new Error("Choose a verified recipient account.");
       await flow.current.pay(pin, destination);
     }
-    catch (e) { setError(e instanceof Error ? e.message : "Unable to prepare bank withdrawal."); }
+    catch (e) { setError(paymentFeedback(e)); }
     finally { setPin(""); }
   }
   const [preview, setPreview] = useState<CryptoOfframpPreview | null>(null);

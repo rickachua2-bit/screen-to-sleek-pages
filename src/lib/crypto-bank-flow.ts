@@ -1,5 +1,6 @@
 import { slikpayTransferFee } from "./transfer-validation";
 import { SWAP_NOT_READY } from "./wallet-safety";
+import { paymentFeedback } from "./payment-feedback";
 
 export type CryptoBankStage = "ready" | "converting" | "conversion_pending" | "converted" | "paying" | "payout_pending" | "completed";
 export interface CryptoBankState {
@@ -41,7 +42,7 @@ export function createCryptoBankFlow(deps: {
         update({ stage: "converted", credited: result.credited, payoutAmount: kobo / 100, message: "Conversion complete. Review your bank withdrawal." });
       } catch (error) {
         const blocked = error instanceof Error && error.message === SWAP_NOT_READY;
-        update({ stage: blocked ? "ready" : "conversion_pending", message: blocked ? SWAP_NOT_READY : "Conversion is awaiting confirmation. Check your ledger before sending again; no bank payout was submitted." });
+        update({ stage: blocked ? "ready" : "conversion_pending", message: blocked ? SWAP_NOT_READY : `${paymentFeedback(error, "conversion")} No bank payout was submitted.` });
       }
     },
     async pay(pin: string, recipient?: CryptoBankRecipient) {
@@ -51,8 +52,8 @@ export function createCryptoBankFlow(deps: {
       try {
         await deps.withdraw({ currency: "NGN", amount: state.payoutAmount, pin, idempotencyKey: state.payoutId, ...(recipient ? { recipient } : {}) });
         update({ stage: "completed", message: "Bank withdrawal completed." });
-      } catch {
-        update({ stage: "payout_pending", message: "Bank withdrawal was not confirmed. Check your ledger for its status; any reserved funds remain unavailable. Do not submit again." });
+      } catch (error) {
+        update({ stage: "payout_pending", message: paymentFeedback(error, "withdrawal") });
       }
     },
   };
