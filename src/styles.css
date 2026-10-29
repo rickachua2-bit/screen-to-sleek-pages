@@ -1292,3 +1292,18 @@ html, body {
 @media (min-width: 1500px) { .international-wallet-strip { grid-auto-columns: minmax(80px, 1fr); } }
 @media (max-width: 1100px) { .international-top-grid { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); } .international-main-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .international-top-grid { grid-template-columns: minmax(0, 1fr); } .international-global, .international-swap-launch { padding: 18px; } .international-wallet-strip { grid-auto-columns: 108px; } .international-mode { font-size: 11px; } .international-quote-metrics { grid-template-columns: minmax(0, 1fr); } .international-quote-metrics > div { padding: 12px; } .international-send-panel, .international-receive { padding-top: 16px; } }
+
+/* International visibility: every wallet, destination and action is reachable without hidden horizontal rails. */
+.international-tabs { flex-wrap: wrap; overflow-x: visible; }
+.international-wallet-strip { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow-x: visible; padding-top: 16px; }
+.international-wallet-tile { height: 108px; padding: 10px 6px; }
+.international-country-list { flex-wrap: wrap; overflow-x: visible; }
+.international-country-list li { max-width: 100%; }
+.international-country { max-width: 100%; }
+.international-send-compact .international-destinations > .relative { display: block; }
+.international-bento fieldset { min-width: 0; }
+.international-global, .international-swap-launch { min-width: 0; }
+.international-bento dl dd, .international-bento button { overflow-wrap: anywhere; }
+.international-global .international-wallet-amount { color: var(--foreground); }
+@media (min-width: 1500px) { .international-wallet-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .international-wallet-strip { grid-auto-columns: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); } .international-tabs > button { flex: 1 0 auto; } .international-bento button { white-space: normal; } }
