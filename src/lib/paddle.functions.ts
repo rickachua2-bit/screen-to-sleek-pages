@@ -4,6 +4,7 @@ import { slikpayTransferFee, payoutBody, payoutStatus } from "./transfer-validat
 import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scopeOf } from "./paddle-policy";
 import { INTERNATIONAL_NOT_ACTIVE, isUnverifiedInternationalPayout } from "./international";
 import { cableValidationBody } from "./cable-tv";
+import { bettingCustomerBody, bettingFundingBody, bettingCustomer } from "./betting";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
   const { bankingUser } = await import("./paddle.server");
@@ -64,6 +65,15 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     if (!access.allowed) throw new Error(access.reason);
     if (JSON.stringify(data.body).length > 20000) throw new Error("Request is too large.");
     if (endpoint.id === "post-bills-cable-validate") data.body = cableValidationBody.parse(data.body);
+    const isBetting = endpoint.id === "post-bills-betting-fund";
+    if (endpoint.id === "post-bills-betting-validate") data.body = bettingCustomerBody.parse(data.body);
+    if (isBetting) {
+      const body = bettingFundingBody.parse(data.body);
+      data.body = { ...body, reference: data.idempotencyKey };
+      data.currency = "NGN";
+      const checked = await callPaddle(mode, "POST", "/v1/bills/betting/validate", { operator: body.operator, customerId: body.customerId });
+      if (!bettingCustomer(checked.data, body)) throw new Error("Could not verify this betting account. Check the platform and customer ID before funding.");
+    }
     if (endpoint.id === "post-accounts-virtual") data.body = { ...data.body, bank: "sterling" };
     if (mode === "live" && review !== "approved") throw new Error("Complete verification before using live services.");
     const isTransfer = endpoint.id === "post-payouts-transfer";
@@ -95,7 +105,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
       const prior = await db.from("payment_receipts").select("id").eq("idempotency_key", data.idempotencyKey).maybeSingle();
       if (prior.error) throw new Error("Could not check this payment. Try again.");
       if (prior.data) throw new Error("This payment was already submitted. Check your ledger before sending again.");
-      if (isTransfer) {
+      if (isTransfer || isBetting) {
         const { guardMoney } = await import("./wallets.server");
         await guardMoney({ db, user, mode, review }, "NGN", amount + transferFee, data.pin, operation, data.idempotencyKey);
       } else {
@@ -119,7 +129,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
 
     try {
       const result = await callPaddle(mode, endpoint.method, path, endpoint.method === "GET" ? data.body : data.body, money ? data.idempotencyKey : undefined);
-      if (scopeOf(endpoint) === "create" || scopeOf(endpoint) === "sandbox") {
+      if (!isBetting && (scopeOf(endpoint) === "create" || scopeOf(endpoint) === "sandbox")) {
         const ids = [...resourceIds(result.data)];
         if (ids.length) await db.from("paddle_resources").upsert(ids.map((resource_id) => ({ user_id: user.id, mode, resource_id, operation })), { onConflict: "mode,resource_id", ignoreDuplicates: true });
       }
@@ -130,12 +140,12 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         const session = [d["sessionId"], d["nipSessionId"], d["session_id"]].find((v) => typeof v === "string") as string | undefined;
         const { providerFee } = await import("./ledger-history");
         const fee = isTransfer ? transferFee : providerFee(d);
-        const status = isTransfer ? payoutStatus(result.data) : "succeeded";
+        const status = isTransfer || isBetting ? payoutStatus(result.data) : "succeeded";
         const body = (data.body ?? {}) as Record<string, unknown>;
         const recipient = [body["destinationAccountName"], body["accountName"], body["beneficiaryName"]].find((v) => typeof v === "string") as string | undefined;
-        if (isTransfer) {
+        if (isTransfer || isBetting) {
           const { settleMoney } = await import("./wallets.server");
-          await settleMoney({ db, user, mode, review }, data.idempotencyKey, status, ref ?? null, { principal: amount, fee: transferFee, ...(session ? { nipSessionId: session } : {}), ...(recipient ? { recipient } : {}) });
+          await settleMoney({ db, user, mode, review }, data.idempotencyKey, status, ref ?? null, { principal: amount, ...(isTransfer ? { fee: transferFee } : fee !== undefined ? { fee } : {}), ...(isBetting ? { customerId: data.body["customerId"], operator: data.body["operator"] } : {}), ...(session ? { nipSessionId: session } : {}), ...(recipient ? { recipient } : {}) });
         } else {
         const saved = await db.from("payment_receipts").update({ status, provider_reference: ref ?? null, session_id: session ?? null, summary: { ...(fee !== undefined ? { fee } : {}), ...(recipient ? { recipient } : {}) } }).eq("user_id", user.id).eq("idempotency_key", data.idempotencyKey);
         if (saved.error) throw new Error("Payment submitted but the receipt could not update. Check your ledger before retrying.");

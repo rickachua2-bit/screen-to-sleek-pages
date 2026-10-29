@@ -117,7 +117,7 @@ export const SERVICES: ServiceDef[] = [
   {
     id: "betting", label: "Betting wallet", category: "bills", keywords: "betting bet9ja sportybet betking 1xbet fund", icon: "Trophy",
     flow: {
-      fields: [{ name: "operator", label: "Platform", kind: "select", options: { op: "get-bills-betting-operators", map: biller } }, { name: "customerId", label: "Customer / user ID", kind: "text" }, amount],
+      fields: [{ name: "operator", label: "Platform", kind: "select", options: { op: "get-bills-betting-operators", map: biller } }, { name: "customerId", label: "Customer / user ID", kind: "text", pattern: /^[a-zA-Z0-9_.@+-]{1,80}$/, patternHint: "Enter a valid customer or user ID" }, amount],
       validate: { op: "post-bills-betting-validate", show: ["customerName", "billerName", "status"], body: (v, p) => ({ operator: code(p, "operator"), customerId: v["customerId"] }) },
       pay: { op: "post-bills-betting-fund", verb: "Fund wallet", body: (v, p) => ({ operator: code(p, "operator"), customerId: v["customerId"], amount: n(v["amount"] ?? "") }) },
     },

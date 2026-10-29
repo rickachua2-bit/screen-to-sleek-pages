@@ -1,0 +1,33 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ run: vi.fn() }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: () => mocks.run }));
+vi.mock("@/lib/paddle.functions", () => ({ runPaddleOperation: {} }));
+vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 50000 } } }) }));
+vi.mock("@/components/slikpay/ServicesHub", () => ({ FieldInput: ({ field, value, onChange }: { field: { name: string; label: string }; value: string; onChange: (v: string, item?: Record<string, unknown>) => void }) => <label>{field.label}<input aria-label={field.label} value={value} onChange={(e) => onChange(e.target.value, field.name === "operator" ? { code: e.target.value, name: e.target.value } : undefined)} /></label> }));
+import { BillsService } from "@/components/slikpay/BillsService";
+beforeEach(() => { vi.resetAllMocks(); localStorage.clear(); });
+it("verifies the selected customer before PIN-protected funding and never retries a pending response", async () => {
+  mocks.run.mockResolvedValueOnce({ resultJson: JSON.stringify({ customerName: "Ada Okafor" }) }).mockResolvedValueOnce({ resultJson: JSON.stringify({ status: "PENDING" }), receipt: { status: "pending", reference: "bet-1" } });
+  render(<BillsService serviceId="betting" />);
+  fireEvent.change(screen.getByLabelText("Platform"), { target: { value: "SPORTY" } });
+  fireEvent.change(screen.getByLabelText("Customer / user ID"), { target: { value: "001234" } });
+  await waitFor(() => expect(mocks.run).toHaveBeenCalledWith({ data: expect.objectContaining({ id: "post-bills-betting-validate", body: { operator: "SPORTY", customerId: "001234" } }) }));
+  fireEvent.change(screen.getByLabelText("Amount (₦)"), { target: { value: "1000" } });
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  fireEvent.change(screen.getByLabelText("Transaction PIN"), { target: { value: "1234" } });
+  fireEvent.click(screen.getByRole("button", { name: /Fund wallet/ }));
+  await waitFor(() => expect(mocks.run).toHaveBeenLastCalledWith({ data: expect.objectContaining({ id: "post-bills-betting-fund", pin: "1234", body: { operator: "SPORTY", customerId: "001234", amount: 1000 } }) }));
+  await waitFor(() => expect((screen.getByRole("button", { name: "New payment" }) as HTMLButtonElement).disabled).toBe(true));
+  expect(mocks.run).toHaveBeenCalledTimes(2);
+});
+it("immediately blocks review when a verified ID changes", async () => {
+  mocks.run.mockResolvedValue({ resultJson: JSON.stringify({ customerName: "Ada" }) });
+  render(<BillsService serviceId="betting" />);
+  fireEvent.change(screen.getByLabelText("Platform"), { target: { value: "SPORTY" } });
+  fireEvent.change(screen.getByLabelText("Customer / user ID"), { target: { value: "001234" } });
+  fireEvent.change(screen.getByLabelText("Amount (₦)"), { target: { value: "1000" } });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.change(screen.getByLabelText("Customer / user ID"), { target: { value: "009999" } });
+  expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
+});
