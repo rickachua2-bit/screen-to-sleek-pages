@@ -43,6 +43,7 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
+- [ ] Activate provider-fee-backed USDT/USDC bank cash-out requested at 01:58 UTC on 29 Oct 2026 — recheck current public conversion, fee and payment-confirmation contracts; no debit or activation without a verified execution/recovery contract.
 - [ ] Resolve remaining signed-in payment and crypto cash-out blockers requested on 29 Oct 2026 — bank-transfer atomic settlement, sandbox bulk balance gating, truthful banking-read errors and conversion execution gate corrected; 33 selected tests pass. Blocked: external sign-in session is unavailable to the agent (browser redirected to /auth); provider quote/USDC-pair/status recovery contracts remain unspecified.
 - [ ] Harden session-bound second-factor authorization and account-specific banking cache before payment certification — email OTP currently has no server session-bound proof; requires external schema setup and authenticated verification. Do not use an authentication bypass to test payments.
 - [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
