@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   AlertTriangle, ArrowLeftRight, BadgeCheck, Building2, Check, Code2, CreditCard, Landmark, QrCode, Rocket, ScanFace,
   ShieldCheck, Smartphone, Users, Wallet, Zap, type LucideIcon,
+  Apple, ArrowDown, ChevronRight, Github, Globe, HelpCircle, Linkedin, Lock, Mail, MessageSquare, Twitter,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { DOCS_URL } from "@/lib/business-api";
@@ -13,8 +14,8 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
 export function TopNav() {
   return (
     <header className="sticky top-0 z-40 border-b-[1.5px] border-border bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-5 py-3">
-        <Logo sub="Pan-African Financial OS" />
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3.5 sm:px-5 py-3">
+        <Logo sub="Pan-African Financial OS" hideSubOnMobile />
         <nav className="hidden flex-1 items-center justify-center gap-7 text-sm font-bold text-body lg:flex">
           {[["What We Offer", "#offer"], ["Pan-African KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Regulatory Status", "#legal"]].map(([l, h]) => (
             <a key={l} href={h} className="transition-colors hover:text-cobalt">{l}</a>
@@ -25,7 +26,7 @@ export function TopNav() {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> All systems live
           </span>
           <a href={DOCS_URL} target="_blank" rel="noreferrer noopener" className="hidden rounded-full border-2 border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:border-cobalt sm:inline-flex">Developer Docs</a>
-          <a href="#signin" className="shine rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90">Get Mobile App</a>
+          <a href="#signin" className="shine rounded-full bg-gradient-tri px-4 py-2 text-xs font-bold text-primary-foreground shadow-cobalt hover:opacity-90"><span className="hidden sm:inline">Get Mobile App</span><span className="sm:hidden">Get App</span></a>
         </div>
       </div>
     </header>
@@ -313,17 +314,134 @@ export function Disclaimer() {
 
 export function Footer() {
   return (
-    <footer className="border-t-[1.5px] border-border bg-tint-cyan">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-8 md:flex-row">
-        <div className="flex items-center gap-3">
-          <Logo />
-          <span className="text-xs font-semibold text-muted-foreground">© 2026 Slikpay Technologies Ltd.</span>
+    <footer className="border-t-[1.5px] border-border bg-tint-cyan/40 pb-28 lg:pb-10">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-5">
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:gap-3 sm:text-left">
+            <Logo hideSubOnMobile />
+            <span className="text-xs font-semibold text-muted-foreground">© 2026 Slikpay Technologies Ltd. All rights reserved.</span>
+          </div>
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-bold text-body">
+            {([["Features", "#offer"], ["KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Developer Docs", DOCS_URL], ["Terms", "#legal"], ["Privacy", "#legal"]] as [string, string][]).map(([l, h]) => (
+              <a key={l} href={h} {...(h.startsWith("http") ? { target: "_blank", rel: "noreferrer noopener" } : {})} className="transition-colors hover:text-cobalt">{l}</a>
+            ))}
+          </nav>
+
+          {/* Social & Contact Bottom Icons */}
+          <div className="flex items-center gap-2">
+            {[
+              { icon: Twitter, label: "Twitter / X", href: "https://x.com" },
+              { icon: Github, label: "GitHub", href: "https://github.com" },
+              { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com" },
+              { icon: Mail, label: "Email Support", href: "mailto:support@slikpay.online" },
+              { icon: MessageSquare, label: "Live Support", href: "#signin" },
+            ].map(({ icon: Icon, label, href }) => (
+              <a
+                key={label}
+                href={href}
+                aria-label={label}
+                title={label}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-all hover:border-cobalt hover:text-cobalt hover:shadow-sm active:scale-95"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
         </div>
-        <nav className="flex flex-wrap justify-center gap-5 text-xs font-bold text-body">
-          {([["Features", "#offer"], ["KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Developer Docs", DOCS_URL], ["Terms", "#legal"], ["Privacy", "#legal"]] as [string, string][]).map(([l, h]) => <a key={l} href={h} {...(h.startsWith("http") ? { target: "_blank", rel: "noreferrer noopener" } : {})} className="hover:text-cobalt">{l}</a>)}
-        </nav>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-muted-foreground"><ArrowLeftRight className="h-3 w-3" /> PCI-DSS L1 · TLS 1.3</span>
+
+        {/* Mobile App Download Strip */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-background/60 p-4 sm:flex-row sm:p-5">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt">
+              <Smartphone className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-foreground sm:text-sm">Download Slikpay on Mobile</p>
+              <p className="text-[11px] text-muted-foreground">Available for Android & iOS with SoftPOS tap-to-pay</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            <a
+              href="#signin"
+              className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground transition-all hover:border-cobalt hover:text-cobalt active:scale-95"
+            >
+              <Apple className="h-4 w-4" />
+              <span>App Store</span>
+            </a>
+            <a
+              href="#signin"
+              className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground transition-all hover:border-cobalt hover:text-cobalt active:scale-95"
+            >
+              <Smartphone className="h-4 w-4 text-success" />
+              <span>Google Play</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom Trust & Compliance Bar with Icons */}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border/70 pt-6 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-mono text-[10px] font-bold uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-foreground"><ShieldCheck className="h-3.5 w-3.5 text-success" /> PCI-DSS L1</span>
+            <span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-cobalt" /> 256-Bit TLS 1.3</span>
+            <span className="flex items-center gap-1.5"><Landmark className="h-3.5 w-3.5 text-magenta" /> Regulated Partner Rails</span>
+            <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-cyan" /> NDIC / CBN Aligned</span>
+          </div>
+          <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-success">
+            <span className="h-2 w-2 rounded-full bg-success animate-pulse" /> All Systems Operational
+          </span>
+        </div>
       </div>
     </footer>
   );
 }
+
+export function AuthMobileBottomNav() {
+  return (
+    <nav
+      aria-label="Mobile quick actions"
+      className="mobile-tabbar fixed inset-x-2 sm:inset-x-3 bottom-2 sm:bottom-3 z-50 flex items-center justify-around gap-0.5 sm:gap-1 rounded-2xl sm:rounded-3xl border border-border/90 bg-background/95 px-2 py-1.5 sm:px-3 sm:py-2 shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--cobalt)_50%,transparent)] backdrop-blur-2xl lg:hidden max-w-[calc(100vw-16px)] mx-auto"
+      style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <a
+        href="#signin"
+        className="flex min-h-[44px] sm:min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl sm:rounded-2xl px-0.5 text-[9px] sm:text-[10px] font-bold text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+      >
+        <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-cobalt" strokeWidth={2.2} />
+        <span>Sign In</span>
+      </a>
+
+      <a
+        href="#signin"
+        className="flex min-h-[44px] sm:min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl sm:rounded-2xl px-0.5 text-[9px] sm:text-[10px] font-bold text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+      >
+        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-magenta" strokeWidth={2.2} />
+        <span>Register</span>
+      </a>
+
+      <a
+        href="#signin"
+        aria-label="Open Free Account"
+        className="shine mx-0.5 sm:mx-1 flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 -translate-y-1.5 sm:-translate-y-2 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-tri text-primary-foreground shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--cobalt)_70%,transparent)] transition-transform active:scale-95"
+      >
+        <Rocket className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.4} />
+      </a>
+
+      <a
+        href="#offer"
+        className="flex min-h-[44px] sm:min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl sm:rounded-2xl px-0.5 text-[9px] sm:text-[10px] font-bold text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+      >
+        <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-cyan" strokeWidth={2.2} />
+        <span>Features</span>
+      </a>
+
+      <a
+        href="#kyb"
+        className="flex min-h-[44px] sm:min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl sm:rounded-2xl px-0.5 text-[9px] sm:text-[10px] font-bold text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+      >
+        <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-success" strokeWidth={2.2} />
+        <span>KYC/KYB</span>
+      </a>
+    </nav>
+  );
+}
+

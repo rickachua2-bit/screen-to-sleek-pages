@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Code2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { AuthCard, type Pending } from "@/components/slikpay/AuthCard";
-import { CtaBand, Disclaimer, FeatureGrid, FloatingChips, PartnerStrip, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
+import { AuthMobileBottomNav, CtaBand, Disclaimer, FeatureGrid, FloatingChips, PartnerStrip, Footer, HeroIntro, HowItWorks, KybSection, RailsTicker, TopNav } from "@/components/slikpay/AuthSections";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -30,7 +30,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="theme-flame min-h-screen bg-background">
+    <div className="theme-flame min-h-screen bg-background pb-20 lg:pb-0 overflow-x-clip w-full">
       <TopNav />
       <RailsTicker />
       <section className="bg-mesh relative overflow-hidden">
@@ -70,6 +70,7 @@ function AuthPage() {
       <CtaBand />
       <Disclaimer />
       <Footer />
+      <AuthMobileBottomNav />
     </div>
   );
 }

@@ -118,7 +118,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         {currency !== "NGN" && (!activeModule || activeModule === "overview" || activeModule === "home") && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} onNavigate={onModuleChange} />}
         {children}<ComplianceFooter /></main>
       {bottomNav && (
-        <nav aria-label="Quick navigation" className="mobile-tabbar fixed inset-x-3 bottom-3 z-40 flex items-stretch justify-around gap-1 rounded-3xl border border-border bg-background/90 px-2 py-1.5 shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--cobalt)_45%,transparent)] backdrop-blur-2xl lg:hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
+        <nav aria-label="Quick navigation" className="mobile-tabbar fixed inset-x-2 sm:inset-x-3 bottom-2 sm:bottom-3 z-40 flex items-stretch justify-around gap-0.5 sm:gap-1 rounded-2xl sm:rounded-3xl border border-border bg-background/90 px-1.5 sm:px-2 py-1.5 shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--cobalt)_45%,transparent)] backdrop-blur-2xl lg:hidden max-w-[calc(100vw-16px)] mx-auto" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
           {bottomNav.map(({ label, icon: Icon, id }, i) => {
             const selected = activeModule ? activeModule === id : active === label;
             const isMore = id === "more";
