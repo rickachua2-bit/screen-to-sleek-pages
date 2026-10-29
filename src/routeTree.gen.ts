@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as DevDebitsRouteImport } from './routes/dev-debits'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
 
@@ -31,11 +30,6 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevDebitsRoute = DevDebitsRouteImport.update({
-  id: '/dev-debits',
-  path: '/dev-debits',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
@@ -51,7 +45,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/dev-debits': typeof DevDebitsRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
 }
@@ -59,7 +52,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/dev-debits': typeof DevDebitsRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
 }
@@ -68,33 +60,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/dev-debits': typeof DevDebitsRoute
   '/personal': typeof PersonalRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/dev-debits'
-    | '/personal'
-    | '/api/public/paddle-webhook'
+    '/' | '/auth' | '/dashboard' | '/personal' | '/api/public/paddle-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/dev-debits'
-    | '/personal'
-    | '/api/public/paddle-webhook'
+  to: '/' | '/auth' | '/dashboard' | '/personal' | '/api/public/paddle-webhook'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
-    | '/dev-debits'
     | '/personal'
     | '/api/public/paddle-webhook'
   fileRoutesById: FileRoutesById
@@ -103,7 +82,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
-  DevDebitsRoute: typeof DevDebitsRoute
   PersonalRoute: typeof PersonalRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
 }
@@ -131,13 +109,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev-debits': {
-      id: '/dev-debits'
-      path: '/dev-debits'
-      fullPath: '/dev-debits'
-      preLoaderRoute: typeof DevDebitsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/personal': {
       id: '/personal'
       path: '/personal'
@@ -159,7 +130,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
-  DevDebitsRoute: DevDebitsRoute,
   PersonalRoute: PersonalRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,
 }
