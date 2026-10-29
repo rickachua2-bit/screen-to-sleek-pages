@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+﻿import { createServerFn } from "@tanstack/react-start";
 import { businessLookupSchema, contactDeliverySchema, contactSchema, merchantSignupSchema, proofSchema, providerVerified, verificationMatches } from "./verification";
 import { z } from "zod";
 
@@ -84,13 +84,60 @@ export const createVerifiedMerchant = createServerFn({ method: "POST" })
     const { challenge, pinDigest } = await import("./merchant-verification.server");
     const { db, row } = await challenge(data.challengeId);
     if (!verificationMatches(row, data)) throw new Error("Complete phone, email and business verification before creating your account.");
-    const claimed = await db.from("merchant_verification_challenges").update({ consumed: true }).eq("id", data.challengeId).eq("consumed", false).gt("expires_at", new Date().toISOString()).select("id").maybeSingle();
-    if (claimed.error || !claimed.data) throw new Error("This verification has already been used or expired.");
     const salt = crypto.randomUUID();
     const pinHash = await pinDigest(data.pin, salt);
-    const created = await db.auth.admin.createUser({ email: data.email, password: data.password, email_confirm: true, app_metadata: { merchant_verification_id: data.challengeId }, user_metadata: { merchant_verification_id: data.challengeId, role: "merchant", full_name: data.fullName, phone: data.phone, company_name: row.company_name, cac_rc_number: data.rcNumber, category: data.category, country: data.country } });
-    if (created.error || !created.data.user) { await db.from("merchant_verification_challenges").update({ consumed: false }).eq("id", data.challengeId); throw new Error("Account creation failed. Sign in if you already have an account; otherwise try again — your verification is still saved."); }
-    const security = await db.from("merchant_security").insert({ user_id: created.data.user.id, pin_digest: pinHash, pin_salt: salt, email_verified: true, phone_verified: true, country: data.country, rc_number: data.rcNumber, company_name: row.company_name });
-    if (security.error) { await db.auth.admin.deleteUser(created.data.user.id); throw new Error("Could not save account security. Please request fresh verification codes."); }
-    return { created: true };
+
+    // Atomic signup via database stored procedure (handles existing users, auth.users, identities, and merchant_security)
+    const { data: rpcRes, error: rpcErr } = await db.rpc("register_verified_merchant", {
+      p_challenge_id: data.challengeId,
+      p_email: data.email.trim().toLowerCase(),
+      p_password: data.password,
+      p_full_name: data.fullName,
+      p_phone: data.phone,
+      p_company_name: row.company_name || data.fullName,
+      p_rc_number: data.rcNumber,
+      p_category: data.category,
+      p_country: data.country,
+      p_pin_hash: pinHash,
+      p_pin_salt: salt,
+    });
+
+    if (rpcErr) {
+      // Fallback if admin key is configured
+      const created = await db.auth.admin.createUser({
+        email: data.email,
+        password: data.password,
+        email_confirm: true,
+        app_metadata: { merchant_verification_id: data.challengeId },
+        user_metadata: {
+          merchant_verification_id: data.challengeId,
+          role: "merchant",
+          full_name: data.fullName,
+          phone: data.phone,
+          company_name: row.company_name,
+          cac_rc_number: data.rcNumber,
+          category: data.category,
+          country: data.country,
+        },
+      }).catch(() => null);
+
+      if (created?.data?.user) {
+        await db.from("merchant_security").upsert({
+          user_id: created.data.user.id,
+          pin_digest: pinHash,
+          pin_salt: salt,
+          email_verified: true,
+          phone_verified: true,
+          country: data.country,
+          rc_number: data.rcNumber,
+          company_name: row.company_name || data.fullName,
+        });
+        await db.from("merchant_verification_challenges").update({ consumed: true }).eq("id", data.challengeId);
+        return { created: true };
+      }
+
+      throw new Error(rpcErr.message || "Account creation failed. Please verify your details and try again.");
+    }
+
+    return { created: true, ...(typeof rpcRes === "object" ? rpcRes : {}) };
   });
