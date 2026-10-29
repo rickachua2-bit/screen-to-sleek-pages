@@ -33,17 +33,7 @@ const createSchema = z
     sortCode: z.string().trim().regex(/^\d{6}$/, "UK sort codes are 6 digits.").optional(),
     reference: z.string().regex(/^SLKDD-[0-9a-fA-F-]{36}$/),
   })
-  .superRefine((v, ctx) => {
-    if (v.currency === "USD" && (!v.routingNumber || !v.accountNumber)) {
-      ctx.addIssue({ code: "custom", message: "US debits need a 9-digit routing number and account number." });
-    }
-    if (v.currency === "EUR" && !v.iban) {
-      ctx.addIssue({ code: "custom", message: "EU debits need the customer's IBAN." });
-    }
-    if (v.currency === "GBP" && (!v.sortCode || !v.accountNumber)) {
-      ctx.addIssue({ code: "custom", message: "UK debits need a 6-digit sort code and account number." });
-    }
-  });
+  .superRefine(bankDetailRefine);
 
 function accountHint(v: z.infer<typeof createSchema>): string {
   if (v.currency === "EUR" && v.iban) return `IBAN ···${v.iban.slice(-4)}`;
