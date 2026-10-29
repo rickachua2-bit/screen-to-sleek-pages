@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PrivacyToggle } from "./DashboardPlus";
 import { useBankingProfile } from "./PaddleConsole";
+import { paymentFeedback } from "@/lib/payment-feedback";
 
 type Extras = Awaited<ReturnType<typeof getWalletExtras>>;
 const uuid = () => globalThis.crypto.randomUUID();
@@ -238,8 +239,10 @@ function WithdrawDialog({ code, live, balance, payout, holder, onNavigate, onClo
   const fee = useFee(railFor("withdraw", code, currencyDef(code)?.kind === "crypto"), amt(amount));
   const [pin, setPin] = useState(""); const [busy, setBusy] = useState(false); const [ref, setRef] = useState<{ reference: string | null; to: string } | null>(null); const [key] = useState(uuid);
   const addAccount = async () => { setBusy(true); try { await save({ data: { currency: code as "GHS", ...form } }); setAcct(form); toast.success("Payout account saved"); } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save account"); } finally { setBusy(false); } };
-  const confirm = async () => { setBusy(true); try { setRef(await withdraw({ data: { currency: code as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } })); setStep("done"); await onDone(); } catch (e) { toast.error(e instanceof Error ? e.message : "Withdrawal failed"); } finally { setBusy(false); } };
+  const [failure, setFailure] = useState("");
+  const confirm = async () => { setBusy(true); setFailure(""); try { setRef(await withdraw({ data: { currency: code as "NGN", amount: amt(amount), idempotencyKey: key, ...(pin ? { pin } : {}) } })); setStep("done"); await onDone(); } catch (e) { const message = paymentFeedback(e); setFailure(message); toast.error(message); } finally { setBusy(false); setPin(""); } };
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="theme-flame"><DialogHeader><DialogTitle>Withdraw {code}</DialogTitle></DialogHeader>
+    {failure && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{failure}</p>}
     {!acct ? (code === "NGN" ? <div className="space-y-3"><p className="text-xs text-muted-foreground">Withdrawals go to your verified settlement account. Add it in KYB first.</p><Button variant="brand" onClick={() => { onClose(); onNavigate?.("golive"); }}>Open KYB</Button></div> :
       <div className="space-y-3"><p className="text-xs text-muted-foreground">Add your own {code} bank account once. It must be in your business name ({holder}).</p>
         {(["accountName", "accountNumber", "bankName"] as const).map((f) => <label key={f} className="block text-xs font-bold">{{ accountName: "Account name", accountNumber: "Account number / IBAN", bankName: "Bank name" }[f]}<input className="field mt-1 h-10" value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} /></label>)}

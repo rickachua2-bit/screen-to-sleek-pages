@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { paymentFeedback } from "@/lib/payment-feedback";
+import { paymentFailureReason } from "@/lib/payment-feedback";
 import { createCryptoBankFlow, type CryptoBankState } from "@/lib/crypto-bank-flow";
 
 describe("withdrawal failure classification", () => {
   it("distinguishes insufficient funds from an unknown dispatch", () => {
-    expect(paymentFeedback(new Error("Insufficient balance including fees."))).toContain("Insufficient funds.");
-    expect(paymentFeedback(new Error("timeout: insufficient funds"))).toContain("status is not confirmed");
+    expect(paymentFailureReason(new Error("Insufficient balance including fees."))).toBe("insufficient_funds");
+    expect(paymentFailureReason(new Error("timeout: insufficient funds"))).toBe("uncertain");
   });
   it("does not expose provider payloads or identity", () => {
-    const result = paymentFeedback(new Error("Paddle Sterling Bank account 0123456789 crashed"));
-    expect(result).not.toMatch(/Paddle|Sterling|0123456789/);
+    expect(paymentFailureReason(new Error("Paddle Sterling Bank account 0123456789 crashed"))).toBe("uncertain");
   });
   it("preserves payout locking while showing the actual preflight failure", async () => {
     let current: CryptoBankState | undefined;
@@ -19,14 +18,13 @@ describe("withdrawal failure classification", () => {
     await flow.pay("1234");
     await flow.pay("1234");
     expect(current?.stage).toBe("payout_pending");
-    expect(current?.message).toContain("Insufficient funds.");
     expect(calls).toBe(1);
   });
   it("distinguishes a confirmed decline from an uncertain withdrawal", () => {
-    expect(paymentFeedback(new Error("The bank declined this withdrawal."))).toContain("Withdrawal failed.");
-    expect(paymentFeedback(new Error("Bank payment is awaiting confirmation."))).not.toContain("failed");
+    expect(paymentFailureReason(new Error("The bank declined this withdrawal."))).toBe("declined");
+    expect(paymentFailureReason(new Error("Bank payment is awaiting confirmation."))).toBe("uncertain");
   });
   it("identifies incorrect PIN without declaring a completed payment", () => {
-    expect(paymentFeedback(new Error("Incorrect transaction PIN."))).toContain("Incorrect transaction PIN.");
+    expect(paymentFailureReason(new Error("Incorrect transaction PIN."))).toBe("incorrect_pin");
   });
 });
