@@ -47,7 +47,7 @@ const createSchema = z
   })
   .superRefine(bankDetailRefine);
 
-function accountHint(v: z.infer<typeof createSchema>): string {
+function accountHint(v: { currency: string; accountNumber?: string | undefined; iban?: string | undefined }): string {
   if (v.currency === "EUR" && v.iban) return `IBAN ···${v.iban.slice(-4)}`;
   if (v.accountNumber) return `Acct ···${v.accountNumber.slice(-4)}`;
   return "Bank account";
