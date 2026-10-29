@@ -1,7 +1,7 @@
 import { TreasuryAutomation } from "./TreasuryAutomation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, BadgeCheck, Clock3, Download, Globe2, GraduationCap, History, Info, Landmark, Repeat, Wallet, Loader2, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowRight, BadgeCheck, Clock3, Download, Globe2, GraduationCap, History, Info, Landmark, Repeat, Wallet, Loader2, RefreshCw, Search, ShieldCheck, TriangleAlert, ArrowUpRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,16 +14,15 @@ import { paymentFeedback } from "@/lib/payment-feedback";
 import { useBankingProfile } from "./PaddleConsole";
 import { CryptoBankFunding } from "./CryptoBankFunding";
 import { HoldBalances, ReceiveAccounts } from "./InternationalAccounts";
+import { currencyDef } from "@/lib/wallets";
+import globe from "@/assets/transfer-globe.jpg";
 
 const money = (n: number, currency?: string) => `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency ? ` ${currency}` : ""}`;
 
 interface ProfileLike { mode: string; balances: Record<string, number>; receipts: Array<{ id: string; operation: string; status: string; amount: number | string; currency: string; provider_reference: string | null; created_at: string; mode?: string; summary?: Record<string, unknown> | null }> }
 
-/** Alternating brand tints for destination dots on the navy explorer rail. */
-const DOTS = ["bg-cyan", "bg-magenta", "bg-cobalt", "bg-success"];
-
 /** Cross-border / remittance payout composer — Destination Explorer layout, backed by the owner-confirmed provider contract. */
-function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-border" | "remittance"; profile: ProfileLike; refresh: () => void }) {
+function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { purpose: "cross-border" | "remittance"; profile: ProfileLike; refresh: () => void; compact?: boolean }) {
   const quoteFn = useServerFn(quoteGlobalPayout);
   const sendFn = useServerFn(sendGlobalPayout);
   const reconcileFn = useServerFn(reconcileGlobalPayoutsFn);
@@ -129,38 +128,38 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
 
   const heading = purpose === "remittance" ? "Send money abroad" : "Pay a bank account abroad";
 
-  return <div className="space-y-5">
-    <div className="overflow-hidden rounded-2xl border border-border bg-card lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
+  return <div className={`international-send space-y-5 ${compact ? "international-send-compact" : ""}`}>
+    <div className="international-send-workspace">
       {/* Navy destination explorer rail */}
-      <aside className="bg-navy-rail p-4 text-white">
+      <aside className="international-destinations">
         <h3 className="text-sm font-bold tracking-wide">{heading}</h3>
-        <p className="mt-0.5 text-xs text-white/90">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
         <div className="relative mt-3">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/85" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search countries or currencies" aria-label="Search destinations"
-            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/80 focus:border-cyan focus:outline-none" />
+            className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
         </div>
-        <ul role="listbox" aria-label="Destinations" className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
-          {filtered.map((c, i) => {
+        <ul role="listbox" aria-label="Destinations" className="international-country-list">
+          {filtered.map((c) => {
             const active = c.id === country;
             return <li key={c.id} className="shrink-0 lg:shrink">
-              <button type="button" role="option" aria-selected={active}
+              <Button variant="outline" type="button" role="option" aria-selected={active}
                 onClick={() => { setCountry(c.id); setFields({}); setQuote(null); setQuoteError(""); }}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors lg:border-l-2 ${active ? "border-cyan bg-white/10" : "border-transparent hover:bg-white/5"}`}>
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[i % DOTS.length]}`} aria-hidden="true" />
-                <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.label}</span><span className="block truncate text-xs text-white/90">{c.target} · {corridorMethod(c)}</span></span>
-                <span className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-cyan lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-cyan" aria-hidden="true" />{profile.mode === "live" ? "Available" : "Sandbox"}</span>
-              </button>
+                className={`international-country ${active ? "border-primary bg-primary/5 text-primary" : "border-border"}`}>
+                <span className="text-xl" aria-hidden="true">{currencyDef(c.target)?.flag}</span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.label}</span><span className="block truncate text-xs text-muted-foreground">{c.target} · {corridorMethod(c)}</span></span>
+                <span className="international-country-status"><span className="h-1.5 w-1.5 rounded-full bg-cyan" aria-hidden="true" />{profile.mode === "live" ? "Available" : "Sandbox"}</span>
+              </Button>
             </li>;
           })}
-          {!filtered.length && <li className="px-3 py-2 text-xs text-white/85">No matching destination.</li>}
+          {!filtered.length && <li className="px-3 py-2 text-xs text-muted-foreground">No matching destination.</li>}
         </ul>
-        <p className="mt-4 hidden border-t border-white/10 pt-3 text-xs leading-5 text-white/90 lg:block">Fees are priced live per corridor. Funds stay reserved if a network is slow, and are returned automatically on a confirmed decline.</p>
+        
       </aside>
 
       {/* White payment workspace */}
-      <div className="min-w-0 space-y-5 p-5">
-        <div className="grid gap-3 sm:grid-cols-3">
+      <div className="international-recipient-workspace min-w-0 space-y-5">
+        <div className="international-quote-metrics grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-border p-3.5">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowRight className="h-3.5 w-3.5 text-cobalt" />Exchange rate</p>
             <p className="mt-1.5 text-sm font-bold tabular-nums">{quote?.rate ? `₦${quote.rate.toLocaleString(undefined, { maximumFractionDigits: 4 })} per ${quote.target}` : quoting ? "Pricing…" : "Live at review"}</p>
@@ -178,13 +177,13 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
           </div>
         </div>
 
-        <div className="rounded-xl border border-border p-5">
+        <div className="international-recipient-form">
           <h4 className="text-base font-bold">Recipient details</h4>
           <p className="mt-0.5 text-xs text-muted-foreground">Funds are reserved at the exact total before any payment is dispatched.</p>
           {saved.length > 0 && <div className="mt-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Repeat className="h-3.5 w-3.5 text-magenta" />Send again</p>
-            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <button key={r.key} type="button" onClick={() => applySaved(r.key)}
-              className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-cobalt hover:text-cobalt">{r.accountName} · {r.country}</button>)}</div>
+            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <Button variant="outline" size="sm" key={r.key} type="button" onClick={() => applySaved(r.key)}
+              className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-cobalt hover:text-cobalt">{r.accountName} · {r.country}</Button>)}</div>
           </div>}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5"><Label htmlFor="xp-source">Pay from</Label>
@@ -291,7 +290,7 @@ function TrackPayments({ profile, refresh }: { profile: ProfileLike; refresh: ()
     const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain" }));
     const a = document.createElement("a"); a.href = url; a.download = `slikpay-${r.provider_reference ?? r.id}.txt`; a.click(); URL.revokeObjectURL(url);
   };
-  return <section className="space-y-4">
+  return <section className="international-tracking space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-muted-foreground">{pendingCount ? `${pendingCount} payment${pendingCount === 1 ? "" : "s"} awaiting the network — checked automatically every 30 seconds. Do not send these again.` : "All payments are settled."}</p>
       <Button variant="outline" className="border-magenta/50 text-magenta hover:bg-magenta/5" disabled={checking} onClick={() => void check(false)}><RefreshCw className={checking ? "h-4 w-4 animate-spin" : "h-4 w-4"} />Check now</Button>
@@ -314,26 +313,39 @@ function TrackPayments({ profile, refresh }: { profile: ProfileLike; refresh: ()
   </section>;
 }
 
-type Tab = "receive" | "hold" | "swap" | "send" | "track" | "treasury";
+type Tab = "overview" | "receive" | "hold" | "swap" | "send" | "track" | "treasury";
 const TABS: Array<{ id: Tab; label: string; icon: typeof Globe2 }> = [
+  { id: "overview", label: "Overview", icon: Globe2 },
   { id: "receive", label: "Receive", icon: Landmark }, { id: "hold", label: "Hold", icon: Wallet }, { id: "swap", label: "Swap", icon: Repeat },
   { id: "send", label: "Send", icon: ArrowRight }, { id: "track", label: "Track", icon: History }, { id: "treasury", label: "Treasury Vault & Sweeps", icon: Landmark },
 ];
 
-export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" | "crypto" | "swap" | "treasury" | "receive" | "hold" | "track" | "send" }) {
+export function InternationalServices({ initial }: { initial?: "cross-border" | "remittance" | "crypto" | "swap" | "treasury" | "receive" | "hold" | "track" | "send" }) {
   const { profile, error: profileError, refresh } = useBankingProfile();
-  const [tab, setTab] = useState<Tab>(initial === "crypto" || initial === "swap" ? "swap" : initial === "treasury" ? "treasury" : initial === "receive" ? "receive" : initial === "hold" ? "hold" : initial === "track" ? "track" : "send");
+  const [tab, setTab] = useState<Tab>(initial === "crypto" || initial === "swap" ? "swap" : initial === "treasury" ? "treasury" : initial === "receive" ? "receive" : initial === "hold" ? "hold" : initial === "track" ? "track" : initial === "cross-border" || initial === "remittance" || initial === "send" ? "send" : "overview");
   const [kind, setKind] = useState<"cross-border" | "remittance" | "tuition">(initial === "remittance" ? "remittance" : "cross-border");
   const unavailable = <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{profileError || "Your account could not be confirmed. Refresh to try again."}</p>;
-  return <section className="space-y-5" aria-label="International services">
+  return <section className="international-bento space-y-5" aria-label="International services">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-xl font-extrabold">International & Swap</h2><p className="mt-1 text-xs text-muted-foreground">Receive, hold, swap, send and track — {profile ? profile.mode === "live" ? "Live account" : "Sandbox account" : "checking account…"}</p></div>
+      <div><p className="text-xs font-semibold text-muted-foreground">Your global money workspace</p><h2 className="mt-1 text-2xl font-extrabold">International & Swap</h2></div>
+      <span className="international-mode"><Globe2 className="h-4 w-4 text-primary" />{profile ? profile.mode === "live" ? "Live account" : "Sandbox account" : "Checking account…"}</span>
       <Button variant="outline" size="icon" aria-label="Refresh international services" onClick={() => refresh()}><RefreshCw className="h-4 w-4" /></Button>
     </div>
-    <div className="flex gap-2 overflow-x-auto border-b border-border pb-4" role="tablist" aria-label="International payment steps">
+    <div className="international-tabs" role="tablist" aria-label="International payment steps">
       {TABS.map((t) => <Button key={t.id} role="tab" aria-selected={tab === t.id} variant={tab === t.id ? "default" : "outline"} onClick={() => setTab(t.id)}><t.icon />{t.label}</Button>)}
     </div>
-    {tab === "receive" ? <ReceiveAccounts />
+    {tab === "overview" ? <><div className="international-top-grid">
+        <section className="international-global bg-navy-rail" aria-label="Global balances">
+          <img src={globe} alt="" className="international-globe" />
+          <div className="relative flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold">Global balances</h3><p className="mt-1 text-xs text-muted-foreground">Available across your currency wallets</p></div><Button variant="ghost" size="sm" className="international-dark-button" onClick={() => setTab("hold")}>All balances<ArrowUpRight /></Button></div>
+          {profileError ? <p role="alert" className="relative mt-6 text-sm">Balances could not be loaded. Refresh to try again.</p> : <div className="international-wallet-strip">{["NGN", "USD", "GBP", "EUR", "GHS", "KES", "ZAR", "USDT", "USDC"].map((code) => <Button key={code} variant="ghost" className="international-wallet-tile" onClick={() => setTab("hold")} aria-label={`View ${code} wallet`}><span className="international-currency-symbol">{code === "USDT" ? "₮" : code === "USDC" ? "$" : currencyDef(code)?.flag}</span><span className="text-xs font-semibold">{code}</span><strong className="international-wallet-amount">{profile?.balances[code] !== undefined ? money(profile.balances[code]) : "—"}</strong><ChevronRight className="h-3 w-3" /></Button>)}</div>}
+          <div className="relative mt-4 flex flex-wrap gap-4 border-t border-border pt-3 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" />Account-owned balances</span><span className="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" />Fiat & stablecoins</span></div>
+        </section>
+        <section className="international-swap-launch bg-navy-rail"><div className="flex items-center justify-between"><h3 className="text-lg font-bold">Swap</h3><Repeat className="h-5 w-5 text-cyan" /></div><p className="mt-1 text-xs text-muted-foreground">USDT / USDC → NGN</p><div className="international-swap-pair"><span className="international-currency-symbol">₮</span><div><p className="text-xs text-muted-foreground">From</p><strong>USDT or USDC</strong></div><span className="ml-auto font-mono text-sm">{profile?.balances["USDT"] !== undefined ? money(profile.balances["USDT"], "USDT") : "—"}</span></div><div className="my-2 flex justify-center"><ArrowRight className="h-4 w-4 rotate-90 text-cyan" /></div><div className="international-swap-pair"><span className="international-currency-symbol">🇳🇬</span><div><p className="text-xs text-muted-foreground">To</p><strong>Nigerian naira</strong></div><span className="ml-auto text-xs">NGN</span></div><p className="my-4 text-xs text-muted-foreground">Rate and net credit confirmed at review</p><Button className="international-swap-cta w-full" onClick={() => setTab("swap")}>Review conversion<ArrowRight /></Button></section>
+      </div>
+      <div className="international-main-grid"><section className="international-receive"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="flex items-center gap-2 font-bold"><Landmark className="h-4 w-4 text-primary" />Receive account details</h3><Button variant="ghost" size="icon" aria-label="View all receiving accounts" onClick={() => setTab("receive")}><ArrowUpRight /></Button></div><ReceiveAccounts compact /></section><section className="international-send-panel">{profileError || !profile ? unavailable : <CrossBorderPayout purpose="cross-border" profile={profile} refresh={refresh} compact />}</section></div>
+      <div className="international-tracking-band"><h3 className="mb-4 flex items-center gap-2 font-bold"><History className="h-4 w-4 text-magenta" />Payment tracking</h3>{profileError || !profile ? unavailable : <TrackPayments profile={profile} refresh={refresh} />}</div>
+    </> : tab === "receive" ? <ReceiveAccounts />
       : tab === "hold" ? <HoldBalances ngn={profile?.balances["NGN"]} />
       : tab === "swap" ? <div className="space-y-3">
           <p className="flex items-start gap-2 rounded-xl border border-cyan/40 bg-cyan/5 p-3 text-xs text-muted-foreground"><Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan" />Live conversion is available for USDT and USDC into naira, with an optional payout to any Nigerian bank. Other currency pairs are not yet available for conversion.</p>
