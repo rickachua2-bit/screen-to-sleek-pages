@@ -177,6 +177,16 @@
     width: 100%;
     box-sizing: border-box;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Prevent mobile Safari & Chrome optical zoom on inputs (<16px forces auto-zoom) */
+  @media (max-width: 768px) {
+    input, select, textarea, .field,
+    input[type="text"], input[type="email"], input[type="password"],
+    input[type="tel"], input[type="number"], input[type="search"] {
+      font-size: 16px !important;
+    }
   }
 }
 
@@ -373,6 +383,13 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--cyan) 22%, transparent), 0 0 20px color-mix(in oklab, var(--cyan) 50%, transparent);
 }
 .otp-slot:disabled { opacity: .55; }
+@media (max-width: 640px) {
+  .otp-slot {
+    width: 2.15rem !important;
+    height: 2.75rem !important;
+    font-size: 1.1rem !important;
+  }
+}
 .otp-caret { background: var(--cyan) !important; width: 2px !important; box-shadow: 0 0 8px var(--cyan); }
 
 

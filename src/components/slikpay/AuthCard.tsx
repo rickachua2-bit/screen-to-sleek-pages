@@ -39,7 +39,7 @@ function Field({ label, id, icon: Icon, error, shake, hint, children }: { label:
   );
 }
 
-const inputCls = (icon = true) => `field h-12 rounded-xl text-sm font-semibold focus:ring-4 focus:ring-cobalt/10 ${icon ? "pl-10" : ""}`;
+const inputCls = (icon = true) => `field h-12 rounded-xl text-base sm:text-sm font-semibold focus:ring-4 focus:ring-cobalt/10 ${icon ? "pl-10" : ""}`;
 
 /* ---------- styled dropdown (custom listbox) ---------- */
 
@@ -131,7 +131,7 @@ function SelectMenu({ id, value, options, onChange, placeholder, searchable = fa
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <input autoFocus value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder={searchPlaceholder} aria-label="Search options"
-                    className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
+                    className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-base sm:text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-cobalt" />
                 </div>
               </div>
             )}
@@ -226,8 +226,14 @@ function StepBar({ n, labels }: { n: number; labels: string[] }) {
 function PinBoxes({ value, onChange, autoFocus }: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
   return (
     <InputOTP maxLength={4} value={value} onChange={onChange} autoFocus={autoFocus}>
-      <InputOTPGroup className="gap-2">
-        {[0, 1, 2, 3].map((i) => <InputOTPSlot key={i} index={i} className="h-14 w-12 rounded-xl border-2 border-l-2 text-xl font-black first:rounded-xl last:rounded-xl" />)}
+      <InputOTPGroup className="gap-1.5 sm:gap-2">
+        {[0, 1, 2, 3].map((i) => (
+          <InputOTPSlot
+            key={i}
+            index={i}
+            className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg sm:rounded-xl border-2 border-l-2 text-lg sm:text-xl font-black first:rounded-lg sm:first:rounded-xl last:rounded-lg sm:last:rounded-xl"
+          />
+        ))}
       </InputOTPGroup>
     </InputOTP>
   );
@@ -391,8 +397,14 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         </p>
         <div className={`mt-6 flex justify-center ${err["otp"] ? "animate-shake" : ""}`}>
           <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
-            <InputOTPGroup className="gap-2">
-              {[0, 1, 2, 3, 4, 5].map((i) => <InputOTPSlot key={i} index={i} className="h-14 w-12 rounded-xl border-2 border-l-2 text-xl font-black first:rounded-xl last:rounded-xl" />)}
+            <InputOTPGroup className="gap-1 sm:gap-2">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <InputOTPSlot
+                  key={i}
+                  index={i}
+                  className="h-11 w-9 sm:h-14 sm:w-12 rounded-lg sm:rounded-xl border-2 border-l-2 text-base sm:text-xl font-black first:rounded-lg sm:first:rounded-xl last:rounded-lg sm:last:rounded-xl"
+                />
+              ))}
             </InputOTPGroup>
           </InputOTP>
         </div>
@@ -826,7 +838,7 @@ function PersonalSignUp({ onDone, onBack }: { onDone: (p: Pending, remember: boo
         <Field label="Phone Number" id="p-phone" icon={Smartphone} error={err["phone"]} shake>
           <div className="flex gap-2">
             <span className="flex h-12 shrink-0 items-center gap-2 rounded-xl border-2 border-cobalt/40 bg-cobalt/10 px-3 text-sm font-black text-foreground"><span className="text-lg leading-none">{dialOf(f.country).flag}</span><span className="font-mono">{dialOf(f.country).dial}</span></span>
-            <input id="p-phone" type="tel" className={`${inputCls(false)} flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
+            <input id="p-phone" type="tel" className={`${inputCls(false)} min-w-0 flex-1`} value={f.phone} onChange={set("phone")} placeholder="803 000 0000" />
           </div>
         </Field>
         <Field label="Password" id="p-pw" icon={Lock} error={err["pw"]} shake>

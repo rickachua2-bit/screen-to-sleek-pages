@@ -941,7 +941,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
                 <div>
                   <span className="text-muted-foreground">Carrier & Flight</span>
                   <p className="font-bold text-foreground">{viewTicket.airline} · {viewTicket.flightNumber}</p>

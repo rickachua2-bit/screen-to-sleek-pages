@@ -39,7 +39,7 @@ export function RailsTicker() {
   const row = [...RAILS, ...RAILS];
   return (
     <div className="flex items-center overflow-hidden border-b-[1.5px] border-border bg-muted/40 py-2.5">
-      <span className="z-10 shrink-0 bg-background px-5 font-mono text-[10px] font-bold uppercase tracking-widest text-cobalt">● Pan-African Rails</span>
+      <span className="z-10 shrink-0 bg-background px-3 sm:px-5 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-cobalt">● Pan-African Rails</span>
       <div className="relative flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_6%,black_94%,transparent)]">
         <div className="flex w-max animate-[marquee_40s_linear_infinite] gap-10">
           {row.map((r, i) => <span key={i} className="whitespace-nowrap font-mono text-xs font-semibold text-body">{r}</span>)}
@@ -65,7 +65,7 @@ export function HeroIntro() {
         <Eyebrow>12 jurisdictions</Eyebrow>
         <span className="rounded-full border border-border px-2.5 py-1 font-mono text-[10px] font-bold text-body">99.99% uptime SLA</span>
       </div>
-      <h1 className="mt-5 text-4xl font-black leading-[1.05] tracking-tight text-foreground md:text-5xl xl:text-[56px]">
+      <h1 className="mt-5 text-3xl sm:text-4xl font-black leading-[1.05] tracking-tight text-foreground md:text-5xl xl:text-[56px]">
         Complete digital banking &{" "}
         <span className="text-gradient-animated">payment infrastructure</span>
       </h1>
@@ -78,9 +78,9 @@ export function HeroIntro() {
       </div>
       <dl className="mt-8 grid grid-cols-3 divide-x-[1.5px] divide-border rounded-2xl border-[1.5px] border-border bg-background/70 backdrop-blur">
         {[["9", "Countries at sign-up"], ["650+", "Banks reachable"], ["24/7", "Instant transfers"]].map(([v, l]) => (
-          <div key={l} className="px-4 py-3">
-            <dt className="text-gradient-flame text-2xl font-black tracking-tight md:text-3xl">{v}</dt>
-            <dd className="text-[11px] font-semibold text-muted-foreground">{l}</dd>
+          <div key={l} className="px-2 sm:px-4 py-2 sm:py-3">
+            <dt className="text-gradient-flame text-lg sm:text-2xl font-black tracking-tight md:text-3xl">{v}</dt>
+            <dd className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{l}</dd>
           </div>
         ))}
       </dl>
