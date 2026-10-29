@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   listInvoices: vi.fn(), createInvoice: vi.fn(),
   listProducts: vi.fn(), createProduct: vi.fn(), deleteProduct: vi.fn(), checkoutProduct: vi.fn(),
 }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, createServerFn: () => ({ inputValidator: () => ({ handler: () => ({}) }), handler: () => ({}) }) }));
 vi.mock("@/lib/invoices.functions", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/invoices.functions")>()), listInvoices: mocks.listInvoices, createInvoice: mocks.createInvoice }));
 vi.mock("@/lib/products.functions", () => ({ listProducts: mocks.listProducts, createProduct: mocks.createProduct, deleteProduct: mocks.deleteProduct, checkoutProduct: mocks.checkoutProduct }));
 import { InvoicesPanel, CatalogPanel } from "@/components/slikpay/InvoiceCatalog";
