@@ -32,17 +32,33 @@ const toOperators = (d: unknown): Operator[] =>
     .map((i) => ({ id: str(i["id"]) || str(i["code"]), label: str(i["shortName"]) || str(i["name"]) }))
     .filter((o) => o.id && o.label);
 
-const networkOf = (i: Record<string, unknown>) => str(i["network"]) || str(i["operator"]) || str(i["operatorName"]) || str(i["provider"]) || str(i["shortName"]);
+const NETWORK_KEYS = ["network", "operator", "operatorName", "provider", "shortName", "biller", "billerName", "service", "serviceType", "telco", "brand"];
+const networkOf = (i: Record<string, unknown>) => { for (const k of NETWORK_KEYS) { const v = str(i[k]); if (v) return v; } return ""; };
+const matches = (tag: string, wanted: string[]) => { const t = tag.toLowerCase(); return wanted.some((w) => t.includes(w) || w.includes(t)); };
 
-/** Pull data plans out of the provider payload, whatever shape it takes. When a network is given, plans tagged with a different network are dropped; untagged plans are kept. */
-export function toDataPlans(d: unknown, network?: string): DataPlan[] {
-  const wanted = network?.toLowerCase() ?? "";
-  return listOf(d)
-    .filter((i) => {
-      const tag = networkOf(i).toLowerCase();
-      return !wanted || !tag || tag.includes(wanted) || wanted.includes(tag);
-    })
-    .map((i) => {
+/** Pull data plans out of the provider payload, whatever shape it takes. When network matchers are given, plans tagged with a different network are dropped; untagged plans are kept only when the whole payload is untagged. */
+export function toDataPlans(d: unknown, ...matchers: string[]): DataPlan[] {
+  const wanted = matchers.map((m) => m.toLowerCase()).filter(Boolean);
+  let rows = listOf(d);
+  if (wanted.length) {
+    // Nested per-network groups: { airtel: [...], mtn: [...] }
+    if (!Array.isArray(d) && d && typeof d === "object") {
+      for (const [k, v] of Object.entries(d as Record<string, unknown>)) {
+        if (Array.isArray(v) && matches(k, wanted)) { rows = v as Record<string, unknown>[]; break; }
+      }
+    }
+    // Operators each carrying their own plans: [{ name: "Airtel", plans: [...] }, ...]
+    const grouped = rows.filter((i) => Array.isArray(i["plans"]));
+    if (grouped.length) {
+      const match = grouped.find((i) => matches(networkOf(i) || str(i["name"]) || str(i["title"]), wanted));
+      rows = match ? (match["plans"] as Record<string, unknown>[]) : [];
+    }
+  }
+  const tagged = rows.map((i) => ({ i, tag: networkOf(i) }));
+  const anyTagged = tagged.some((t) => t.tag);
+  return tagged
+    .filter(({ tag }) => !wanted.length || !anyTagged || (tag !== "" && matches(tag, wanted)))
+    .map(({ i }) => {
       const amount = Number(i["amount"] ?? i["price"] ?? 0);
       const code = str(i["itemCode"]) || str(i["planCode"]) || str(i["code"]) || str(i["id"]);
       const name = str(i["name"]) || str(i["title"]) || str(i["plan"]);
