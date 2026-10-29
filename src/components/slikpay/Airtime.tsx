@@ -248,7 +248,7 @@ export function Airtime() {
         </div>
         {receipt?.ref && <p className="text-xs text-muted-foreground">Reference <span className="font-mono">{receipt.ref}</span></p>}
         <div className="flex gap-2">
-          <Button variant="crisp" className="flex-1 rounded-full" onClick={share}>{navigator.share ? <Share2 /> : <Copy />}{navigator.share ? "Share receipt" : "Copy receipt"}</Button>
+          <Button variant="crisp" className="flex-1 rounded-full" onClick={share}>{"share" in navigator ? <Share2 /> : <Copy />}{"share" in navigator ? "Share receipt" : "Copy receipt"}</Button>
           <Button variant="brand" className="flex-1 rounded-full" onClick={reset}>New top-up</Button>
         </div>
       </div>}
