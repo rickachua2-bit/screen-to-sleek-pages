@@ -5,6 +5,7 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/international.functions", () => ({ quoteGlobalPayout: mocks.quote, sendGlobalPayout: mocks.send, reconcileGlobalPayoutsFn: mocks.reconcile }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 500000 }, receipts: [] }, error: "", refresh: vi.fn() }) }));
 vi.mock("@/components/slikpay/CryptoBankFunding", () => ({ CryptoBankFunding: (props: unknown) => { mocks.crypto(props); return <div>Crypto bank form</div>; } }));
+vi.mock("@/components/slikpay/InternationalAccounts", () => ({ ReceiveAccounts: () => <div>Receive</div>, HoldBalances: () => <div>Hold</div> }));
 import { InternationalServices } from "@/components/slikpay/InternationalServices";
 
 const QUOTE = { country: "US", corridorLabel: "United States", sourceCurrency: "NGN", target: "USD", rate: 1725, recipientGets: 100, principal: 172500, fee: 5000, feeCurrency: "NGN", totalDebit: 177500, minimum: 17.25, rule: "0.5% of the naira amount, minimum ₦5,000" };
@@ -50,5 +51,23 @@ describe("cross-border payment composer", () => {
   it("routes crypto cash-out to the existing protected flow", () => {
     render(<InternationalServices initial="crypto" />);
     expect(mocks.crypto).toHaveBeenCalledWith({ balances: { NGN: 500000 } });
+  });
+});
+
+describe("duplicate and quote protection", () => {
+  beforeEach(() => { vi.clearAllMocks(); mocks.quote.mockResolvedValue(QUOTE); });
+  it("reuses the same payment reference when the user retries after an uncertain error", async () => {
+    mocks.send.mockRejectedValue(new Error("network timeout"));
+    render(<InternationalServices />);
+    fillForm();
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(2));
+    const [a, b] = mocks.send.mock.calls.map((c) => (c[0] as { data: { idempotencyKey: string; confirmedTotal: number } }).data);
+    expect(a!.idempotencyKey).toBe(b!.idempotencyKey);
+    expect(a!.confirmedTotal).toBe(177500);
   });
 });

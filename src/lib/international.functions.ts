@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { GLOBAL_SOURCES } from "./international";
+import { GLOBAL_SOURCES, PAYMENT_PURPOSES } from "./international";
 
 export type { GlobalQuote, GlobalPayoutResult } from "./global-payout.server";
 
@@ -27,7 +27,7 @@ export const quoteGlobalPayout = createServerFn({ method: "POST" })
 
 /** Submits one global payout with an exact reservation and owner-confirmed timeout recovery. */
 export const sendGlobalPayout = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => base.extend({ pin: z.string().regex(/^\d{4}$/).optional(), idempotencyKey: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => base.extend({ pin: z.string().regex(/^\d{4}$/).optional(), idempotencyKey: z.string().uuid(), confirmedTotal: z.number().positive().max(1e13).optional(), purpose: z.enum(PAYMENT_PURPOSES).optional() }).parse(d))
   .handler(async ({ data }) => {
     const { bankingUser } = await import("./paddle.server");
     const { executeGlobalPayout } = await import("./global-payout.server");
