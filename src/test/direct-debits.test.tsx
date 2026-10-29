@@ -19,7 +19,11 @@ const DEBITS = [
 ];
 
 describe("Direct debits page", () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.list.mockResolvedValue({ mode: "sandbox", debits: DEBITS }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.list.mockResolvedValue({ mode: "sandbox", debits: DEBITS });
+    mocks.listSchedules.mockResolvedValue({ schedules: [] });
+  });
 
   it("lists debits with live statuses and stats", async () => {
     render(<DirectDebits />);
