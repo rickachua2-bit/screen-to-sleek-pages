@@ -381,11 +381,7 @@ export function DirectDebits({ preview }: { preview?: { debits: DirectDebitView[
           {TABS.map((t) => <Button key={t.id} variant={tab === t.id ? "default" : "outline"} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}><t.icon />{t.label}</Button>)}
         </div>
 
-        {tab === "schedules" && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-magenta/10"><CalendarClock className="h-6 w-6 text-magenta" /></span>
-          <h3 className="mt-4 font-bold">Recurring schedules are not connected yet</h3>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">Automatic weekly or monthly debits will appear here once the scheduling service is available. Until then, start each debit from the Direct debits tab — nothing is charged automatically.</p>
-        </div>}
+        {tab === "schedules" && <SchedulesPanel onDebit={(d) => setDebits((prev) => (prev ? [d, ...prev] : prev))} />}
 
         {tab === "debits" && <>
           <CreateDebitCard onCreated={(d) => setDebits((prev) => (prev ? [d, ...prev] : prev))} />
