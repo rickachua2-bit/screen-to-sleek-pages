@@ -132,3 +132,186 @@ export const listDirectDebits = createServerFn({ method: "POST" }).handler(async
   await Promise.all(debits.map(async (d) => { d.status = await verifyStatus(mode, d.reference); }));
   return { mode, debits };
 });
+
+// ---- Billing schedules ----
+
+export const SCHEDULE_OP = "BILLINGSCHEDULE";
+export const SCHEDULE_FREQUENCIES = ["weekly", "monthly"] as const;
+export type ScheduleFrequency = (typeof SCHEDULE_FREQUENCIES)[number];
+
+export interface BillingScheduleView {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  amount: number;
+  currency: DebitCurrency;
+  description: string;
+  accountHint: string;
+  frequency: ScheduleFrequency;
+  nextRun: string;
+  active: boolean;
+  runs: number;
+  createdAt: string;
+}
+
+/** Stored record includes the bank details needed to execute; the public view never exposes them. */
+interface StoredSchedule extends BillingScheduleView {
+  routingNumber?: string;
+  accountNumber?: string;
+  iban?: string;
+  sortCode?: string;
+}
+
+const scheduleSchema = createSchema.innerType().omit({ reference: true }).extend({
+  frequency: z.enum(SCHEDULE_FREQUENCIES),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a start date."),
+});
+
+const scheduleIdSchema = z.object({ id: z.string().regex(/^SLKSCH-[0-9a-fA-F-]{36}$/) });
+const scheduleActiveSchema = scheduleIdSchema.extend({ active: z.boolean() });
+
+export function nextRunDate(from: Date, frequency: ScheduleFrequency): string {
+  const d = new Date(from);
+  if (frequency === "weekly") d.setUTCDate(d.getUTCDate() + 7);
+  else d.setUTCMonth(d.getUTCMonth() + 1);
+  return d.toISOString();
+}
+
+function toView(s: StoredSchedule): BillingScheduleView {
+  return {
+    id: s.id, customerName: s.customerName, customerEmail: s.customerEmail, amount: s.amount, currency: s.currency,
+    description: s.description, accountHint: s.accountHint, frequency: s.frequency, nextRun: s.nextRun,
+    active: s.active, runs: s.runs, createdAt: s.createdAt,
+  };
+}
+
+function parseSchedule(raw: string): StoredSchedule | null {
+  try {
+    const v = JSON.parse(raw) as Partial<StoredSchedule>;
+    if (typeof v.id !== "string" || typeof v.customerEmail !== "string" || typeof v.amount !== "number" || typeof v.nextRun !== "string") return null;
+    return {
+      id: v.id,
+      customerName: typeof v.customerName === "string" ? v.customerName : "",
+      customerEmail: v.customerEmail,
+      amount: v.amount,
+      currency: (DEBIT_CURRENCIES as readonly string[]).includes(v.currency as string) ? (v.currency as DebitCurrency) : "USD",
+      description: typeof v.description === "string" ? v.description : "",
+      accountHint: typeof v.accountHint === "string" ? v.accountHint : "Bank account",
+      frequency: v.frequency === "weekly" ? "weekly" : "monthly",
+      nextRun: v.nextRun,
+      active: v.active !== false,
+      runs: typeof v.runs === "number" ? v.runs : 0,
+      createdAt: typeof v.createdAt === "string" ? v.createdAt : "",
+      routingNumber: typeof v.routingNumber === "string" ? v.routingNumber : undefined,
+      accountNumber: typeof v.accountNumber === "string" ? v.accountNumber : undefined,
+      iban: typeof v.iban === "string" ? v.iban : undefined,
+      sortCode: typeof v.sortCode === "string" ? v.sortCode : undefined,
+    };
+  } catch { return null; }
+}
+
+async function readSchedule(db: Db, userId: string, mode: "sandbox" | "live", id: string): Promise<StoredSchedule> {
+  const row = await db.from("paddle_resources").select("resource_id").eq("user_id", userId).eq("mode", mode).eq("operation", `${SCHEDULE_OP} ${id}`).maybeSingle();
+  if (row.error || !row.data) throw new Error("That billing schedule was not found on this account.");
+  const parsed = parseSchedule(row.data.resource_id);
+  if (!parsed) throw new Error("That schedule record is damaged. Contact support.");
+  return parsed;
+}
+
+async function writeSchedule(db: Db, userId: string, mode: "sandbox" | "live", s: StoredSchedule): Promise<void> {
+  const row = await db.from("paddle_resources").update({ resource_id: JSON.stringify(s) }).eq("user_id", userId).eq("mode", mode).eq("operation", `${SCHEDULE_OP} ${s.id}`);
+  if (row.error) throw new Error("The schedule could not be saved. Try again.");
+}
+
+export const createSchedule = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => scheduleSchema.parse(d))
+  .handler(async ({ data }): Promise<BillingScheduleView> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode, review } = await bankingUser();
+    if (mode === "live" && review !== "approved") throw new Error("Complete verification before creating live billing schedules.");
+    const start = new Date(`${data.startDate}T00:00:00Z`);
+    if (Number.isNaN(start.getTime())) throw new Error("Pick a valid start date.");
+    const id = `SLKSCH-${crypto.randomUUID()}`;
+    const stored: StoredSchedule = {
+      id,
+      customerName: data.customerName,
+      customerEmail: data.customerEmail,
+      amount: data.amount,
+      currency: data.currency,
+      description: data.description ?? "",
+      accountHint: accountHint(data),
+      frequency: data.frequency,
+      nextRun: start.toISOString(),
+      active: true,
+      runs: 0,
+      createdAt: new Date().toISOString(),
+      routingNumber: data.routingNumber,
+      accountNumber: data.accountNumber,
+      iban: data.iban,
+      sortCode: data.sortCode,
+    };
+    const row = await db.from("paddle_resources").insert({
+      user_id: user.id, mode, operation: `${SCHEDULE_OP} ${id}`, resource_id: JSON.stringify(stored),
+    });
+    if (row.error) throw new Error("The schedule could not be saved. Try again.");
+    return toView(stored);
+  });
+
+export const listSchedules = createServerFn({ method: "POST" }).handler(async (): Promise<{ schedules: BillingScheduleView[] }> => {
+  const { bankingUser } = await import("./paddle.server");
+  const { listDetails } = await import("./checkout-links.server");
+  const { db, user, mode } = await bankingUser();
+  const schedules = await listDetails(db, user.id, mode, SCHEDULE_OP, parseSchedule, 50);
+  return { schedules: schedules.map(toView) };
+});
+
+export const setScheduleActive = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => scheduleActiveSchema.parse(d))
+  .handler(async ({ data }): Promise<BillingScheduleView> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode } = await bankingUser();
+    const s = await readSchedule(db, user.id, mode, data.id);
+    s.active = data.active;
+    await writeSchedule(db, user.id, mode, s);
+    return toView(s);
+  });
+
+export const deleteSchedule = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => scheduleIdSchema.parse(d))
+  .handler(async ({ data }): Promise<{ id: string }> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode } = await bankingUser();
+    const row = await db.from("paddle_resources").delete().eq("user_id", user.id).eq("mode", mode).eq("operation", `${SCHEDULE_OP} ${data.id}`);
+    if (row.error) throw new Error("The schedule could not be deleted. Try again.");
+    return { id: data.id };
+  });
+
+/**
+ * Executes one run of a schedule as a real direct debit, then advances the next run date.
+ * Each run gets a fresh debit reference, so a failed run never blocks or duplicates the next one.
+ */
+export const runSchedule = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => scheduleIdSchema.parse(d))
+  .handler(async ({ data }): Promise<{ schedule: BillingScheduleView; debit: DirectDebitView }> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode, review } = await bankingUser();
+    if (mode === "live" && review !== "approved") throw new Error("Complete verification before running live billing schedules.");
+    const s = await readSchedule(db, user.id, mode, data.id);
+    if (!s.active) throw new Error("This schedule is paused. Resume it before running a debit.");
+    const debit = await chargeDebit(db, user.id, mode, {
+      customerName: s.customerName,
+      customerEmail: s.customerEmail,
+      amount: s.amount,
+      currency: s.currency,
+      description: s.description || undefined,
+      routingNumber: s.routingNumber,
+      accountNumber: s.accountNumber,
+      iban: s.iban,
+      sortCode: s.sortCode,
+      reference: `SLKDD-${crypto.randomUUID()}`,
+    });
+    s.runs += 1;
+    s.nextRun = nextRunDate(new Date(), s.frequency);
+    await writeSchedule(db, user.id, mode, s);
+    return { schedule: toView(s), debit };
+  });
