@@ -45,4 +45,19 @@ describe("guarded two-step crypto bank review", () => {
     expect(t.swap).toHaveBeenCalledTimes(1);
     expect(t.withdraw).not.toHaveBeenCalled();
   });
+  it("reserves the capped 80 NGN fee out of confirmed proceeds", async () => {
+    const t = setup(vi.fn().mockResolvedValue({ credited: 10000 }));
+    await t.flow.convert("USDT", 10, "1234");
+    expect(t.state()?.payoutAmount).toBe(9920);
+  });
+  it("suppresses overlapping conversion requests", async () => {
+    let finish: ((value: { credited: number }) => void) | undefined;
+    const t = setup(vi.fn().mockImplementation(() => new Promise<{ credited: number }>((resolve) => { finish = resolve; })));
+    const first = t.flow.convert("USDT", 1, "1234");
+    await t.flow.convert("USDT", 1, "1234");
+    finish?.({ credited: 1000 });
+    await first;
+    expect(t.swap).toHaveBeenCalledTimes(1);
+    expect(t.state()?.stage).toBe("converted");
+  });
 });
