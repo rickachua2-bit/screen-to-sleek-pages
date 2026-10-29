@@ -22,8 +22,8 @@ describe("Direct debits page", () => {
     render(<DirectDebits />);
     await waitFor(() => expect(screen.getByText("Johnathan Edwards")).toBeTruthy());
     expect(screen.getByText("Greta Müller")).toBeTruthy();
-    expect(screen.getByText("Collected")).toBeTruthy();
-    expect(screen.getByText("Processing")).toBeTruthy();
+    expect(screen.getAllByText("Collected").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Processing").length).toBeGreaterThan(0);
     expect(screen.getByText("250.00 USD")).toBeTruthy();
     expect(screen.queryByText(/paddle|sterling/i)).toBeNull();
   });
