@@ -12,6 +12,9 @@ export const getBankingProfile = createServerFn({ method: "POST" }).handler(asyn
     db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, session_id, created_at, mode, summary").eq("user_id", user.id).order("created_at", { ascending: false }).limit(25),
     db.from("paddle_resources").select("resource_id, operation").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: true }),
   ]);
+  if ([kyc, ledger, receipts, resources].some((r) => r.error)) {
+    throw new Error("Banking records are unavailable. Balance and payment history could not be confirmed.");
+  }
   const owned = resources.data ?? [];
   const virtualAccount = owned.find((r) => r.operation === "POST /v1/accounts/virtual" && /^\d{10}$/.test(r.resource_id))?.resource_id ?? null;
   let accountDetails: { accountName: string | null; bankName: string | null; status: string | null } | null = null;

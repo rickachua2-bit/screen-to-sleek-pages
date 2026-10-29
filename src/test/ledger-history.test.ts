@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { fromReceipt, fromTransaction, providerFee } from "@/lib/ledger-history";
 
 describe("ledger history", () => {
+  it("does not charge the fee twice when the reservation includes it", () => {
+    const t = fromReceipt({ id: "atomic", created_at: "2026-10-29", operation: "POST /v1/payouts/transfer", status: "succeeded", amount: 101, currency: "NGN", provider_reference: "provider", session_id: null, summary: { principal: 100, fee: 1, nipSessionId: "bank-session" } });
+    expect(t?.amount).toBe(100);
+    expect(t?.net).toBe(101);
+    expect(t?.nipSessionId).toBe("bank-session");
+  });
   it("reads the provider's fee and never invents one", () => {
     expect(providerFee({ fee: "10.75" })).toBe(10.75);
     expect(providerFee({ metadata: { charges: 25 } })).toBe(25);
