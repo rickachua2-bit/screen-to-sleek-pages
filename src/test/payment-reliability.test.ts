@@ -5,6 +5,16 @@ describe("payment reliability", () => {
   it("blocks conversion without a verified quote and recovery contract", () => {
     expect(() => requireVerifiedSwapContract()).toThrow("not active yet");
   });
+  it("allows only owner-confirmed stablecoin to NGN pairs", () => {
+    expect(() => requireVerifiedSwapContract("USDT", "NGN")).not.toThrow();
+    expect(() => requireVerifiedSwapContract("USDC", "NGN")).not.toThrow();
+    expect(() => requireVerifiedSwapContract("NGN", "USDT")).toThrow();
+    expect(() => requireVerifiedSwapContract("USDT", "USD")).toThrow();
+  });
+  it("accepts the supplied completed conversion without deducting its included fee", () => {
+    expect(confirmedSwap({ success: true, reference: "SWP_example", status: "COMPLETED", toAmount: 172000, rate: 1725, platformFee: 500 })).toEqual({ amount: 172000, rate: 1725 });
+    expect(confirmedSwap({ success: false, status: "COMPLETED", toAmount: 172000, rate: 1725 })).toBeNull();
+  });
   it("does not require a live ledger balance for sandbox batch tests", () => {
     expect(insufficientBulkBalance(false, 101, undefined)).toBe(false);
     expect(insufficientBulkBalance(false, 101, 0)).toBe(false);

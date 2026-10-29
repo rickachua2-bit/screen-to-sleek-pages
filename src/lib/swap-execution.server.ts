@@ -44,6 +44,8 @@ export async function executeVerifiedSwap(ctx: Context, data: SwapRequest) {
     // toAmount is the final credit, already net of platformFee; never subtract it again.
     const credited = confirmed.amount;
     await settleMoney(ctx, data.idempotencyKey, "succeeded", reference, { to: "NGN", toAmount: credited, rate: confirmed.rate, fee, feeCurrency: "NGN" }, { currency: "NGN", amount: credited });
-    return { reference, fromAmount: data.amount, toAmount: credited, credited, rate: confirmed.rate, fee, feeCurrency: "NGN" };
+    const settled = await read();
+    if (settled?.status !== "succeeded") throw new Error(UNCERTAIN_PAYMENT);
+    return resultFromSummary((settled.summary ?? {}) as Record<string, unknown>, settled.provider_reference);
   } catch { throw new Error(UNCERTAIN_PAYMENT); }
 }
