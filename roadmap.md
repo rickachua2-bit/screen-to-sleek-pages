@@ -8,7 +8,8 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] International & Swap readiness: reveal all currencies/destinations/tabs, fix stale quote and insufficient-balance controls, refresh accounts and verify recovery/loading states.
+- [x] International & Swap readiness: wrapped all currencies/destinations/tabs; stale-quote sequencing, expiry and balance gates, PIN clearing, synchronous dispatch guard, pending lock, account refresh/retry and notice-only disconnected vaults. 30 focused tests passed; isolated 1092×557 and mobile layout/navigation checks passed without overflow.
+- [ ] International & Swap live verification: external authenticated session unavailable; actual receiving-account issuance, provider balances, signed-in sending and recovery remain unverified.
 - [x] Applied selected Wallet Bento to International & Swap with real-data balance strip, compact receiving details, protected send form, swap entry and full-width tracking; 23 focused tests passed. Isolated desktop/mobile rendering and conversion navigation checked with no page overflow; authenticated data/payment verification remains unavailable.
 - [x] Applied selected Mission Control: real receipt activity, inbound webhook feed, key access, quick-start code and compact navigation; email-code confirmation preserved. Signed-in visual verification remains unavailable with external auth.
 - [x] Built automatic merchant API keys: database triggers for sandbox signup/live approved KYB, encrypted unclaimed secrets and hashed verification, one-time PIN claim, rotation/revocation, owner-scoped read API for ledger balances/receipts/banks, 365-day expiry and atomic 60 requests/minute verifier.
