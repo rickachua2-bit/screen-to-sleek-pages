@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), charge: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), charge: vi.fn(), listBoxes: vi.fn(), registerBox: vi.fn(), updateBox: vi.fn(), unlinkBox: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, createServerFn: () => ({ inputValidator: () => ({ handler: () => ({}) }), handler: () => ({}) }) }));
 vi.mock("@/lib/smarttag.functions", () => ({
   listSmartTags: mocks.list, createSmartTag: mocks.create, chargeSmartTag: mocks.charge,
+  listSoundboxes: mocks.listBoxes, registerSoundbox: mocks.registerBox, updateSoundbox: mocks.updateBox, unlinkSoundbox: mocks.unlinkBox,
   tagUrl: (h: string) => `https://pay.slikpay.africa/@${h}`,
   TAG_CURRENCIES: ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"],
+  SOUNDBOX_VOICES: ["English", "Pidgin", "Hausa", "Yorùbá", "Igbo"],
 }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "sandbox", balances: {}, receipts: [] }, error: "", refresh: vi.fn() }) }));
 import { SmartTag } from "@/components/slikpay/SmartTag";
