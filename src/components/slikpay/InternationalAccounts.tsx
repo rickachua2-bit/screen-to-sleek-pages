@@ -12,6 +12,8 @@ function useWallets(refreshVersion = 0) {
   const [wallets, setWallets] = useState<WalletView[] | null>(null);
   const [error, setError] = useState("");
   const refresh = useCallback(async () => {
+    setError("");
+    setWallets(null);
     try { setWallets((await load()).wallets); setError(""); }
     catch { setError("Your currency accounts could not be loaded. Refresh to try again."); }
   }, [load]);
@@ -45,7 +47,7 @@ export function ReceiveAccounts({ compact = false, refreshVersion = 0 }: { compa
     if (navigator.share) { try { await navigator.share({ title: `${w.code} account details`, text }); } catch { /* cancelled */ } } else await copy(w);
   };
 
-  if (error) return <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</p>;
+  if (error) return <div role="alert" className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"><p>{error}</p><Button variant="outline" size="sm" onClick={() => void refresh()}>Retry accounts</Button></div>;
   if (!wallets) return <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your accounts…</p>;
   return <div className={compact ? "international-receive-details" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-3"}>
     {compact && <label className="mb-4 block text-xs font-semibold text-muted-foreground">Receiving currency<select aria-label="Receiving currency" value={selected} onChange={(e) => setSelected(e.target.value)} className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground">{wallets.map((w) => <option key={w.code} value={w.code}>{currencyDef(w.code)?.flag} {w.code} · {currencyDef(w.code)?.name}</option>)}</select></label>}
@@ -81,8 +83,8 @@ export function ReceiveAccounts({ compact = false, refreshVersion = 0 }: { compa
 
 /** Hold tab: every currency balance, provider-reported first with ledger filling the gaps. */
 export function HoldBalances({ ngn, refreshVersion = 0 }: { ngn: number | undefined; refreshVersion?: number }) {
-  const { wallets, error } = useWallets(refreshVersion);
-  if (error) return <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</p>;
+  const { wallets, error, refresh } = useWallets(refreshVersion);
+  if (error) return <div role="alert" className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"><p>{error}</p><Button variant="outline" size="sm" onClick={() => void refresh()}>Retry balances</Button></div>;
   if (!wallets) return <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading balances…</p>;
   const rows = [{ code: "NGN", balance: ngn, status: "active" as const }, ...wallets];
   return <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
