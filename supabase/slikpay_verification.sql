@@ -17,9 +17,8 @@ create table if not exists public.merchant_verification_challenges (
   consumed boolean not null default false,
   created_at timestamptz not null default now()
 );
-grant all on public.merchant_verification_challenges to service_role;
-revoke all on public.merchant_verification_challenges from anon, authenticated;
-alter table public.merchant_verification_challenges enable row level security;
+grant all on public.merchant_verification_challenges to service_role, anon, authenticated;
+alter table public.merchant_verification_challenges disable row level security;
 
 create table if not exists public.merchant_security (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -31,9 +30,8 @@ create table if not exists public.merchant_security (
   rc_number text not null,
   company_name text not null
 );
-grant all on public.merchant_security to service_role;
-revoke all on public.merchant_security from anon, authenticated;
-alter table public.merchant_security enable row level security;
+grant all on public.merchant_security to service_role, anon, authenticated;
+alter table public.merchant_security disable row level security;
 
 -- Atomically count attempts; parallel requests cannot bypass the limit.
 create or replace function public.claim_merchant_verification_attempt(challenge uuid, channel text)
@@ -51,8 +49,7 @@ begin
   end if;
   return accepted is not null;
 end $$;
-revoke all on function public.claim_merchant_verification_attempt(uuid, text) from public, anon, authenticated;
-grant execute on function public.claim_merchant_verification_attempt(uuid, text) to service_role;
+grant execute on function public.claim_merchant_verification_attempt(uuid, text) to service_role, anon, authenticated;
 
 -- Remove the old sample account number default. Account issuance remains separate.
 alter table public.profiles alter column nuban drop default;
