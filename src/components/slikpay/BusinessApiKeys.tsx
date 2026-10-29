@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, KeyRound, Loader2, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, Copy, KeyRound, Loader2, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { listBusinessKeys, manageBusinessKey } from "@/lib/business-keys.functions";
-import { API_PATHS } from "@/lib/business-api";
+import { API_PATHS, DOCS_SECTIONS, DOCS_URL, docsLink } from "@/lib/business-api";
 type Key = Awaited<ReturnType<typeof listBusinessKeys>>[number];
 export function BusinessApiKeys() {
   const load = useServerFn(listBusinessKeys);
