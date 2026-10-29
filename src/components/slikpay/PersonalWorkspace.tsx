@@ -115,7 +115,7 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
           {spend.total ? <DonutChart data={spend.data} center={naira(spend.total).split(".")[0]!} sub="Total spent" /> : <p className="py-10 text-center text-sm font-semibold text-muted-foreground">No spending yet. Your breakdown appears after your first payment.</p>}
         </Panel>
       </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 xl:grid-cols-6 w-full">
         <QuickAction icon={Send} title="Send Money" sub="To bank or @SlikTag" tone="bg-cobalt" onClick={() => open("send")} />
         <QuickAction icon={Plane} title="Book Flights" sub="450+ airlines & instant PNR" tone="bg-cyan/90 text-slate-950" onClick={() => { window.location.href = "/personal?module=flights"; }} />
         <QuickAction icon={Smartphone} title="Airtime & Data" sub="MTN, Airtel, Glo, 9mobile" tone="bg-gradient-brand" onClick={() => open("airtime")} />

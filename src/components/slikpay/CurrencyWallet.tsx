@@ -72,8 +72,8 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
   const copyAll = async () => { try { await navigator.clipboard.writeText(share); } catch { /* clipboard unavailable */ } toast.success("Details copied"); };
 
   const actionGrid = (
-      <div className="relative mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"><span className={`wallet-action flex h-14 w-14 items-center justify-center rounded-full ${TINTS[a.id]}`}>{a.enabled ? <Icon className="h-5 w-5" strokeWidth={2.2} /> : <Lock className="h-4 w-4" />}</span><span className="text-[11px] font-bold text-body transition-colors group-enabled:group-hover:text-foreground">{a.label}</span></button>;
+      <div className="relative mt-4 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-6 w-full">
+        {actions.map((a) => { const Icon = ICONS[a.id]; const btn = <button key={a.id} disabled={!a.enabled} title={a.reason} onClick={() => onAction(a.id)} className="group flex flex-col items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"><span className={`wallet-action flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-full ${TINTS[a.id]}`}>{a.enabled ? <Icon className="h-5 w-5" strokeWidth={2.2} /> : <Lock className="h-4 w-4" />}</span><span className="text-[10px] sm:text-[11px] font-bold text-body transition-colors group-enabled:group-hover:text-foreground truncate max-w-full text-center">{a.label}</span></button>;
           return a.id === "more" ? <DropdownMenu key="more"><DropdownMenuTrigger asChild>{btn}</DropdownMenuTrigger><DropdownMenuContent align="end" className="theme-flame"><DropdownMenuItem onSelect={exportCsv}><Download />Download {code} statement</DropdownMenuItem><DropdownMenuItem onSelect={() => setDialog("limits")}><Gauge />Limits & fees</DropdownMenuItem><DropdownMenuItem disabled={!w?.accountNumber} onSelect={copyAll}><Copy />Copy all details</DropdownMenuItem></DropdownMenuContent></DropdownMenu> : btn; })}
       </div>
   );
@@ -288,7 +288,7 @@ export function PortfolioHeader() {
   const parts = data.w.filter((w) => w.balance !== 0).map((w) => ({ code: w.code, bal: w.balance, n: nairaValueLive(w.code, w.balance, pricing?.rates ?? null) }));
   const total = ngn + parts.reduce((a, p) => a + (p.n ?? 0), 0);
   const unpriced = parts.filter((p) => p.n === null).map((p) => p.code);
-  return <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
+  return <div className="panel flex flex-col sm:flex-row flex-wrap sm:items-center gap-x-6 gap-y-2 p-3 sm:px-5 sm:py-3 w-full min-w-0">
     <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Total across all wallets</p><p className="font-mono text-lg font-bold">{mask(naira(total), hidden)}</p></div>
     <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-muted-foreground"><span className="rounded-full bg-muted px-2 py-1">🇳🇬 {mask(naira(ngn), hidden)}</span>{parts.map((p) => <span key={p.code} className="rounded-full bg-muted px-2 py-1">{currencyDef(p.code)?.flag} {mask(fmt(p.code, p.bal), hidden)}</span>)}</div>
     {unpriced.length > 0 && <p className="text-[10px] text-muted-foreground">{unpriced.join(", ")} not in total until a swap sets a rate.</p>}

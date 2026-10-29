@@ -14,8 +14,8 @@ const TXNS: Txn[] = [
 describe("Merchant modules", () => {
   it("contains all 29 modules in eight service-aligned groups", () => {
     expect(MERCHANT_GROUPS).toHaveLength(8);
-    expect(MERCHANT_NAV).toHaveLength(29);
-    expect(new Set(MERCHANT_NAV.map((n) => n.id)).size).toBe(29);
+    expect(MERCHANT_NAV).toHaveLength(30);
+    expect(new Set(MERCHANT_NAV.map((n) => n.id)).size).toBe(30);
   });
   it("validates module navigation", () => {
     expect(merchantModule("approvals")).toBe("approvals");

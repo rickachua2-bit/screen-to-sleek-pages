@@ -7,7 +7,7 @@ import { CardGraphic } from "./CardGraphic";
 
 export function Panel({ title, action, children, className = "" }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`panel p-5 ${className}`}>
+    <section className={`panel p-4 sm:p-5 w-full min-w-0 max-w-full ${className}`}>
       {title && (
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
@@ -69,7 +69,7 @@ export function NubanCard({ nuban = "", label = "Slikpay Business", title = "Ded
 export function UsdCardPanel({ balance = 0, label, onFund, note }: { balance?: number; label?: string; onFund: () => void; note?: string | undefined }) {
   return (
     <Panel>
-      <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
+      <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between w-full min-w-0">
         <div>
           <h3 className="text-sm font-extrabold text-foreground">USD Virtual Mastercard</h3>
           <div className="mt-4 text-3xl font-black text-foreground">${balance.toFixed(2)}</div>
@@ -85,11 +85,11 @@ export function UsdCardPanel({ balance = 0, label, onFund, note }: { balance?: n
 
 export function QuickAction({ icon: Icon, title, sub, tone, onClick }: { icon: LucideIcon; title: string; sub: string; tone: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="panel group flex flex-col items-start gap-3 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan hover:shadow-md">
-      <span className={`flex h-11 w-11 items-center justify-center rounded-full text-primary-foreground ${tone}`}><Icon className="h-5 w-5" /></span>
-      <div>
-        <div className="text-sm font-extrabold text-foreground">{title}</div>
-        <div className="text-xs font-semibold text-muted-foreground">{sub}</div>
+    <button onClick={onClick} className="panel group flex flex-col items-start gap-2.5 sm:gap-3 p-3 sm:p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan hover:shadow-md w-full min-w-0">
+      <span className={`flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full text-primary-foreground shrink-0 ${tone}`}><Icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+      <div className="w-full min-w-0">
+        <div className="text-xs sm:text-sm font-extrabold text-foreground break-words">{title}</div>
+        <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground break-words line-clamp-2 mt-0.5">{sub}</div>
       </div>
     </button>
   );

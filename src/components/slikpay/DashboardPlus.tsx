@@ -37,8 +37,8 @@ export function DashboardHero({ name, business, balance, mode, txns, onOpenComma
   useEffect(() => setHour(new Date().getHours()), []);
   const spark = useMemo(() => dailyInflow(txns, 7).map((d) => d.value), [txns]);
   const live = mode === "live";
-  return <section className="hero-surface p-6 md:p-8">
-    <div className="relative flex flex-wrap items-start justify-between gap-6">
+  return <section className="hero-surface p-4 sm:p-6 md:p-8 w-full min-w-0 max-w-full">
+    <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6 w-full min-w-0">
       <div className="min-w-0">
         <p className="text-xs font-semibold text-foreground/95">{hour === null ? "Welcome back" : greetingFor(hour)}, {name.split(" ")[0]} 👋</p>
         <h2 className="mt-1 truncate text-sm font-bold text-foreground">{business ?? "Your business"}</h2>
@@ -49,7 +49,7 @@ export function DashboardHero({ name, business, balance, mode, txns, onOpenComma
           <button onClick={onOpenCommand} className="flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-[11px] font-semibold text-foreground/95 hover:text-foreground"><Search className="h-3 w-3" />Quick search<kbd className="rounded bg-muted px-1.5 font-mono text-[10px]">Ctrl K</kbd></button>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1"><span className="text-[10px] font-bold uppercase tracking-wider text-foreground/90">Inflow · 7 days</span><Sparkline values={spark} /><span className="font-mono text-sm font-bold text-foreground">{mask(naira(spark.reduce((a, b) => a + b, 0)), hidden)}</span></div>
+      <div className="flex flex-col items-start sm:items-end gap-1 w-full sm:w-auto pt-3 sm:pt-0 border-t border-border/30 sm:border-0"><span className="text-[10px] font-bold uppercase tracking-wider text-foreground/90">Inflow · 7 days</span><Sparkline values={spark} /><span className="font-mono text-sm font-bold text-foreground">{mask(naira(spark.reduce((a, b) => a + b, 0)), hidden)}</span></div>
     </div>
   </section>;
 }
@@ -63,7 +63,7 @@ export function InsightsStrip({ txns }: { txns: Txn[] }) {
     { icon: Clock, tone: "text-chart-4", label: "Pending", value: `${i.pending} transaction${i.pending === 1 ? "" : "s"}` },
     { icon: Sparkles, tone: "text-magenta", label: "Top customer", value: i.topCustomer ? `${i.topCustomer.name}` : "No payments yet" },
   ];
-  return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{items.map(({ icon: Icon, tone, label, value }) => <div key={label} className="panel hover-lift flex items-center gap-3 p-4"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted ${tone}`}><Icon className="h-4 w-4" /></span><div className="min-w-0"><p className="text-[10px] font-bold uppercase text-muted-foreground">{label}</p><p className="truncate text-sm font-extrabold">{value}</p></div></div>)}</div>;
+  return <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">{items.map(({ icon: Icon, tone, label, value }) => <div key={label} className="panel hover-lift flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 min-w-0"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted ${tone}`}><Icon className="h-4 w-4" /></span><div className="min-w-0"><p className="text-[10px] font-bold uppercase text-muted-foreground">{label}</p><p className="truncate text-sm font-extrabold">{value}</p></div></div>)}</div>;
 }
 
 export function FlipNubanCard({ nuban, accountName, bankName, status, sandbox }: { nuban: string; accountName?: string | null | undefined; bankName?: string | null | undefined; status?: string | null | undefined; sandbox?: boolean | undefined }) {
@@ -75,12 +75,12 @@ export function FlipNubanCard({ nuban, accountName, bankName, status, sandbox }:
     catch { toast.error("Could not copy account details"); }
   };
   return <section className="receiving-account" aria-label={sandbox ? "Sandbox account" : "Business account"}>
-    <div className="relative flex min-h-[220px] flex-col justify-between gap-6 p-5 sm:p-6">
+    <div className="relative flex min-h-[200px] sm:min-h-[220px] flex-col justify-between gap-4 sm:gap-6 p-4 sm:p-6 w-full min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3"><span className="receiving-account-icon flex h-10 w-10 items-center justify-center rounded-lg"><Landmark className="h-5 w-5" /></span><div><p className="text-sm font-bold">{sandbox ? "Sandbox account" : "Business account"}</p><p className="mt-1 text-[11px] text-muted-foreground">NGN · Receiving account</p></div></div>
         {status && <span className={`receiving-account-status inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${status.toUpperCase() === "ACTIVE" ? "is-active" : ""}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{status.toUpperCase() === "ACTIVE" ? "Active" : status}</span>}
       </div>
-      <div className="min-w-0"><p className="mb-2 text-[10px] font-semibold uppercase text-muted-foreground">Account number</p><div className="flex items-center justify-between gap-2"><p className="receiving-account-number font-mono text-2xl font-semibold sm:text-3xl">{pretty}</p><Button variant="ghost" size="icon" className="receiving-account-copy shrink-0" onClick={copy} aria-label="Copy account details" title="Copy account details"><Copy /></Button></div><p className="mt-3 break-words text-xs font-semibold leading-relaxed">{accountName ?? "Account name unavailable"}</p></div>
+      <div className="min-w-0"><p className="mb-2 text-[10px] font-semibold uppercase text-muted-foreground">Account number</p><div className="flex items-center justify-between gap-2"><p className="receiving-account-number font-mono text-xl sm:text-2xl md:text-3xl font-semibold">{pretty}</p><Button variant="ghost" size="icon" className="receiving-account-copy shrink-0" onClick={copy} aria-label="Copy account details" title="Copy account details"><Copy /></Button></div><p className="mt-3 break-words text-xs font-semibold leading-relaxed">{accountName ?? "Account name unavailable"}</p></div>
     </div>
     <div className="receiving-account-footer relative flex min-h-14 flex-wrap items-center justify-between gap-2 px-5 py-3 sm:px-6">
       <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"><Landmark className="h-3.5 w-3.5 shrink-0" /><span className="break-words">{flipped ? bankName ?? "Bank details unavailable" : "Bank details"}</span></p>

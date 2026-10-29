@@ -2,7 +2,7 @@ import { FlameMark } from "./Logo";
 
 export function CardGraphic({ label = "BUSINESS", name = "Slikpay Business", last4 = "1234", expiry = "12/28" }: { label?: string | undefined; name?: string | undefined; last4?: string | undefined; expiry?: string | undefined }) {
   return (
-    <div className="relative aspect-[1.586] w-full max-w-[300px] overflow-hidden rounded-2xl bg-gradient-card p-4 text-primary-foreground shadow-xl [transform:perspective(900px)_rotateY(-8deg)_rotateX(4deg)]">
+    <div className="relative aspect-[1.586] w-full max-w-[270px] sm:max-w-[300px] overflow-hidden rounded-2xl bg-gradient-card p-3.5 sm:p-4 text-primary-foreground shadow-xl sm:[transform:perspective(900px)_rotateY(-8deg)_rotateX(4deg)]">
       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-cobalt/30 blur-2xl" />
       <div className="absolute -bottom-12 left-8 h-32 w-32 rounded-full bg-magenta/25 blur-2xl" />
       <div className="relative flex items-center justify-between">
