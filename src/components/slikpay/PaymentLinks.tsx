@@ -144,8 +144,8 @@ export function PaymentLinks() {
       <Button variant={tab === "catalog" ? "default" : "outline"} aria-pressed={tab === "catalog"} onClick={() => setTab("catalog")}><Package />Product catalog</Button>
     </div>
 
-    {tab === "invoices" && <ComingSoon icon={FileText} title="Invoices aren't connected yet" text="Once invoicing is connected to your account, you'll create, send and track professional invoices here — with the same hosted checkout your payment links use." />}
-    {tab === "catalog" && <ComingSoon icon={Package} title="Product catalog isn't connected yet" text="Once the catalog is connected, you'll list products once and turn any of them into a shareable checkout link in one tap." />}
+    {tab === "invoices" && <InvoicesPanel />}
+    {tab === "catalog" && <CatalogPanel />}
 
     {tab === "links" && <>
       <div className="grid gap-3 sm:grid-cols-3">
