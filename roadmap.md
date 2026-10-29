@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Enable visible foreign-wallet funding and coin sending in International & Swap; activate only confirmed payout/conversion contracts and verify protections.
 - [x] International & Swap readiness: wrapped all currencies/destinations/tabs; stale-quote sequencing, expiry and balance gates, PIN clearing, synchronous dispatch guard, pending lock, account refresh/retry and notice-only disconnected vaults. 30 focused tests passed; isolated 1092×557 and mobile layout/navigation checks passed without overflow.
 - [ ] International & Swap live verification: external authenticated session unavailable; actual receiving-account issuance, provider balances, signed-in sending and recovery remain unverified.
 - [x] Applied selected Wallet Bento to International & Swap with real-data balance strip, compact receiving details, protected send form, swap entry and full-width tracking; 23 focused tests passed. Isolated desktop/mobile rendering and conversion navigation checked with no page overflow; authenticated data/payment verification remains unavailable.
