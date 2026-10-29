@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Team screen upgrade: colour-rich Team/Security/Profile/Activity, seven requested invitation roles, resend and activity controls; verify focused tests and layouts.
 - [x] Team & Security: branded tabs, owner profile, authenticator setup, current-password-protected password/session actions, PIN replacement, pending invitation notices/revocation and activity; focused tests added.
 - [ ] Team activation: manually apply supabase/slikpay_team_security.sql for invitations, PIN attempt limits and audit storage. Real shared-team roles/access remain unavailable until workspace authorization is implemented; authenticated live actions remain unverified.
 - [x] Federal tax and Remita: dedicated pages, automatic verification, assessed amount/fee binding, atomic payments, honest statuses and downloadable saved records; 11 focused tests and 297 regression tests passed.
