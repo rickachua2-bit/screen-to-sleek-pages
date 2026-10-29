@@ -14,7 +14,7 @@ export const INTERNATIONAL_NOT_ACTIVE = "International payments are not active y
 
 /* ---------- Owner-confirmed corridors, fees and recovery rules (29 Oct 2026) ---------- */
 
-export interface BeneficiaryField { name: string; label: string; pattern?: RegExp; hint?: string }
+export interface BeneficiaryField { name: string; label: string; pattern?: RegExp | undefined; hint?: string | undefined }
 export interface Corridor { id: string; label: string; target: string; fields: BeneficiaryField[] }
 
 const f = (name: string, label: string, pattern?: RegExp, hint?: string): BeneficiaryField => ({ name, label, pattern, hint });

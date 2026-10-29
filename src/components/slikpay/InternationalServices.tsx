@@ -54,10 +54,10 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
     if (!amountValid || !fieldsFilled) { setQuote(null); setQuoteError(""); return; }
     setQuoting(true); setQuoteError("");
     try {
-      const q = await quoteFn({
+      const q = await quoteFn({ data: {
         sourceCurrency: source, country, accountName: accountName.trim(), amount: Number(amount),
         beneficiary: Object.fromEntries(Object.entries(fields).filter(([, v]) => v.trim())),
-      });
+      } });
       if (key === quoteKey) setQuote(q);
     } catch (e) {
       if (key === quoteKey) { setQuote(null); setQuoteError(e instanceof Error ? e.message : "Could not price this payment. Try again."); }
@@ -73,10 +73,10 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
     if (!corridor || !amountValid || !fieldsFilled || !quote) return;
     setSending(true); setError(""); setResult(null);
     try {
-      const r = await sendFn({
+      const r = await sendFn({ data: {
         sourceCurrency: source, country, accountName: accountName.trim(), amount: Number(amount),
         beneficiary: fields, pin: pin ? pin : undefined, idempotencyKey: crypto.randomUUID(),
-      });
+      } });
       setResult(r);
       if (r.status === "succeeded") { setQuote(null); setAmount(""); setPin(""); }
       refresh();
@@ -188,7 +188,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   </div>;
 }
 
-export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" }) {
+export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" | "crypto" }) {
   const { profile, error: profileError, refresh } = useBankingProfile();
   const [tab, setTab] = useState<"cross-border" | "remittance" | "crypto">(initial);
   const history = profile?.receipts.filter((r) => isInternationalReceipt(r.operation)) ?? [];

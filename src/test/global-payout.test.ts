@@ -46,7 +46,7 @@ describe("corridor beneficiary validation", () => {
   });
   it("requires a 6-digit sort code and 8-digit account for the UK", () => {
     expect(() => fill("GB", { sortCode: "04-00-04", accountNumber: "12345678" })).toThrow();
-    expect(fill("GB", { sortCode: "040004", accountNumber: "12345678" }).sortCode).toBe("040004");
+    expect(fill("GB", { sortCode: "040004", accountNumber: "12345678" })["sortCode"]).toBe("040004");
   });
   it("requires IBAN and BIC for euro corridors", () => {
     const de = corridorFor("DE");
