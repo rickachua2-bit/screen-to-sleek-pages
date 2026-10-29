@@ -1,5 +1,5 @@
 # Roadmap
 
-- [x] Cross-border & Remittances page redesigned with the chosen Destination Explorer layout.
-
-- [x] Apply Split Composer design to Payment links / Invoices / Product catalog page (user picked design 2)
+## Open
+- [ ] Logo for Slikpay: present fintech-style concepts for the user to pick (initial two generated; "fintech designs" ask = more fintech-leaning options)
+- [ ] Apply chosen logo: refine, set favicon from it, place in app header/sign-in
