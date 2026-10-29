@@ -38,7 +38,7 @@ export function BulkPayments({ live, balance }: { live: boolean; balance?: numbe
     if (working.current) return;
     working.current = true; setBusy(true); setError("");
     try { await work(); } catch (e) { setError(e instanceof Error ? e.message : "Could not complete this request."); }
-    finally { working.current = false; setBusy(false); }
+    finally { working.current = false; setBusy(false); setPin(""); }
   };
   const upload = (csv: string) => withBusy(async () => {
     const result = await prepare({ data: { csv } }); await open(result.id); await fetchList();
