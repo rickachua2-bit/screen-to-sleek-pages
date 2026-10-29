@@ -209,12 +209,153 @@ function QrStands({ tags }: { tags: SmartTagView[] }) {
   </div>;
 }
 
-function Soundboxes() {
-  return <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
+function speakPreview(text: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) { toast.error("Voice preview is not available on this device."); return; }
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+}
+
+function SoundboxCard({ box, charges, onEdit, onUnlink, busy }: { box: SoundboxView; charges: TagChargeView[]; onEdit: (b: SoundboxView) => void; onUnlink: (b: SoundboxView) => void; busy: boolean }) {
+  const recent = charges.filter((c) => c.handle === box.handle).slice(0, 3);
+  return <li className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-cobalt">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="flex items-center gap-2 text-base font-extrabold"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-magenta/10"><Speaker className="h-3.5 w-3.5 text-magenta" /></span>{box.label}</p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground">{box.deviceId}</p>
+        <p className="mt-1 text-xs font-semibold text-cyan">Announces payments to @{box.handle} · {box.voice}</p>
+      </div>
+      <div className="flex gap-1.5">
+        <Button variant="outline" size="sm" aria-label={`Preview voice for ${box.label}`} onClick={() => speakPreview(`Payment received. Five thousand naira. Thank you.`)}><Volume2 className="h-3.5 w-3.5" />Preview</Button>
+        <Button variant="outline" size="sm" aria-label={`Edit ${box.label}`} disabled={busy} onClick={() => onEdit(box)}><Pencil className="h-3.5 w-3.5" />Edit</Button>
+        <Button variant="outline" size="sm" aria-label={`Unlink ${box.label}`} disabled={busy} onClick={() => onUnlink(box)}><Trash2 className="h-3.5 w-3.5" />Unlink</Button>
+      </div>
+    </div>
+    <div className="mt-3 border-t border-border pt-3">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Recent payments on @{box.handle}</p>
+      {recent.length ? <ul className="mt-2 space-y-1.5">
+        {recent.map((c) => { const st = STATUS_STYLE[c.status]; return <li key={c.reference} className="flex items-center justify-between gap-2 text-xs">
+          <span className="font-semibold tabular-nums">{money(c.amount, c.currency)}</span>
+          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${st.className}`}>{st.label}</span>
+        </li>; })}
+      </ul> : <p className="mt-2 text-xs text-muted-foreground">No payments on this tag yet.</p>}
+    </div>
+  </li>;
+}
+
+function Soundboxes({ tags, charges }: { tags: SmartTagView[]; charges: TagChargeView[] }) {
+  const listFn = useServerFn(listSoundboxes);
+  const registerFn = useServerFn(registerSoundbox);
+  const updateFn = useServerFn(updateSoundbox);
+  const unlinkFn = useServerFn(unlinkSoundbox);
+  const [boxes, setBoxes] = useState<SoundboxView[] | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<SoundboxView | null>(null);
+  const [deviceId, setDeviceId] = useState("");
+  const [label, setLabel] = useState("");
+  const [handle, setHandle] = useState("");
+  const [voice, setVoice] = useState<string>(SOUNDBOX_VOICES[0]);
+  const deviceValid = /^[A-Z0-9][A-Z0-9-]{3,23}$/.test(deviceId);
+  const linkedHandle = handle || tags[0]?.handle || "";
+
+  const load = useCallback(async () => {
+    setError("");
+    try { const r = await listFn(); setBoxes(r.soundboxes); }
+    catch (e) { setError(e instanceof Error ? e.message : "Your soundboxes could not be loaded. Try again."); }
+  }, [listFn]);
+  useEffect(() => { void load(); }, [load]);
+
+  const startEdit = (b: SoundboxView) => { setEditing(b); setDeviceId(b.deviceId); setLabel(b.label); setHandle(b.handle); setVoice(b.voice); };
+  const resetForm = () => { setEditing(null); setDeviceId(""); setLabel(""); setHandle(""); setVoice(SOUNDBOX_VOICES[0]); };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deviceValid || label.trim().length < 2 || !linkedHandle || busy) return;
+    setBusy(true); setError("");
+    try {
+      if (editing) {
+        const updated = await updateFn({ data: { deviceId: editing.deviceId, label: label.trim(), voice: voice as never } });
+        setBoxes((prev) => prev?.map((b) => (b.deviceId === updated.deviceId ? updated : b)) ?? prev);
+        toast.success(`${updated.label} updated`);
+      } else {
+        const created = await registerFn({ data: { deviceId, label: label.trim(), handle: linkedHandle, voice: voice as never } });
+        setBoxes((prev) => (prev ? [created, ...prev] : prev));
+        toast.success(`${created.label} registered`);
+      }
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The soundbox could not be saved. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  const unlink = async (b: SoundboxView) => {
+    if (busy) return;
+    setBusy(true); setError("");
+    try {
+      await unlinkFn({ data: { deviceId: b.deviceId } });
+      setBoxes((prev) => prev?.filter((x) => x.deviceId !== b.deviceId) ?? prev);
+      if (editing?.deviceId === b.deviceId) resetForm();
+      toast.success(`${b.label} unlinked`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The soundbox could not be unlinked. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  if (!tags.length) return <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-magenta/10"><Speaker className="h-6 w-6 text-magenta" /></span>
-    <h3 className="mt-4 font-bold">Soundboxes are not connected yet</h3>
-    <p className="mt-2 max-w-sm text-sm text-muted-foreground">A soundbox speaks every payment out loud at your counter. Hardware ordering and pairing will appear here as soon as the service is available — nothing is charged or reserved now.</p>
-    <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"><Volume2 className="h-3.5 w-3.5 text-cyan" />Instant voice alerts in English, Pidgin, Hausa, Yorùbá and Igbo are planned.</p>
+    <h3 className="mt-4 font-bold">Create a SmartTag first</h3>
+    <p className="mt-2 max-w-sm text-sm text-muted-foreground">A soundbox announces payments made to one of your SmartTags. Create a tag in the SmartTags tab, then register your device here.</p>
+  </div>;
+
+  return <div className="space-y-4">
+    <form className="rounded-2xl border border-border bg-card p-5 shadow-sm" onSubmit={(e) => void submit(e)} aria-label={editing ? `Edit ${editing.label}` : "Register soundbox"}>
+      <h3 className="font-bold">{editing ? `Edit ${editing.label}` : "Register a soundbox"}</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">{editing ? "Rename the device or change its announcement voice. The device ID and linked tag stay fixed." : "Enter the device ID printed on your soundbox and link it to a SmartTag. It will announce every payment to that tag."}</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label htmlFor="sb-device">Device ID</Label>
+          <Input id="sb-device" value={deviceId} maxLength={24} disabled={!!editing} onChange={(e) => setDeviceId(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} placeholder="SLK-BOX-0001" autoComplete="off" required className="font-mono" />
+          {deviceId && !deviceValid && <p className="text-[11px] text-destructive">4–24 capital letters, numbers or dashes.</p>}
+        </div>
+        <div className="space-y-1.5"><Label htmlFor="sb-label">Counter name</Label>
+          <Input id="sb-label" value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} placeholder="Front counter" autoComplete="off" required />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label id="sb-tag-label">Announces payments to</Label>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="sb-tag-label">
+            {tags.map((t) => <button key={t.handle} type="button" disabled={!!editing} aria-pressed={linkedHandle === t.handle} onClick={() => setHandle(t.handle)}
+              className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${linkedHandle === t.handle ? "border-cobalt bg-cobalt text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-cobalt/50"}`}>@{t.handle}</button>)}
+          </div>
+        </div>
+        <div className="space-y-1.5"><Label id="sb-voice-label">Announcement voice</Label>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="sb-voice-label">
+            {SOUNDBOX_VOICES.map((v) => <button key={v} type="button" aria-pressed={voice === v} onClick={() => setVoice(v)}
+              className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${voice === v ? "border-magenta bg-magenta text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-magenta/50"}`}>{v}</button>)}
+          </div>
+        </div>
+      </div>
+      {error && <p role="alert" className="mt-3 text-xs text-destructive">{error}</p>}
+      <div className="mt-4 flex gap-2">
+        {editing && <Button type="button" variant="outline" className="flex-1" onClick={resetForm}>Cancel</Button>}
+        <Button type="submit" variant="brand" className="flex-1" disabled={!deviceValid || label.trim().length < 2 || !linkedHandle || busy}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Speaker className="h-4 w-4" />}{busy ? "Saving…" : editing ? "Save changes" : "Register soundbox"}
+        </Button>
+      </div>
+    </form>
+
+    <div className="rounded-xl border border-cyan/30 bg-cyan/5 p-3.5 text-xs text-muted-foreground">
+      <p className="flex items-start gap-2"><Volume2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan" />Registration links your device to a tag and stores its voice preference. On-device audio pairing is handled by the soundbox itself once it comes online; the Preview button plays a sample announcement on this device.</p>
+    </div>
+
+    {boxes === null && !error && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your soundboxes…</p>}
+    {boxes && !boxes.length && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-magenta/10"><Speaker className="h-6 w-6 text-magenta" /></span>
+      <h3 className="mt-4 font-bold">No soundboxes registered</h3>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">Register your first device above — it takes under a minute.</p>
+    </div>}
+    <ul className="space-y-3">
+      {(boxes ?? []).map((b) => <SoundboxCard key={b.deviceId} box={b} charges={charges} busy={busy} onEdit={startEdit} onUnlink={(x) => void unlink(x)} />)}
+    </ul>
   </div>;
 }
 
