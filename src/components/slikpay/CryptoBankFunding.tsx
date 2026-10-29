@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDown, ArrowLeftRight, Landmark, Lock, Wallet } from "lucide-react";
+import { ArrowRight, CheckCircle2, Landmark, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCryptoOfframpPreview } from "@/lib/crypto-offramp.functions";
 import type { CryptoOfframpPreview } from "@/lib/crypto-offramp";
@@ -12,6 +12,7 @@ import { runPaddleOperation } from "@/lib/paddle.functions";
 import { baasService } from "@/lib/baas.functions";
 import { listBanks } from "@/lib/transfers.functions";
 import { RecipientBankPicker, type RecipientBank } from "./RecipientBankPicker";
+import coins from "@/assets/crypto-bank-coins.jpg";
 
 export function CryptoBankFunding({ balances }: { balances?: Record<string, number> | undefined }) {
   const [coin, setCoin] = useState<"USDT" | "USDC">("USDT"); const [amount, setAmount] = useState("");
@@ -107,30 +108,40 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
   }, [coin, amount, getPreview]);
   const estimate = preview ? { amount: preview.netNgn, rate: preview.effectiveRate } : null;
   const recovering = payment?.stage === "conversion_pending";
-  return <section className="space-y-5 border-t border-border pt-5">
-    {!payment && recoveries.length > 0 && <div className="space-y-2"><p className="text-sm font-semibold text-foreground">Pending conversions</p>{recoveries.map((r) => <Button key={r.idempotency_key} variant="outline" className="max-w-full" onClick={() => {
-      const originalCoin = r.operation === "SWAP USDC->NGN" ? "USDC" : "USDT";
-      setCoin(originalCoin); setAmount(String(r.amount));
-      flow.current = createCryptoBankFlow({ swap: (data) => swap({ data }), withdraw, id: () => crypto.randomUUID(), changed: setPayment, resume: { coin: originalCoin, amount: r.amount, swapId: r.idempotency_key } });
-      setPayment({ stage: "conversion_pending", credited: 0, payoutAmount: 0, swapId: r.idempotency_key, payoutId: "", message: "Recover the original conversion." });
-    }}>Recover {r.amount} {r.operation.includes("USDC") ? "USDC" : "USDT"} conversion</Button>)}</div>}
-    <div className="flex items-start gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><ArrowLeftRight className="h-5 w-5" /></span><div><h2 className="text-xl font-bold text-foreground">Crypto to bank</h2><p className="mt-1 text-sm text-muted-foreground">USDT or USDC → NGN → bank account</p></div></div>
-    <div className="space-y-3 border-b border-border pb-5"><p className="text-sm font-semibold text-foreground">Recipient · NGN bank account</p>
-      {(!payment || ["ready", "converted", "conversion_pending"].includes(payment.stage)) && <>
-        <RecipientBankPicker banks={banks} bank={bank} error={bankError} onRetry={loadBanks} onSelect={(selected) => { setDestination(null); setBank(selected); }} />
-        <label className="block text-sm font-semibold text-foreground">Account number<input aria-label="Cash-out recipient account number" inputMode="numeric" autoComplete="off" maxLength={10} className="field mt-2" value={account} onChange={(e) => { setDestination(null); setAccount(e.target.value.replace(/\D/g, "")); }} /></label>
-      </>}
-      {lookup && <p role="status" className="text-sm text-muted-foreground">{lookup}</p>}
-      {destination && <p className="text-sm font-semibold text-primary">{destination.accountName} · {bank?.name} · {destination.accountNumber}</p>}
+  const step = payment?.stage === "completed" ? 3 : payment?.stage === "converted" || payment?.stage === "paying" || payment?.stage === "payout_pending" ? 2 : 1;
+  const fee = payment?.stage === "converted" ? (payment.payoutAmount > 0 ? slikpayTransferFee(payment.payoutAmount) : 0) : estimate ? slikpayTransferFee(estimate.amount) : null;
+  return <section className="transfer-center crypto-composer space-y-5">
+    <div><h2 className="text-2xl font-bold text-foreground">Crypto to bank</h2><p className="mt-1 text-sm text-muted-foreground">USDT or USDC → NGN → bank account</p></div>
+    <div className="transfer-composer-layout">
+      <aside className="transfer-story crypto-story">
+        <span className="transfer-eyebrow"><ShieldCheck className="h-4 w-4" />CRYPTO TO BANK</span>
+        <h2>From crypto<br />to your bank account</h2>
+        <p className="crypto-story-description">Convert USDT or USDC to NGN and pay any supported Nigerian bank account.</p>
+        <img src={coins} alt="USDT and USDC coins connected to a bank" width={1152} height={576} className="crypto-coins" />
+        <div className="crypto-coin-labels"><span>USDT</span><span>USDC</span><span>NGN</span></div>
+        <ol className="crypto-stages">{[["Convert", "Convert crypto to your NGN balance."], ["Review", "Review the confirmed credit and bank fee."], ["Pay", "Confirm the bank payout with your PIN."]].map(([title, detail], i) => <li key={title} aria-current={step === i + 1 ? "step" : undefined}><span className="crypto-stage-number">{step > i + 1 ? <CheckCircle2 className="h-4 w-4" /> : i + 1}</span><div><strong>{title}</strong><p>{detail}</p></div></li>)}</ol>
+        <p className="crypto-story-security"><Lock className="h-3.5 w-3.5" />PIN protected · Verified recipients</p>
+      </aside>
+      <section className="transfer-composer space-y-4" aria-label="Crypto bank transfer form">
+        {!payment && recoveries.length > 0 && <div className="space-y-2"><p className="text-xs font-semibold text-foreground">Pending conversions</p>{recoveries.map((r) => <Button key={r.idempotency_key} variant="outline" className="max-w-full" onClick={() => {
+          const originalCoin = r.operation === "SWAP USDC->NGN" ? "USDC" : "USDT";
+          setCoin(originalCoin); setAmount(String(r.amount));
+          flow.current = createCryptoBankFlow({ swap: (data) => swap({ data }), withdraw, id: () => crypto.randomUUID(), changed: setPayment, resume: { coin: originalCoin, amount: r.amount, swapId: r.idempotency_key } });
+          setPayment({ stage: "conversion_pending", credited: 0, payoutAmount: 0, swapId: r.idempotency_key, payoutId: "", message: "Recover the original conversion." });
+        }}>Recover {r.amount} {r.operation.includes("USDC") ? "USDC" : "USDT"}</Button>)}</div>}
+        <div><p className="crypto-field-label">Select crypto asset</p><div className="grid grid-cols-2 gap-2" role="group" aria-label="Crypto funding currency">{(["USDT", "USDC"] as const).map((c) => <Button key={c} disabled={locked || preparing} variant="outline" className="crypto-asset" aria-pressed={coin === c} onClick={() => { setCoin(c); setAmount(""); }}><span className={c === "USDT" ? "crypto-asset-symbol crypto-tether" : "crypto-asset-symbol"}>{c === "USDT" ? "₮" : "$"}</span><span className="text-left"><strong className="block">{c}</strong><span className="block text-xs font-normal text-muted-foreground">{c === "USDT" ? "Tether" : "USD Coin"}</span></span></Button>)}</div></div>
+        <label className="block"><span className="crypto-field-label">Amount <span className="float-right font-normal text-muted-foreground">Available: {balances?.[coin] !== undefined ? balances[coin]?.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</span></span><div className="crypto-amount"><input aria-label="Crypto conversion amount" disabled={locked || preparing} inputMode="decimal" className="field" placeholder="0.00" value={amount} onChange={(e) => { if (/^\d*(\.\d{0,8})?$/.test(e.target.value)) setAmount(e.target.value); }} /><span>{coin}</span></div></label>
+        <dl className="crypto-estimates"><div><dt>{payment?.stage === "converted" ? "Confirmed NGN credit" : "Estimated NGN"}</dt><dd>{payment?.stage === "converted" ? naira(payment.credited) : estimate ? naira(estimate.amount) : "—"}</dd></div><div><dt>Conversion fee · included</dt><dd>{preview ? naira(preview.conversionFee) : "—"}</dd></div></dl>
+        {preview && <p className="text-xs text-muted-foreground">Effective rate {naira(preview.effectiveRate)} · Wholesale {naira(preview.wholesaleRate)} · Indicative, not locked.</p>}
+        {loading && <p role="status" className="text-xs text-muted-foreground">Fetching conversion rates…</p>}
+        {(!payment || ["ready", "converted", "conversion_pending"].includes(payment.stage)) && <><RecipientBankPicker banks={banks} bank={bank} error={bankError} onRetry={loadBanks} onSelect={(selected) => { setDestination(null); setBank(selected); }} /><label className="block"><span className="crypto-field-label">Account number</span><input aria-label="Cash-out recipient account number" inputMode="numeric" autoComplete="off" maxLength={10} placeholder="Enter account number" className="field" value={account} onChange={(e) => { setDestination(null); setAccount(e.target.value.replace(/\D/g, "")); }} /></label></>}
+        <div><p className="crypto-field-label">Recipient name</p><div className="crypto-recipient">{destination ? <><CheckCircle2 className="h-4 w-4 shrink-0 text-success" /><span>{destination.accountName}</span></> : <span>{lookup || "—"}</span>}</div></div>
+        <div className="crypto-bank-fee"><span>Bank fee · 1% capped at ₦80</span><strong>{fee !== null ? naira(fee) : "—"}</strong></div>
+        {payment && <div role="status" className="crypto-payment-status"><p>{payment.message}</p>{payment.stage === "converted" && <p className="mt-1">Bank receives {naira(payment.payoutAmount)} · Total debit {naira(payment.payoutAmount + (fee ?? 0))}</p>}<p className="mt-2 break-all text-xs text-muted-foreground">{payment.stage === "payout_pending" || payment.stage === "completed" ? payment.payoutId : payment.swapId}</p></div>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        {(!locked || recovering || payment?.stage === "converted") && <label className="block"><span className="crypto-field-label">Enter your PIN</span><input aria-label="Crypto bank transaction PIN" type="password" inputMode="numeric" placeholder="4-digit transaction PIN" autoComplete="off" maxLength={4} className="field" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} /></label>}
+        {payment?.stage === "converted" ? <Button variant="brand" disabled={pin.length !== 4 || payment.payoutAmount <= 0 || !destination} onClick={() => void pay()} className="crypto-submit"><Landmark className="h-4 w-4" />Confirm bank withdrawal</Button> : <Button variant="brand" disabled={(locked && !recovering) || preparing || (!recovering && (loading || !preview || !destination)) || pin.length !== 4} onClick={() => void convert()} className="crypto-submit">{preparing ? "Preparing conversion…" : recovering ? "Recover original conversion" : "Convert and review"}<ArrowRight className="h-4 w-4" /></Button>}
+      </section>
     </div>
-    <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-4"><div className="flex gap-2" role="group" aria-label="Crypto funding currency">{(["USDT", "USDC"] as const).map((c) => <Button key={c} disabled={locked || preparing} variant={coin === c ? "brand" : "outline"} aria-pressed={coin === c} onClick={() => { setCoin(c); setAmount(""); }}><Wallet className="h-4 w-4" />{c}</Button>)}</div><p className="text-xs text-muted-foreground">Available {coin}: <strong className="text-foreground">{balances?.[coin] !== undefined ? balances[coin]?.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong></p><label className="block text-sm font-semibold text-foreground">Amount in {coin}<input aria-label="Crypto conversion amount" disabled={locked || preparing} inputMode="decimal" className="field mt-2" placeholder="0.00" value={amount} onChange={(e) => { if (/^\d*(\.\d{0,8})?$/.test(e.target.value)) setAmount(e.target.value); }} /></label><div className="rounded-lg border border-border bg-muted/40 p-4"><p className="text-xs text-muted-foreground">Estimated NGN after conversion spread</p><p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{estimate ? naira(estimate.amount) : "—"}</p><p className="mt-2 text-xs text-muted-foreground">{estimate ? `Indicative live rate: 1 ${coin} = ${naira(estimate.rate)}. Not a locked quote.` : "No executable quote available for this pair."}</p>{estimate && <p className="mt-2 text-xs text-muted-foreground">Estimated bank fee: {naira(slikpayTransferFee(estimate.amount))} · 1% capped at ₦80</p>}</div></div>
-    {loading && <p role="status" className="text-sm text-muted-foreground">Fetching conversion rates…</p>}
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    {preview && <dl className="grid gap-3 border-y border-border py-4 sm:grid-cols-2">
-      {[["Wholesale rate", naira(preview.wholesaleRate)], ["Effective rate", naira(preview.effectiveRate)], ["Conversion fee · included in rate", naira(preview.conversionFee)], ["Estimated net NGN", naira(preview.netNgn)]].map(([label, value]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 font-semibold tabular-nums text-foreground">{value}</dd></div>)}
-    </dl>}
-    <div className="space-y-4 border-l-2 border-primary/20 pl-5"><div className="flex items-center gap-2 text-sm font-bold text-foreground"><ArrowLeftRight className="h-4 w-4 text-primary" />Convert to your NGN balance</div><ArrowDown className="h-4 w-4 text-muted-foreground" /><div className="flex items-center gap-2 text-sm font-bold text-foreground"><Landmark className="h-4 w-4 text-primary" />Pay any supported NGN bank account</div><div role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-4"><p className="flex items-center gap-2 text-sm font-bold text-primary"><Lock className="h-4 w-4" />{payment && payment.stage !== "ready" ? payment.message : "Convert, then review your bank withdrawal"}</p><p className="mt-2 text-sm text-muted-foreground">{payment?.stage === "converted" ? `${naira(payment.credited)} credited to NGN. Bank payment: ${naira(payment.payoutAmount)} · Fee: ${naira(payment.payoutAmount > 0 ? slikpayTransferFee(payment.payoutAmount) : 0)}.` : "The final conversion credit already includes the conversion fee. Bank withdrawal needs separate confirmation."}</p>{destination && <p className="mt-2 text-sm text-foreground">{destination.accountName} · {destination.accountNumber}</p>}{payment && <p className="mt-2 break-all text-xs text-muted-foreground">{payment.stage === "payout_pending" || payment.stage === "completed" ? payment.payoutId : payment.swapId}</p>}</div>
-    {(!locked || recovering || payment?.stage === "converted") && <label className="block text-sm font-semibold text-foreground">Transaction PIN<input aria-label="Crypto bank transaction PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={4} className="field mt-2" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} /></label>}
-    {payment?.stage === "converted" ? <Button variant="brand" disabled={pin.length !== 4 || payment.payoutAmount <= 0 || !destination} onClick={() => void pay()} className="w-full"><Landmark className="h-4 w-4" />Confirm bank withdrawal</Button> : <Button variant="outline" disabled={(locked && !recovering) || preparing || (!recovering && (loading || !preview || !destination)) || pin.length !== 4} onClick={() => void convert()} className="w-full"><Lock className="h-4 w-4" />{preparing ? "Checking settlement account…" : recovering ? "Recover original conversion" : "Convert and review bank payout"}</Button>}</div></div>
   </section>;
 }
