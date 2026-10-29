@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { CURRENCIES, NOT_ACTIVE, type WalletStatus } from "./wallets";
-import { confirmedSwap, UNCERTAIN_PAYMENT } from "./wallet-safety";
+import { confirmedSwap, requireVerifiedSwapContract, UNCERTAIN_PAYMENT } from "./wallet-safety";
 import { payoutStatus, slikpayTransferFee } from "./transfer-validation";
 
 export interface WalletView { code: string; status: WalletStatus; balance: number; accountNumber: string | null; accountName: string | null; bankName: string | null; routing: string | null; network: string | null; note: string | null }
@@ -74,6 +74,7 @@ export const swapCurrency = createServerFn({ method: "POST" })
     const { learnRate } = await import("./wallet-actions");
     const ctx = await bankingUser();
     const op = `SWAP ${data.from}->${data.to}`;
+    requireVerifiedSwapContract();
     await guardMoney(ctx, data.from, data.amount, data.pin, op, data.idempotencyKey);
     try {
       const r = await callPaddle(ctx.mode, "POST", "/v1/crypto/swap", { fromCurrency: data.from, toCurrency: data.to, amount: data.amount }, data.idempotencyKey);
@@ -135,7 +136,7 @@ export const withdrawFunds = createServerFn({ method: "POST" })
       const { providerFee } = await import("./ledger-history");
       const fee = data.currency === "NGN" ? transferFee : providerFee(d);
       const status = payoutStatus(d);
-      await settleMoney(ctx, data.idempotencyKey, status, reference ?? null, { recipient: acct.accountName, to: acct.accountNumber, bank: acct.bankName, ...(fee !== undefined ? { fee } : {}) });
+      await settleMoney(ctx, data.idempotencyKey, status, reference ?? null, { principal: data.amount, recipient: acct.accountName, to: acct.accountNumber, bank: acct.bankName, ...(fee !== undefined ? { fee } : {}) });
       if (status === "failed") throw new Error("The bank declined this withdrawal.");
       if (status === "pending") throw new Error(UNCERTAIN_PAYMENT);
       return { reference: reference ?? null, to: `${acct.accountName} · ${acct.bankName} · ${acct.accountNumber}` };

@@ -1,4 +1,10 @@
 import { payoutStatus } from "./transfer-validation";
+// The public service spec has no binding quote or swap recovery contract.
+// This gate applies to server execution, not only the bank cash-out screen.
+export const SWAP_NOT_READY = "Currency conversion is not active yet. Confirmed quotes and payment recovery are required before funds can be converted.";
+export function requireVerifiedSwapContract(): never {
+  throw new Error(SWAP_NOT_READY);
+}
 export function confirmedSwap(value: unknown) {
   const d = value as Record<string, unknown> | null;
   const amount = Number(d?.["toAmount"]);
