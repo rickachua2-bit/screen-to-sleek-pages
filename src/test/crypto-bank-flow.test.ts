@@ -51,6 +51,14 @@ describe("guarded two-step crypto bank review", () => {
     await t.flow.convert("USDT", 10, "1234");
     expect(t.state()?.payoutAmount).toBe(9920);
   });
+  it("pays a selected recipient rather than requiring an own settlement account", async () => {
+    const t = setup();
+    const recipient = { bankCode: "058", accountNumber: "0123456789", accountName: "Another recipient" };
+    await t.flow.convert("USDT", 1, "1234");
+    await t.flow.pay("1234", recipient);
+    expect(t.withdraw).toHaveBeenCalledWith(expect.objectContaining({ recipient, currency: "NGN", amount: 990.1 }));
+    expect(t.state()?.stage).toBe("completed");
+  });
   it("suppresses overlapping conversion requests", async () => {
     let finish: ((value: { credited: number }) => void) | undefined;
     const t = setup(vi.fn().mockImplementation(() => new Promise<{ credited: number }>((resolve) => { finish = resolve; })));

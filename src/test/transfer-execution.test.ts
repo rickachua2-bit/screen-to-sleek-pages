@@ -33,6 +33,13 @@ describe("bank payout transactional execution", () => {
     expect(mocks.call).toHaveBeenCalledTimes(1);
     expect(mocks.settle).not.toHaveBeenCalled();
   });
+  it("uses the bank-resolved name instead of trusting any-recipient client input", async () => {
+    mocks.call.mockResolvedValueOnce({ data: { status: "completed", reference: "provider" } });
+    const request = input();
+    request.data.body = { ...request.data.body, destinationAccountName: "Untrusted name" } as typeof request.data.body;
+    await invoke(request);
+    expect(mocks.call).toHaveBeenNthCalledWith(2, "live", "POST", "/v1/payouts/transfer", expect.objectContaining({ destinationAccountName: "Verified recipient", destinationAccountNumber: "0123456789" }), request.data.idempotencyKey);
+  });
   it("never releases uncertain funds on a dispatch timeout", async () => {
     mocks.call.mockRejectedValueOnce(new Error("timeout"));
     await expect(invoke(input())).rejects.toThrow("funds remain reserved");

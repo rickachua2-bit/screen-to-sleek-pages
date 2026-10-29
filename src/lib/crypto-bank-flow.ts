@@ -11,7 +11,8 @@ export interface CryptoBankState {
   message: string;
 }
 type SwapInput = { from: "USDT" | "USDC"; to: "NGN"; amount: number; pin: string; idempotencyKey: string };
-type WithdrawalInput = { currency: "NGN"; amount: number; pin: string; idempotencyKey: string };
+export interface CryptoBankRecipient { bankCode: string; accountNumber: string; accountName: string }
+type WithdrawalInput = { currency: "NGN"; amount: number; pin: string; idempotencyKey: string; recipient?: CryptoBankRecipient };
 
 /** A single mounted review session. Durable recovery remains the server ledger's responsibility. */
 export function createCryptoBankFlow(deps: {
@@ -43,12 +44,12 @@ export function createCryptoBankFlow(deps: {
         update({ stage: blocked ? "ready" : "conversion_pending", message: blocked ? SWAP_NOT_READY : "Conversion is awaiting confirmation. Check your ledger before sending again; no bank payout was submitted." });
       }
     },
-    async pay(pin: string) {
+    async pay(pin: string, recipient?: CryptoBankRecipient) {
       if (state.stage !== "converted" || state.payoutAmount <= 0) return;
       if (!/^\d{4}$/.test(pin)) throw new Error("Enter your 4-digit transaction PIN.");
       update({ stage: "paying", message: "Submitting bank withdrawal…" });
       try {
-        await deps.withdraw({ currency: "NGN", amount: state.payoutAmount, pin, idempotencyKey: state.payoutId });
+        await deps.withdraw({ currency: "NGN", amount: state.payoutAmount, pin, idempotencyKey: state.payoutId, ...(recipient ? { recipient } : {}) });
         update({ stage: "completed", message: "Bank withdrawal completed." });
       } catch {
         update({ stage: "payout_pending", message: "Bank withdrawal was not confirmed. Check your ledger for its status; any reserved funds remain unavailable. Do not submit again." });
