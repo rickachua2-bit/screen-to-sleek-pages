@@ -119,7 +119,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
         <div className="relative mt-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/85" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search countries or currencies" aria-label="Search destinations"
-            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/75 focus:border-cyan focus:outline-none" />
+            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/80 focus:border-cyan focus:outline-none" />
         </div>
         <ul role="listbox" aria-label="Destinations" className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
           {filtered.map((c, i) => {
