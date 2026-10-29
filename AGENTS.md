@@ -12,7 +12,7 @@
 - Legacy read-only Slikpay API calls may use `src/lib/api.ts` demo fallbacks; verification and banking use TanStack server functions without mock success so outages never imply verified identity or completed transfers.
 - Auth state lives in `src/lib/auth.tsx` (React context backed by localStorage/sessionStorage); the backend is external, not Lovable Cloud.
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
-- Unconnected merchant operations prepare explicitly labelled in-memory drafts only; never imply policies, verification, payments, device pairing or API secrets are live without a service response.
+- Unconnected merchant operations stay labelled in-memory drafts; never imply they are live without a service response.
 - Slikpay overlays use shared global surface tokens and BrandSelect wraps the existing Radix Select; portal content carries its own theme so it remains branded outside page containers.
 - External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
@@ -25,9 +25,8 @@
 - Non-NGN wallets (fiat via accounts/global, USDT/USDC via crypto/address) are tracked as `paddle_resources` rows tagged `POST /v1/... <CODE>` with wallet details JSON in resource_id; USDT/USDC auto-issue for live users holding a NUBAN, and refused issuance is recorded so the UI shows "Account not active yet".
 - Dashboard live updates subscribe to the external project realtime (transactions, ledger_entries) via `src/lib/live-updates.ts` with a 60s visible-tab poll fallback; realtime needs `supabase/slikpay_precision.sql` run manually.
 - Incoming transfers are captured idempotently (reference col:<provider ref>) by both the webhook and a 30s/refresh pull sync in src/lib/collections.server.ts; unrecorded 10-digit receiving accounts are auto-linked only when their name matches the user's verified business name, since the provider key can see every customer's collections.
-- Services use `services-registry.ts`; payment execution retains shared PIN, holds and receipt safeguards.
-- ServicesCatalog owns the shared visual banking/business catalog; ServicesHub retains account context, navigation and guided operations so design changes never duplicate payment logic.
-- TransferComposerLayout owns the split transfer presentation; SendNip retains bank lookup, review and payment execution and publishes display-only preview state so the page and modal share one payment flow.
+- Services use `services-registry.ts` with a shared visual catalog (ServicesCatalog) and account context (ServicesHub); payment execution retains shared PIN, holds and receipt safeguards.
+- TransferComposerLayout owns the split transfer presentation; SendNIP retains bank lookup, review and payment execution and publishes display-only preview state so the page and modal share one payment flow.
 - NIP transfer execution re-resolves the recipient, derives NGN and reserves principal plus the provider fee server-side; ambiguous dispatch outcomes retain held funds and pending receipts rather than claiming failure or making funds spendable again.
 - Bulk payment files use Papa Parse and server-owned saved batches with stable row references; the UI resumes original receipts rather than minting new references on re-upload, to prevent duplicate payouts.
 - Wallet and NIP bank-transfer reservations and settlement use service-only transactional RPCs from the payment reliability script; unknown outcomes retain holds. Receipt summaries store principal and NIP session ID separately from fee-inclusive reserved amounts to keep ledger displays accurate.
