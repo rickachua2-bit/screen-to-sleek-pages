@@ -19,7 +19,7 @@ import { Cards } from "./Cards";
 import { Airtime } from "./Airtime";
 import { BillsService } from "./BillsService";
 
-const BILLS_MODULES: Record<string, string> = { "svc-data": "data", "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
+const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
