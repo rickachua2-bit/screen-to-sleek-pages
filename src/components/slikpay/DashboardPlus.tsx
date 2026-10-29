@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Copy, CreditCard, Eye, EyeOff, Landmark, Link2, Plus, RefreshCw, Search, Send, Settings2, Sparkles, TrendingDown, TrendingUp, UserPlus, Wallet, X, Clock, Inbox } from "lucide-react";
+import { 
+  ArrowDownLeft, ArrowUpRight, Clock, Copy, CreditCard, ExternalLink, Eye, EyeOff, 
+  Headphones, HelpCircle, Inbox, Landmark, Link2, Mail, MessageSquare, 
+  Plane, Plus, Receipt, RefreshCw, Search, Send, Settings2, ShieldCheck, 
+  Smartphone, Sparkles, TrendingDown, TrendingUp, UserPlus, Wallet, X, Zap 
+} from "lucide-react";
 import { toast } from "sonner";
 import { naira, type Txn } from "@/lib/api";
 import { dailyInflow, greetingFor, insights, mask, relativeTime, setHideAmounts, useHideAmounts } from "@/lib/insights";
@@ -109,29 +114,274 @@ export function EmptyState({ icon: Icon, title, text }: { icon: typeof Inbox; ti
   return <div className="flex flex-col items-center py-8 text-center"><span className="relative mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-tri text-primary-foreground shadow-cobalt"><Icon className="h-6 w-6" /></span><p className="text-sm font-extrabold">{title}</p><p className="mt-1 max-w-xs text-xs text-muted-foreground">{text}</p></div>;
 }
 
-export interface QuickItem { label: string; icon: typeof Send; run: () => void }
+export interface QuickItem { 
+  label: string; 
+  sub?: string;
+  badge?: string;
+  category?: "finance" | "travel" | "system" | "support";
+  icon: typeof Send; 
+  run: () => void;
+}
+
 export function merchantQuickActions(open: (k: ActionKind) => void, go: (m: string) => void, refresh: () => void): QuickItem[] {
   return [
-    { label: "Send money", icon: Send, run: () => open("send") },
-    { label: "Payment link", icon: Link2, run: () => go("links") },
-    { label: "Fund card", icon: CreditCard, run: () => open("fund") },
-    { label: "Add beneficiary", icon: UserPlus, run: () => go("banking") },
-    { label: "Request payment", icon: Wallet, run: () => go("links") },
-    { label: "Refresh", icon: RefreshCw, run: refresh },
+    { 
+      label: "Send Money", 
+      sub: "Instant NIP bank transfer or P2P", 
+      badge: "Instant",
+      icon: Send, 
+      category: "finance",
+      run: () => open("send") 
+    },
+    { 
+      label: "Payment Link", 
+      sub: "Create invoice or online checkout link", 
+      icon: Link2, 
+      category: "finance",
+      run: () => go("links") 
+    },
+    { 
+      label: "Book Flights", 
+      sub: "450+ airlines & instant PNR issuance", 
+      badge: "Wholesale",
+      icon: Plane, 
+      category: "travel",
+      run: () => go("flights") 
+    },
+    { 
+      label: "Virtual USD Card", 
+      sub: "Fund or issue corporate debit cards", 
+      icon: CreditCard, 
+      category: "finance",
+      run: () => open("fund") 
+    },
+    { 
+      label: "Pay Utilities & Bills", 
+      sub: "Airtime, power, cable TV & betting", 
+      icon: Receipt, 
+      category: "finance",
+      run: () => open("bills") 
+    },
+    { 
+      label: "Add Beneficiary", 
+      sub: "Save verified account for fast payouts", 
+      icon: UserPlus, 
+      category: "finance",
+      run: () => go("banking") 
+    },
+    { 
+      label: "Request Payment", 
+      sub: "Share payable invoice with client", 
+      icon: Wallet, 
+      category: "finance",
+      run: () => go("links") 
+    },
+    { 
+      label: "Sync Balances", 
+      sub: "Refresh real-time ledger & transactions", 
+      icon: RefreshCw, 
+      category: "system",
+      run: refresh 
+    },
   ];
 }
 
 export function QuickActionFab({ items, raised }: { items: QuickItem[]; raised?: boolean | undefined }) {
   const [open, setOpen] = useState(false);
-  useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); }; document.addEventListener("keydown", k); return () => document.removeEventListener("keydown", k); }, [open]);
-  const r = 112;
-  return <>
-    {open && <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={() => setOpen(false)} />}
-    <div className={`fixed right-5 z-50 md:right-8 ${raised ? "bottom-24 lg:bottom-8" : "bottom-8"}`}>
-      {open && items.map(({ label, icon: Icon, run }, i) => { const a = (Math.PI / 2) * (i / Math.max(1, items.length - 1)); const tx = `${-Math.cos(a) * r}px`, ty = `${-Math.sin(a) * r}px`; return <button key={label} onClick={() => { setOpen(false); run(); }} className="fab-item group absolute bottom-1 right-1 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background text-cyan shadow-cobalt hover:text-magenta" style={{ "--tx": tx, "--ty": ty, animationDelay: `${i * 30}ms` } as React.CSSProperties} aria-label={label} title={label}><Icon className="h-5 w-5" /><span className="pointer-events-none absolute right-full mr-2 whitespace-nowrap rounded-md bg-background px-2 py-1 text-[10px] font-bold text-foreground opacity-0 shadow-cobalt transition-opacity group-hover:opacity-100">{label}</span></button>; })}
-      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-label={open ? "Close quick actions" : "Open quick actions"} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-tri text-primary-foreground shadow-cobalt transition-transform hover:scale-105"><span className="absolute inset-0 rounded-full bg-gradient-tri opacity-60 blur-md" /><span className={`relative transition-transform duration-300 ${open ? "rotate-45" : ""}`}>{open ? <X /> : <Plus />}</span></button>
-    </div>
-  </>;
+
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", k);
+    return () => document.removeEventListener("keydown", k);
+  }, [open]);
+
+  return (
+    <>
+      {/* Pop-Up Modal Backdrop */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200" 
+          onClick={() => setOpen(false)} 
+        />
+      )}
+
+      {/* Pop-Up Dialog Card */}
+      {open && (
+        <div 
+          className={`fixed right-3 sm:right-6 md:right-8 z-50 w-[calc(100vw-24px)] sm:w-[450px] max-w-full rounded-3xl border border-border/80 bg-card shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_40px_rgba(37,99,235,0.25)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 ${
+            raised ? "bottom-24 lg:bottom-10" : "bottom-10"
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-actions-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Top Glowing Brand Gradient Strip */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-cyan via-cobalt to-magenta shrink-0" />
+
+          {/* Pop-Up Header */}
+          <div className="flex items-center justify-between border-b border-border bg-card/95 px-5 py-4 backdrop-blur-md shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-cobalt to-cobalt-deep text-white shadow-cobalt">
+                <Sparkles className="h-5 w-5 text-cyan" />
+              </span>
+              <div>
+                <h2 id="quick-actions-title" className="text-base font-black text-foreground flex items-center gap-2">
+                  <span>Slikpay Quick Hub</span>
+                </h2>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">24/7 Live Banking & Services</span>
+                </p>
+              </div>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Close Quick Hub"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Pop-Up Scrollable Body */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+            {/* Quick Actions Grid */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground px-1">
+                Instant Actions & Services
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {items.map(({ label, sub, badge, icon: Icon, run }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      run();
+                    }}
+                    className="group flex items-start gap-3 rounded-2xl border border-border/70 bg-card p-3 text-left transition-all hover:border-cobalt hover:bg-cobalt/5 hover:shadow-md active:scale-98 cursor-pointer"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cobalt/10 text-cobalt transition-colors group-hover:bg-cobalt group-hover:text-white">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 justify-between">
+                        <p className="truncate text-xs font-black text-foreground group-hover:text-cobalt transition-colors">
+                          {label}
+                        </p>
+                        {badge && (
+                          <span className="rounded bg-cyan/15 px-1.5 py-0.2 text-[9px] font-black text-cyan shrink-0">
+                            {badge}
+                          </span>
+                        )}
+                      </div>
+                      {sub && (
+                        <p className="line-clamp-1 text-[10px] text-muted-foreground mt-0.5">
+                          {sub}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dedicated 24/7 Support Desk Section */}
+            <div className="rounded-2xl border border-border/80 bg-gradient-to-br from-navy/30 via-muted/40 to-transparent p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500">
+                    <Headphones className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-black text-foreground">Need Assistance? 24/7 Support Desk</p>
+                    <p className="text-[10px] text-muted-foreground">Dedicated enterprise and customer support</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <a
+                  href="https://wa.me/2348000000000?text=Hello%20Slikpay%20Support%2C%20I%20need%20assistance%20with%20my%20account"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-500/20 active:scale-98"
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0 text-emerald-500" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black">WhatsApp Live Chat</p>
+                    <p className="text-[9px] text-muted-foreground">Instant reply in &lt; 2 mins</p>
+                  </div>
+                </a>
+
+                <a
+                  href="mailto:support@slikpay.online?subject=Slikpay%20Customer%20Support"
+                  className="flex items-center gap-2.5 rounded-xl border border-cobalt/30 bg-cobalt/10 px-3 py-2.5 text-xs font-bold text-cobalt dark:text-cyan transition-all hover:bg-cobalt/20 active:scale-98"
+                >
+                  <Mail className="h-4 w-4 shrink-0 text-cobalt" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black">Email Help Desk</p>
+                    <p className="text-[9px] text-muted-foreground">support@slikpay.online</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Pop-Up Footer */}
+          <div className="border-t border-border bg-card/95 px-5 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground">Esc</kbd> to close
+            </span>
+            <span className="font-semibold text-cobalt flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              Verified Slikpay Engine
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Button (Catchy, Deeper, Ultra-Premium Brand Color) */}
+      <div className={`fixed right-5 z-40 md:right-8 ${raised ? "bottom-24 lg:bottom-8" : "bottom-8"}`}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-label={open ? "Close quick actions pop-up" : "Open quick actions pop-up"}
+          className="group relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-cobalt/40"
+        >
+          {/* Pulsing Animated Halo Ring */}
+          <span className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-cobalt via-cyan to-magenta opacity-70 blur-md group-hover:opacity-100 transition-opacity motion-safe:animate-pulse" />
+
+          {/* Deeper Rich Metallic Obsidian & Cobalt Container */}
+          <span className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#070d1e] via-[#0f1f4b] to-[#1d4ed8] border-2 border-cyan/50 text-white shadow-[0_12px_36px_-6px_rgba(37,99,235,0.8),0_0_22px_rgba(6,182,212,0.45)]">
+            {/* Live Green Online Badge Indicator */}
+            <span className="absolute top-0 right-0 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-slate-950" />
+            </span>
+
+            {/* Icon Transition */}
+            <span className={`relative transition-transform duration-300 ${open ? "rotate-90 scale-110" : "group-hover:scale-110"}`}>
+              {open ? (
+                <X className="h-6 w-6 sm:h-7 sm:w-7 text-cyan" />
+              ) : (
+                <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-cyan fill-cyan/20 animate-in zoom-in duration-200" />
+              )}
+            </span>
+          </span>
+        </button>
+      </div>
+    </>
+  );
 }
 
 export function CommandPalette({ open, onOpenChange, actions, go, txns }: { open: boolean; onOpenChange: (v: boolean) => void; actions: QuickItem[]; go: (m: string) => void; txns: Txn[] }) {
