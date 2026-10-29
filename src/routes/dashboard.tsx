@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/lib/currency-store";
 import { CurrencyWallet } from "@/components/slikpay/CurrencyWallet";
 import { ActivityFeed, CommandPalette, CustomiseButton, DashboardHero, EmptyState, FlipNubanCard, InsightsStrip, QuickActionFab, merchantQuickActions, useTiles } from "@/components/slikpay/DashboardPlus";
-import { ArrowRightLeft, BarChart3, LayoutDashboard, Rocket, Settings } from "lucide-react";
+import { ArrowRightLeft, BarChart3, LayoutDashboard, LayoutGrid, Rocket, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (search: Record<string, unknown>) => ({ module: merchantModule(search["module"]) }),
