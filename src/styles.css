@@ -969,3 +969,15 @@ html { scroll-behavior: smooth; }
 .bulk-studio-summary dd { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
 .bulk-studio-summary > div:last-child { border-top: 1px solid var(--border); padding-top: 22px; margin-top: 8px; font-size: 15px; }
 @media (max-width: 760px) { .bulk-studio { grid-template-columns: minmax(0, 1fr); } .bulk-studio-workspace { padding: 18px; } .bulk-studio-overview { border-left: 0; border-top: 3px solid var(--cyan); padding: 22px; } .bulk-studio-drop { min-height: 220px; } .bulk-studio-summary { margin-top: 24px; gap: 16px; } }
+
+.team-studio-rail {
+  --background: oklch(.19 .07 264);
+  --foreground: oklch(.99 .003 255);
+  --muted-foreground: oklch(.82 .025 255);
+  --cyan: oklch(.9 .16 195);
+  --magenta: oklch(.76 .25 330);
+  --border: oklch(.99 .003 255 / 16%);
+  background: var(--background);
+  color: var(--foreground);
+  border-top: 3px solid var(--cyan);
+}
