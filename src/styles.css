@@ -251,6 +251,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(135deg, var(--cobalt-deep), var(--cobalt));
 }
 @utility bg-mesh { background: var(--gradient-mesh); }
+@utility bg-navy-rail { background: linear-gradient(160deg, var(--obsidian), var(--navy)); }
 @utility bg-tint-cyan { background: var(--gradient-tint-cyan); }
 @utility bg-tint-magenta { background: var(--gradient-tint-magenta); }
 @utility bg-band { background: var(--gradient-band); }
