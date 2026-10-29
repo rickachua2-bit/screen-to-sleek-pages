@@ -105,10 +105,11 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const checked = check ? (flow.validate?.show ?? []).map((k) => [k, check[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
   const extras = result ? (flow.receipt ?? []).map((k) => [k, result.data[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
 
+  const canShare = typeof navigator !== "undefined" && "share" in navigator;
   const share = async () => {
     const text = [`Slikpay ${service.label} · ${naira(totals.total)}`, ...summary.map(([k, v]) => `${k}: ${v}`), ...extras.map(([k, v]) => `${label(k)}: ${String(v)}`), result?.ref ? `Reference: ${result.ref}` : ""].filter(Boolean).join("\n");
     try {
-      if ("share" in navigator) await navigator.share({ title: `Slikpay ${service.label} receipt`, text });
+      if (canShare) await navigator.share({ title: `Slikpay ${service.label} receipt`, text });
       else { await navigator.clipboard.writeText(text); toast.success("Receipt copied"); }
     } catch { /* dismissed */ }
   };
