@@ -13,6 +13,7 @@ import { useBankingProfile } from "./PaddleConsole";
 import { FieldInput } from "./ServicesHub";
 import { useMeterCustomer } from "@/lib/electricity-verification";
 import { CableCustomerLookup, CableProviderPicker, useCableCustomer } from "./CableCustomerLookup";
+import { useBettingCustomer } from "@/lib/betting-verification";
 
 type Step = "details" | "review" | "done";
 interface Recent { label: string; values: Record<string, string>; at: string }
@@ -41,7 +42,9 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const [error, setError] = useState("");
   const [check, setCheck] = useState<Record<string, unknown> | null>(null);
   const [pin, setPin] = useState("");
-  const [result, setResult] = useState<{ ref: string | null; data: Record<string, unknown> } | null>(null);
+  const [result, setResult] = useState<{ ref: string | null; data: Record<string, unknown>; status: "succeeded" | "failed" | "pending" } | null>(null);
+  const [paymentKey, setPaymentKey] = useState<string | null>(null);
+  const [uncertain, setUncertain] = useState(false);
   const [recents, setRecents] = useState<Recent[]>([]);
 
   useEffect(() => { setRecents(loadRecents(serviceId)); }, [serviceId]);
@@ -56,6 +59,12 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const short = balance !== null && totals.total > balance;
   const electricity = serviceId === "power";
   const cable = serviceId === "tv";
+  const betting = serviceId === "betting";
+  const lookupBetting = useCallback(async (body: { operator: string; customerId: string }) => {
+    const response = await run({ data: { id: "post-bills-betting-validate", params: {}, body, idempotencyKey: crypto.randomUUID(), currency: "NGN" } });
+    return JSON.parse(response.resultJson) as unknown;
+  }, [run]);
+  const bettor = useBettingCustomer(betting ? str(picked["operator"]?.["code"]) : "", betting ? values["customerId"] ?? "" : "", lookupBetting);
   const lookupMeter = useCallback(async (body: { meterNumber: string; billerCode: string; itemCode: string }) => {
     const response = await run({ data: { id: "post-bills-electricity-validate", params: {}, body, idempotencyKey: crypto.randomUUID(), currency: "NGN" } });
     return JSON.parse(response.resultJson) as unknown;
@@ -76,6 +85,8 @@ export function BillsService({ serviceId }: { serviceId: string }) {
     }
     setValues((p) => { const next = { ...p, [f.name]: v }; for (const g of fields) if (g.options?.dependsOn === f.name) delete next[g.name]; const amt = it && f.setsAmount?.(it); if (amt) next[amountKey] = String(amt); return next; });
     if (it) setPicked((p) => ({ ...p, [f.name]: it }));
+    else if (f.kind === "select") setPicked((p) => { const next = { ...p }; delete next[f.name]; return next; });
+    setCheck(null);
     setError("");
   };
 
@@ -96,6 +107,10 @@ export function BillsService({ serviceId }: { serviceId: string }) {
     setError("");
     if (missing) { setError(missing.patternHint && values[missing.name] ? `${missing.label}: ${missing.patternHint}.` : `Enter ${missing.label.toLowerCase()}.`); return; }
     if (short) { setError(`This is more than your available balance of ${naira(balance ?? 0)}.`); return; }
+    if (betting) {
+      if (!bettor.customer) { setError("Verify the customer ID for the selected platform before continuing."); return; }
+      setStep("review"); return;
+    }
     if (electricity) {
       if (!meter.details) { setError("Confirm the meter's customer name and address before continuing."); return; }
       setStep("review"); return;
@@ -116,21 +131,27 @@ export function BillsService({ serviceId }: { serviceId: string }) {
 
   const pay = async () => {
     setError("");
+    if (busy || uncertain) return;
+    if (betting && !bettor.customer) { setError("Verify the betting account before funding."); return; }
     if (electricity && !meter.details) { setError("Confirm the meter's customer name and address before paying."); return; }
     if (cable && (!tv.customer || !picked["plan"])) { setError("Verify your account and select a package before paying."); return; }
     if (live && !/^\d{4}$/.test(pin)) { setError("Enter your 4-digit transaction PIN."); return; }
     setBusy(true);
+    const key = paymentKey ?? crypto.randomUUID();
+    setPaymentKey(key);
     try {
-      const r = await run({ data: { id: flow.pay.op, params: {}, body: flow.pay.body(values, picked), idempotencyKey: crypto.randomUUID(), currency: "NGN", pin: pin || undefined } });
+      const r = await run({ data: { id: flow.pay.op, params: {}, body: flow.pay.body(values, picked), idempotencyKey: key, currency: "NGN", pin: pin || undefined } });
       const d = (JSON.parse(r.resultJson) ?? {}) as Record<string, unknown>;
-      setResult({ ref: r.receipt?.reference ?? (typeof d["reference"] === "string" ? d["reference"] : null), data: d });
-      remember();
+      const status = r.receipt?.status ?? "pending";
+      setResult({ ref: r.receipt?.reference ?? (typeof d["reference"] === "string" ? d["reference"] : null), data: d, status });
+      if (status === "succeeded") remember();
+      if (status === "pending") setUncertain(true);
       setStep("done");
-    } catch (e) { setError(paymentFeedback(e, "transfer")); } finally { setBusy(false); }
+    } catch (e) { setError(paymentFeedback(e, "transfer")); if (betting) setUncertain(true); } finally { setBusy(false); }
   };
 
   const summary = fields.filter((f) => f.kind !== "amount").map((f) => [f.label, f.kind === "select" ? (f.choices?.find((c) => c.value === values[f.name])?.label ?? str(picked[f.name]?.["shortName"] ?? picked[f.name]?.["name"] ?? values[f.name])) : values[f.name]] as const);
-  const verification: Record<string, unknown> | null = electricity ? meter.details : cable ? tv.customer ? { ...tv.customer } : null : check;
+  const verification: Record<string, unknown> | null = betting ? bettor.customer : electricity ? meter.details : cable ? tv.customer ? { ...tv.customer } : null : check;
   const checked = verification ? (flow.validate?.show ?? []).map((k) => [k, verification[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
   const extras = result ? (flow.receipt ?? []).map((k) => [k, result.data[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
 
@@ -143,7 +164,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
     } catch { /* dismissed */ }
   };
 
-  const reset = () => { setStep("details"); setPin(""); setResult(null); setCheck(null); setError(""); };
+  const reset = () => { setStep("details"); setPin(""); setResult(null); setCheck(null); setError(""); setPaymentKey(null); setUncertain(false); };
 
   const Icon = (Icons as unknown as Record<string, Icons.LucideIcon>)[service.icon] ?? Icons.Boxes;
 
@@ -151,7 +172,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
     <aside className="bg-navy-rail relative overflow-hidden rounded-3xl p-6 text-white md:p-8">
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">Bills & top-up</p>
       <h2 className="mt-2 flex items-center gap-3 text-2xl font-extrabold md:text-3xl"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Icon className="h-5 w-5 text-cyan" /></span>{service.label}</h2>
-      <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">Verify the details, confirm the total, and it lands instantly — all from your wallet.</p>
+      {!betting && <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">Verify the details and confirm your payment.</p>}
       <ol className="mt-6 space-y-3">
         {["Enter the details", flow.validate ? "We verify them" : "Review the total", "Confirm and pay"].map((s, i) => {
           const active = step === "done" || (step === "review" && i <= 2) || (step === "details" && i === 0);
@@ -173,7 +194,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
         {recents.length > 0 && <div>
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-muted-foreground"><History className="h-3.5 w-3.5" />Pay again</p>
           <div className="flex flex-wrap gap-2">
-            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(electricity ? { ...r.values, disco: "" } : cable ? { ...r.values, plan: "", amount: "" } : r.values); if (electricity || cable) setPicked({}); setCheck(null); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
+            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(electricity ? { ...r.values, disco: "" } : betting ? { ...r.values, operator: "" } : cable ? { ...r.values, plan: "", amount: "" } : r.values); if (electricity || cable || betting) setPicked({}); setCheck(null); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
           </div>
         </div>}
 
@@ -183,6 +204,11 @@ export function BillsService({ serviceId }: { serviceId: string }) {
             {meter.status === "loading" && <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Checking meter details…</p>}
             {meter.status === "failed" && <div className="flex flex-wrap items-center justify-between gap-2"><p role="alert" className="text-sm text-destructive">Couldn’t confirm the customer name and address. Check the meter and electricity company.</p><Button type="button" variant="outline" size="sm" onClick={meter.retry}>Retry verification</Button></div>}
             {meter.details && <dl className="space-y-3 rounded-lg border border-border bg-muted p-4"><div><dt className="text-xs text-muted-foreground">Customer name</dt><dd className="mt-1 break-words font-semibold text-foreground">{meter.details.customerName}</dd></div><div><dt className="text-xs text-muted-foreground">Address</dt><dd className="mt-1 break-words text-sm text-foreground">{meter.details.address}</dd></div></dl>}
+          </div>}
+          {betting && f.name === "customerId" && <div aria-live="polite">
+            {bettor.status === "loading" && <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Checking betting account…</p>}
+            {bettor.status === "failed" && <div className="flex flex-wrap items-center justify-between gap-2"><p role="alert" className="text-sm text-destructive">Couldn’t verify this account. Check the platform and customer ID.</p><Button variant="outline" size="sm" onClick={bettor.retry}>Retry verification</Button></div>}
+            {bettor.customer && <div className="rounded-lg border border-chart-2/40 bg-chart-2/10 p-4"><p className="flex items-center gap-2 text-xs font-bold text-chart-2"><Check className="h-4 w-4" />Account verified</p><p className="mt-2 break-words font-semibold text-foreground">{bettor.customer.customerName}</p><p className="mt-1 break-all text-xs text-muted-foreground">{str(picked["operator"]?.["name"])} · {bettor.customer.customerId}</p></div>}
           </div>}
         </div>)}
 
@@ -195,8 +221,8 @@ export function BillsService({ serviceId }: { serviceId: string }) {
 
         {short && <p className="text-[11px] font-semibold text-destructive">This is more than your available balance of {naira(balance ?? 0)}.</p>}
         {error && <p className="text-xs font-semibold text-destructive">{error}</p>}
-        {(!cable || tv.customer) && <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || !!missing || short || (electricity && !meter.details) || (cable && !picked["plan"])} onClick={toReview}>
-          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{cable ? "Renew Subscription" : electricity ? "Continue" : flow.validate ? "Verify details" : "Continue"}
+        {(!cable || tv.customer) && <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || uncertain || !!missing || short || (betting && !bettor.customer) || (electricity && !meter.details) || (cable && !picked["plan"])} onClick={toReview}>
+          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{cable ? "Renew Subscription" : electricity || betting ? "Continue" : flow.validate ? "Verify details" : "Continue"}
         </Button>}
       </div>}
 
@@ -214,22 +240,23 @@ export function BillsService({ serviceId }: { serviceId: string }) {
         {live && <Input inputMode="numeric" maxLength={4} type="password" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} placeholder="4-digit transaction PIN" aria-label="Transaction PIN" className="text-center font-mono tracking-[0.5em]" />}
         {error && <p className="text-xs font-semibold text-destructive">{error}</p>}
         <div className="flex gap-2">
-          <Button variant="crisp" className="rounded-full" onClick={() => setStep("details")}><ChevronLeft />Edit</Button>
-          <Button variant="brand" className="h-12 flex-1 rounded-full" disabled={busy} onClick={pay}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}{flow.pay.verb} · {naira(totals.total)}</Button>
+          <Button variant="crisp" className="rounded-full" disabled={busy || uncertain} onClick={() => setStep("details")}><ChevronLeft />Edit</Button>
+          <Button variant="brand" className="h-12 flex-1 rounded-full" disabled={busy || uncertain} onClick={pay}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}{flow.pay.verb} · {naira(totals.total)}</Button>
         </div>
       </div>}
 
       {step === "done" && result && <div className="space-y-5 text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-tri text-primary-foreground"><Check className="h-7 w-7" /></span>
         <div>
-          <p className="text-lg font-extrabold">{flow.pay.verb} successful</p>
+          <p className="text-lg font-extrabold">{result.status === "succeeded" ? `${flow.pay.verb} successful` : result.status === "failed" ? "Payment declined" : "Payment awaiting confirmation"}</p>
+          {result.status === "pending" && <p className="mt-2 text-sm text-muted-foreground">Check your ledger for updates. Do not fund this account again while confirmation is pending.</p>}
           <p className="font-mono text-2xl font-bold">{naira(totals.total)}</p>
         </div>
         {extras.map(([k, v]) => <div key={k} className="rounded-2xl border border-cyan/40 bg-cyan/10 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-cyan">{label(k)}</p><p className="break-all font-mono text-lg font-bold">{String(v)}</p></div>)}
         {result.ref && <p className="text-xs text-muted-foreground">Reference <span className="font-mono">{result.ref}</span></p>}
         <div className="flex gap-2">
           <Button variant="crisp" className="flex-1 rounded-full" onClick={share}>{canShare ? <Share2 /> : <Copy />}{canShare ? "Share receipt" : "Copy receipt"}</Button>
-          <Button variant="brand" className="flex-1 rounded-full" onClick={reset}>New payment</Button>
+          <Button variant="brand" className="flex-1 rounded-full" disabled={uncertain} onClick={reset}>New payment</Button>
         </div>
       </div>}
     </div>
