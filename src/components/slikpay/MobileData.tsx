@@ -32,9 +32,16 @@ const toOperators = (d: unknown): Operator[] =>
     .map((i) => ({ id: str(i["id"]) || str(i["code"]), label: str(i["shortName"]) || str(i["name"]) }))
     .filter((o) => o.id && o.label);
 
-/** Pull data plans out of the provider payload, whatever shape it takes. */
-export function toDataPlans(d: unknown): DataPlan[] {
+const networkOf = (i: Record<string, unknown>) => str(i["network"]) || str(i["operator"]) || str(i["operatorName"]) || str(i["provider"]) || str(i["shortName"]);
+
+/** Pull data plans out of the provider payload, whatever shape it takes. When a network is given, plans tagged with a different network are dropped; untagged plans are kept. */
+export function toDataPlans(d: unknown, network?: string): DataPlan[] {
+  const wanted = network?.toLowerCase() ?? "";
   return listOf(d)
+    .filter((i) => {
+      const tag = networkOf(i).toLowerCase();
+      return !wanted || !tag || tag.includes(wanted) || wanted.includes(tag);
+    })
     .map((i) => {
       const amount = Number(i["amount"] ?? i["price"] ?? 0);
       const code = str(i["itemCode"]) || str(i["planCode"]) || str(i["code"]) || str(i["id"]);
@@ -121,17 +128,18 @@ export function MobileData() {
   useEffect(() => {
     if (!operatorId) { setPlans(null); setPlansFailed(false); return; }
     const seq = ++plansSeq.current;
+    const label = operators?.find((o) => o.id === operatorId)?.label ?? "";
     setPlans(null); setPlansFailed(false); setPlanCode(""); setAmount("");
-    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, network: operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
+    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, network: label || operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
       .then((r) => {
         if (plansSeq.current !== seq) return;
-        const list = toDataPlans(JSON.parse(r.resultJson));
+        const list = toDataPlans(JSON.parse(r.resultJson), label || undefined);
         setPlans(list);
         setPlansFailed(list.length === 0);
       })
       .catch(() => { if (plansSeq.current === seq) { setPlans([]); setPlansFailed(true); } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [operatorId]);
+  }, [operatorId, operators]);
 
   const operator = useMemo(() => operators?.find((o) => o.id === operatorId) ?? null, [operators, operatorId]);
   const plan = useMemo(() => plans?.find((p) => p.code === planCode) ?? null, [plans, planCode]);
@@ -232,7 +240,7 @@ export function MobileData() {
         </div>
 
         {operatorId && <div className="space-y-1.5">
-          <p className="flex items-center gap-1.5 text-xs font-bold"><Signal className="h-3.5 w-3.5 text-cobalt" />Available plans {plans && plans.length > 0 && <span className="rounded-full bg-cyan/15 px-2 py-0.5 text-[10px] font-extrabold text-cyan">{plans.length} live</span>}</p>
+          <p className="flex items-center gap-1.5 text-xs font-bold"><Signal className="h-3.5 w-3.5 text-cobalt" />{operator ? `${operator.label} plans` : "Available plans"} {plans && plans.length > 0 && <span className="rounded-full bg-cyan/15 px-2 py-0.5 text-[10px] font-extrabold text-cyan">{plans.length} live</span>}</p>
           {plans === null && <div className="flex items-center gap-2 rounded-2xl border border-border bg-background/40 p-4 text-xs font-semibold text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin text-cobalt" />Loading live plans…</div>}
           {plans !== null && plans.length > 0 && <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {plans.map((p) => <button key={p.code} type="button" onClick={() => pickPlan(p)} className={`rounded-2xl border p-3 text-left transition ${planCode === p.code ? "border-cobalt bg-cobalt/5 ring-2 ring-cobalt/30" : "border-border bg-background/40 hover:border-cobalt/50"}`} aria-pressed={planCode === p.code}>
