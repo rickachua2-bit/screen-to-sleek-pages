@@ -20,7 +20,8 @@ function useWallets() {
 }
 
 /** Receive tab: foreign bank accounts and stablecoin addresses issued to this business. */
-export function ReceiveAccounts() {
+export function ReceiveAccounts({ compact = false }: { compact?: boolean }) {
+  const [selected, setSelected] = useState("USD");
   const { wallets, error, refresh } = useWallets();
   const issue = useServerFn(issueCurrencyWallet);
   const [busy, setBusy] = useState("");
@@ -45,11 +46,12 @@ export function ReceiveAccounts() {
 
   if (error) return <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</p>;
   if (!wallets) return <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your accounts…</p>;
-  return <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-    {wallets.map((w) => {
+  return <div className={compact ? "international-receive-details" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-3"}>
+    {compact && <label className="mb-4 block text-xs font-semibold text-muted-foreground">Receiving currency<select aria-label="Receiving currency" value={selected} onChange={(e) => setSelected(e.target.value)} className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground">{wallets.map((w) => <option key={w.code} value={w.code}>{currencyDef(w.code)?.flag} {w.code} · {currencyDef(w.code)?.name}</option>)}</select></label>}
+    {wallets.filter((w) => !compact || w.code === selected).map((w) => {
       const def = currencyDef(w.code);
       const blocked = w.status === "not_active" || Boolean(note[w.code]);
-      return <article key={w.code} className="rounded-2xl border border-border bg-card p-4">
+      return <article key={w.code} className={compact ? "min-w-0" : "rounded-lg border border-border bg-card p-4"}>
         <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-2 font-bold"><span aria-hidden="true">{def?.flag}</span>{w.code} <span className="text-xs font-normal text-muted-foreground">{def?.name}</span></p>
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${w.status === "active" ? "bg-success/10 text-success" : blocked ? "bg-magenta/10 text-magenta" : "bg-muted text-muted-foreground"}`}>
@@ -58,8 +60,8 @@ export function ReceiveAccounts() {
         </div>
         {w.status === "active" ? <>
           <dl className="mt-3 space-y-1 text-xs">
-            {w.accountName && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Name</dt><dd className="truncate font-semibold">{w.accountName}</dd></div>}
-            {w.bankName && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Bank</dt><dd className="truncate">{w.bankName}</dd></div>}
+            {w.accountName && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Name</dt><dd className="min-w-0 break-words text-right font-semibold">{w.accountName}</dd></div>}
+            {w.bankName && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Bank</dt><dd className="min-w-0 break-words text-right">{w.bankName}</dd></div>}
             {w.accountNumber && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">{w.network ? "Address" : "Account"}</dt><dd className="break-all font-mono">{w.accountNumber}</dd></div>}
             {w.routing && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Routing / sort</dt><dd className="font-mono">{w.routing}</dd></div>}
             {w.network && <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Network</dt><dd>{w.network}</dd></div>}

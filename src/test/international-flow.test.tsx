@@ -23,7 +23,7 @@ describe("cross-border payment composer", () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.quote.mockResolvedValue(QUOTE); });
 
   it("quotes the exact fee-inclusive total from live inputs", async () => {
-    render(<InternationalServices />);
+    render(<InternationalServices initial="cross-border" />);
     fillForm();
     await waitFor(() => expect(mocks.quote).toHaveBeenCalledWith({ data: expect.objectContaining({ sourceCurrency: "NGN", country: "US", amount: 100 }) }));
     await waitFor(() => expect(screen.getAllByText("177,500.00 NGN").length).toBeGreaterThan(0));
@@ -31,7 +31,7 @@ describe("cross-border payment composer", () => {
 
   it("sends one payment and reports completion without exposing provider names", async () => {
     mocks.send.mockResolvedValue({ status: "succeeded", reference: "GLB-1", trackingReference: "SWIFT-1", recipientGets: 100, fee: 5000, totalDebit: 177500, destinationCurrency: "USD" });
-    render(<InternationalServices />);
+    render(<InternationalServices initial="cross-border" />);
     fillForm();
     await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
@@ -41,7 +41,7 @@ describe("cross-border payment composer", () => {
 
   it("maps failures to the safe feedback message", async () => {
     mocks.send.mockRejectedValue(new Error("Incorrect transaction PIN."));
-    render(<InternationalServices />);
+    render(<InternationalServices initial="cross-border" />);
     fillForm();
     await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
@@ -58,7 +58,7 @@ describe("duplicate and quote protection", () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.quote.mockResolvedValue(QUOTE); });
   it("reuses the same payment reference when the user retries after an uncertain error", async () => {
     mocks.send.mockRejectedValue(new Error("network timeout"));
-    render(<InternationalServices />);
+    render(<InternationalServices initial="cross-border" />);
     fillForm();
     await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));

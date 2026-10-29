@@ -1245,3 +1245,50 @@ html, body {
     margin-right: 0.5rem !important;
   }
 }
+
+/* Wallet Bento: shared real-data overview, focused protected payment workspaces. */
+.international-bento { min-width: 0; letter-spacing: 0; }
+.international-mode { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+.international-tabs { display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.international-tabs > button { flex-shrink: 0; font-size: 12px; }
+.international-top-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 16px; }
+.international-global, .international-swap-launch { position: relative; overflow: hidden; padding: 22px; border-radius: 8px; }
+.international-global, .international-swap-launch { --border: color-mix(in oklab, var(--primary-foreground) 18%, transparent); --input: var(--border); --background: var(--navy); --accent: color-mix(in oklab, var(--cyan) 12%, var(--navy)); }
+.international-globe { position: absolute; inset: 0 0 auto auto; height: 155px; width: 50%; object-fit: cover; object-position: right bottom; opacity: .32; pointer-events: none; mask-image: linear-gradient(to right, transparent, var(--primary-foreground)); }
+.international-dark-button { color: var(--foreground); }
+.international-wallet-strip { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(100px, 1fr); gap: 8px; overflow-x: auto; padding: 22px 2px 12px; }
+.international-wallet-tile { min-width: 0; height: 140px; padding: 14px 6px; display: flex; flex-direction: column; justify-content: space-between; gap: 7px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in oklab, var(--primary-foreground) 6%, var(--navy)); color: var(--foreground); }
+.international-wallet-tile:first-child { border-color: var(--cyan); box-shadow: 0 0 12px -7px var(--cyan); }
+.international-currency-symbol { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: color-mix(in oklab, var(--cyan) 12%, var(--navy)); color: var(--primary-foreground); font-size: 23px; }
+.international-wallet-amount { width: 100%; font-size: 11px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; white-space: normal; text-align: center; }
+.international-swap-pair { display: flex; gap: 10px; align-items: center; padding: 12px; margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in oklab, var(--primary-foreground) 6%, var(--navy)); }
+.international-swap-pair strong { font-size: 12px; }
+.international-swap-pair > span:last-child { overflow-wrap: anywhere; text-align: right; min-width: 0; }
+.international-swap-cta { background-image: linear-gradient(100deg, var(--cobalt), var(--magenta)); color: var(--primary-foreground); }
+.international-main-grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.6fr); gap: 22px; align-items: start; }
+.international-receive, .international-send-panel { min-width: 0; padding-block: 20px; border-top: 1px solid var(--border); }
+.international-receive-details dl > div { padding-block: 10px; border-bottom: 1px solid var(--border); }
+.international-receive-details dl dt { flex-shrink: 0; }
+.international-receive-details dl dd { text-align: right; overflow-wrap: anywhere; }
+.international-send-workspace { display: grid; gap: 22px; }
+.international-destinations { min-width: 0; }
+.international-country-list { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 6px; }
+.international-country { height: auto; min-height: 56px; padding: 9px 12px; gap: 8px; text-align: left; white-space: normal; }
+.international-country-status { display: none; }
+.international-country span.block { white-space: nowrap; }
+.international-country-list li { flex-shrink: 0; }
+.international-quote-metrics > div { border: 0; border-radius: 0; background: var(--muted); }
+.international-recipient-form { padding-top: 10px; }
+.international-recipient-workspace { min-width: 0; }
+.international-send-compact .international-destinations > .relative { display: none; }
+.international-send-compact .international-country { min-height: 40px; }
+.international-send-compact .international-country .block:first-child { font-size: 11px; }
+.international-send-compact .international-country .block:last-child { display: none; }
+.international-send-compact .international-quote-metrics { gap: 7px; }
+.international-send-compact .international-quote-metrics > div { padding: 10px; }
+.international-send-compact .international-quote-metrics > div > p:last-child { font-size: 10px; }
+.international-tracking-band { min-width: 0; border-top: 1px solid var(--border); padding-block: 22px; }
+.international-tracking li { border-radius: 8px; }
+@media (min-width: 1500px) { .international-wallet-strip { grid-auto-columns: minmax(80px, 1fr); } }
+@media (max-width: 1100px) { .international-top-grid { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); } .international-main-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .international-top-grid { grid-template-columns: minmax(0, 1fr); } .international-global, .international-swap-launch { padding: 18px; } .international-wallet-strip { grid-auto-columns: 108px; } .international-mode { font-size: 11px; } .international-quote-metrics { grid-template-columns: minmax(0, 1fr); } .international-quote-metrics > div { padding: 12px; } .international-send-panel, .international-receive { padding-top: 16px; } }
