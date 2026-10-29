@@ -5,6 +5,7 @@ import { refreshBankingProfile, resetBankingProfileForTests, useBankingProfile }
 const mocks = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/paddle.functions", () => ({ getBankingProfile: mocks.load, runPaddleOperation: vi.fn(), submitIdentityCheck: vi.fn() }));
+vi.mock("@/lib/developer.functions", () => ({ getWebhookEvents: vi.fn(), reconcileWebhook: vi.fn() }));
 
 const profile = { mode: "sandbox", balances: { NGN: 125000 } } as never;
 
