@@ -3,7 +3,7 @@ import { authorizeMoney, guardMoney, settleMoney } from "./wallets.server";
 import { confirmedSwap, requireVerifiedSwapContract, UNCERTAIN_PAYMENT } from "./wallet-safety";
 
 type Context = Awaited<ReturnType<typeof bankingUser>>;
-export interface SwapRequest { from: string; to: string; amount: number; pin?: string; idempotencyKey: string }
+export interface SwapRequest { from: string; to: string; amount: number; pin?: string | undefined; idempotencyKey: string }
 /** Replay uses the original owner/mode/pair/amount and reservation, never a fresh debit. */
 export async function executeVerifiedSwap(ctx: Context, data: SwapRequest) {
   requireVerifiedSwapContract(data.from, data.to);
