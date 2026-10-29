@@ -52,6 +52,23 @@ const chargeSchema = z.object({
   reference: z.string().regex(/^SLKTAG-[0-9a-fA-F-]{36}$/),
 });
 
+const DEVICE_ID = /^[A-Z0-9][A-Z0-9-]{3,23}$/;
+
+const soundboxSchema = z.object({
+  deviceId: z.string().trim().toUpperCase().regex(DEVICE_ID, "Use 4-24 capital letters, numbers or dashes."),
+  label: z.string().trim().min(2).max(60),
+  handle: z.string().trim().toLowerCase().regex(HANDLE),
+  voice: z.enum(SOUNDBOX_VOICES),
+});
+
+const soundboxUpdateSchema = z.object({
+  deviceId: z.string().trim().toUpperCase().regex(DEVICE_ID),
+  label: z.string().trim().min(2).max(60),
+  voice: z.enum(SOUNDBOX_VOICES),
+});
+
+const soundboxDeleteSchema = z.object({ deviceId: z.string().trim().toUpperCase().regex(DEVICE_ID) });
+
 function parseTag(raw: string): SmartTagView | null {
   try {
     const v = JSON.parse(raw) as Partial<SmartTagView>;
