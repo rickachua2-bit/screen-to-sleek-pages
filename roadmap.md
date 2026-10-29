@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Team & Security: replace session-only drafts with owner-scoped team invitations and member controls, profile and security actions, audit history, branded layout and tests.
 - [x] Federal tax and Remita: dedicated pages, automatic verification, assessed amount/fee binding, atomic payments, honest statuses and downloadable saved records; 11 focused tests and 297 regression tests passed.
 - [ ] Tax/Remita live confirmation: needs a real authenticated service response with assessed amount/fee; official receipt retrieval and pending recovery need provider-confirmed contracts. No guessed pricing rail or status endpoint added.
 - [x] Betting wallet: automatic customer/user ID verification, server-side revalidation, stale-result protection, atomic funding and pending safety; tests passed. Real authenticated service response remains unverified without a session.
