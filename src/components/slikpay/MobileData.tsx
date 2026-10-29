@@ -32,9 +32,16 @@ const toOperators = (d: unknown): Operator[] =>
     .map((i) => ({ id: str(i["id"]) || str(i["code"]), label: str(i["shortName"]) || str(i["name"]) }))
     .filter((o) => o.id && o.label);
 
-/** Pull data plans out of the provider payload, whatever shape it takes. */
-export function toDataPlans(d: unknown): DataPlan[] {
+const networkOf = (i: Record<string, unknown>) => str(i["network"]) || str(i["operator"]) || str(i["operatorName"]) || str(i["provider"]) || str(i["shortName"]);
+
+/** Pull data plans out of the provider payload, whatever shape it takes. When a network is given, plans tagged with a different network are dropped; untagged plans are kept. */
+export function toDataPlans(d: unknown, network?: string): DataPlan[] {
+  const wanted = network?.toLowerCase() ?? "";
   return listOf(d)
+    .filter((i) => {
+      const tag = networkOf(i).toLowerCase();
+      return !wanted || !tag || tag.includes(wanted) || wanted.includes(tag);
+    })
     .map((i) => {
       const amount = Number(i["amount"] ?? i["price"] ?? 0);
       const code = str(i["itemCode"]) || str(i["planCode"]) || str(i["code"]) || str(i["id"]);
