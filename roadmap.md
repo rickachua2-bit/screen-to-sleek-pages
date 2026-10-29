@@ -1,3 +1,3 @@
 # Roadmap
 
-- [ ] Cross-border & Remittances page redesign: first 3 mockups done (Split Composer, Corridor Cards, World Hero); 3 more requested 29 Oct — generate and present for picking, then apply the chosen design.
+- [ ] Cross-border & Remittances page redesign: 6 mockups generated; user picked #5 "Destination Explorer" (navy corridor rail + wide white form). Apply the design now, keeping all payment logic.
