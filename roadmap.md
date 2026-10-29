@@ -43,7 +43,7 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
-- [ ] Improve bulk-payout workspace: compact layout, import review and column mapping, pre-submission row corrections, search/status filters, history and separate PIN review.
+- [x] Improve bulk-payout workspace: compact layout, CSV column mapping/import review, local corrections before recipient verification, search/status filters, searchable history and separate PIN review. 29 tests pass; isolated desktop/mobile layout checked without overflow. Live signed-in execution remains unavailable to verify; bank-name import, spreadsheet support and saved-row corrections are not implemented.
 - [ ] Background batch execution, maker-checker approvals, scheduling and automatic payout reconciliation — blocked: durable server workflow, account permissions and provider status contract; not represented as active controls.
 - [x] Show clear, white-labelled withdrawal failure reasons without misreporting uncertain payments; inline errors, insufficient funds, PIN, recipient, verification and declined/unknown outcomes covered. 20 tests pass and build OK; live signed-in failure checks remain unverified.
 - [x] Apply selected Composer Split design to crypto-to-bank page (02:37 UTC): navy coin-to-bank artwork and Convert/Review/Pay stages beside white asset, amount, recipient and PIN form. Payment/recovery behavior unchanged; isolated desktop/mobile rendering checked, artwork loaded and no mobile overflow; 17 selected tests pass and build OK. Signed-in payments remain unverified.
