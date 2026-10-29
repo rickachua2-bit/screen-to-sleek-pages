@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ quote: vi.fn(), send: vi.fn(), reconcile: vi.fn(), crypto: vi.fn() }));
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ quote: vi.fn(), send: vi.fn(), reconcile: vi.fn(), crypto: vi.fn(), balances: { NGN: 500000 } as Record<string, number> }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/international.functions", () => ({ quoteGlobalPayout: mocks.quote, sendGlobalPayout: mocks.send, reconcileGlobalPayoutsFn: mocks.reconcile }));
-vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 500000 }, receipts: [] }, error: "", refresh: async () => {} }) }));
+vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: mocks.balances, receipts: [] }, error: "", refresh: async () => {} }) }));
 vi.mock("@/components/slikpay/CryptoBankFunding", () => ({ CryptoBankFunding: (props: unknown) => { mocks.crypto(props); return <div>Crypto bank form</div>; } }));
 vi.mock("@/components/slikpay/InternationalAccounts", () => ({ ReceiveAccounts: () => <div>Receive</div>, HoldBalances: () => <div>Hold</div> }));
 import { InternationalServices } from "@/components/slikpay/InternationalServices";
@@ -51,6 +51,40 @@ describe("cross-border payment composer", () => {
   it("routes crypto cash-out to the existing protected flow", () => {
     render(<InternationalServices initial="crypto" />);
     expect(mocks.crypto).toHaveBeenCalledWith({ balances: { NGN: 500000 } });
+  });
+});
+
+describe("foreign-wallet and coin funding", () => {
+  beforeEach(() => { vi.clearAllMocks(); mocks.balances = { NGN: 500000, USD: 1000 }; });
+  afterEach(() => { mocks.balances = { NGN: 500000 }; });
+  it("sends USD from the USD wallet instead of debiting naira", async () => {
+    mocks.quote.mockResolvedValue({ ...QUOTE, sourceCurrency: "USD", rate: null, principal: 100, fee: 5, feeCurrency: "USD", totalDebit: 105 });
+    mocks.send.mockResolvedValue({ status: "succeeded", reference: "USD-1", recipientGets: 100, fee: 5, totalDebit: 105, destinationCurrency: "USD" });
+    render(<InternationalServices initial="send" />);
+    fireEvent.change(screen.getByLabelText("Pay from"), { target: { value: "USD" } });
+    fillForm();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send payment" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Send payment" }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledWith({ data: expect.objectContaining({ sourceCurrency: "USD", confirmedTotal: 105, country: "US" }) }));
+  });
+  it("does not request a quote or dispatch an unconfirmed USD to GBP conversion", async () => {
+    render(<InternationalServices initial="send" />);
+    fireEvent.change(screen.getByLabelText("Pay from"), { target: { value: "USD" } });
+    fireEvent.click(screen.getByRole("option", { name: /United Kingdom/ }));
+    fireEvent.change(screen.getByLabelText("Recipient account name"), { target: { value: "Ada Obi" } });
+    fireEvent.change(screen.getByLabelText("Sort code"), { target: { value: "040004" } });
+    fireEvent.change(screen.getByLabelText("Account number"), { target: { value: "12345678" } });
+    fireEvent.change(screen.getByLabelText("Amount (GBP)"), { target: { value: "100" } });
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    expect(mocks.quote).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Send payment" })).toBeDisabled();
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it("reuses the protected stablecoin bank flow from Send", () => {
+    render(<InternationalServices initial="send" />);
+    fireEvent.click(screen.getByRole("button", { name: "Coins to bank" }));
+    expect(mocks.crypto).toHaveBeenCalledWith({ balances: mocks.balances });
+    expect(mocks.send).not.toHaveBeenCalled();
   });
 });
 
