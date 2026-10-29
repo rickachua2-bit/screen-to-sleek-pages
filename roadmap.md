@@ -46,7 +46,7 @@
 - [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
 - [x] Add Fiat/Crypto choices and gated USDT/USDC-to-NGN bank funding preview; no execution enabled without verified rails
 - [x] CSV quoted-cell parsing, duplicates, numeric checks, fee-inclusive totals, template and results downloads; saved batch restore uses original receipts
-- [ ] Activate saved batches and atomic wallet settlement — blocked: `supabase/slikpay_payment_reliability.sql` must be applied manually to the external account service
+- [ ] Activate saved batches and atomic wallet settlement — activation requested; remote readiness check confirmed `payment_batches`, `begin_wallet_payment` and `finish_wallet_payment` are missing (29 Oct 2026). Blocked: `supabase/slikpay_payment_reliability.sql` must be applied manually in the existing external account service SQL editor; no migration-authorized connection is available here.
 - [ ] Enable crypto conversion plus bank payout with a durable cash-out record — blocked: provider documentation omits supported pairs, firm quote/fees, swap status and reconciliation contracts
 - [ ] Reconcile pending outbound payments and allow confirmed-failure retries — blocked: authoritative provider reference/status contract
 - [ ] Verify quote, fee, balance reservation, conversion and payout status end-to-end — blocked: external authenticated test access and confirmed conversion/payout contract
