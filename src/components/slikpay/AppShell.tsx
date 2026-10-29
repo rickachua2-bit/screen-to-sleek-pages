@@ -103,6 +103,19 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
     <div className="light-workspace min-w-0 flex-1 overflow-x-clip w-full max-w-full">
       <header className="topbar-midnight sticky top-0 z-30 flex h-14 sm:h-16 lg:h-[72px] items-center gap-1 sm:gap-2 px-2.5 sm:px-4 backdrop-blur-2xl md:gap-4 md:px-7 max-w-full overflow-hidden">
         <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
+        <Link
+          to={isBiz ? "/dashboard" : "/personal"}
+          className="flex items-center gap-1.5 shrink-0 lg:hidden mr-1 group transition-transform active:scale-95"
+          aria-label="Slikpay Home"
+        >
+          <FlameMark className="h-6 w-6 sm:h-7 sm:w-7 flame-glow" />
+          <span className="text-sm sm:text-base font-black tracking-tight text-foreground flex items-center">
+            SLIKPAY<span className="text-cyan font-black">.</span>
+          </span>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-cobalt/15 text-cobalt border border-cobalt/20 ml-0.5 hidden xs:inline-block">
+            {isBiz ? "Biz" : "App"}
+          </span>
+        </Link>
         {greeting && <div className="hidden shrink-0 xl:block"><h1 className="text-lg font-black">{greeting}</h1>{tierBadge && <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-success" />{tierBadge}</p>}</div>}
         {onAddMoney && <Button variant="brand" size="sm" className="hidden shrink-0 rounded-full md:inline-flex" onClick={onAddMoney}><Plus /> Add Money</Button>}
         <label className="topbar-search group relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" /><input aria-label="Global search" className="h-10 w-full rounded-full bg-transparent pl-10 pr-14 text-base sm:text-xs md:text-[13px] outline-none placeholder:text-muted-foreground" placeholder="Search..." value={onSearchChange ? search : undefined} onChange={(e) => onSearchChange?.(e.target.value)} /><kbd className="topbar-kbd absolute right-3 top-1/2 hidden -translate-y-1/2 sm:inline">⌘K</kbd></label>
