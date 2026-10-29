@@ -16,6 +16,7 @@ import { SmartTag } from "./SmartTag";
 import { DirectDebits } from "./DirectDebits";
 import { Escrow } from "./Escrow";
 import { Cards } from "./Cards";
+import { Airtime } from "./Airtime";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
@@ -38,6 +39,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (!item) return null;
   if (module === "services") return <ServicesHub role="merchant" />;
   if (module === "svc-escrow") return <Escrow />;
+  if (module === "svc-airtime") return <Airtime />;
   if (module.startsWith("svc-")) return <ServicesHub key={module} role="merchant" only={[module.slice(4)]} title={item.label} autoOpen />;
   if (module === "developer") return <PaddleConsole role="merchant" />;
   if (module === "golive") return <KybFlow />;
