@@ -19,13 +19,17 @@ export function createCryptoBankFlow(deps: {
   withdraw: (input: WithdrawalInput) => Promise<unknown>;
   id: () => string;
   changed: (state: CryptoBankState) => void;
+  resume?: { coin: "USDT" | "USDC"; amount: number; swapId: string };
 }) {
-  let state: CryptoBankState = { stage: "ready", credited: 0, payoutAmount: 0, swapId: deps.id(), payoutId: deps.id(), message: "" };
+  let original = deps.resume;
+  let state: CryptoBankState = { stage: original ? "conversion_pending" : "ready", credited: 0, payoutAmount: 0, swapId: original?.swapId ?? deps.id(), payoutId: deps.id(), message: "" };
   const update = (patch: Partial<CryptoBankState>) => { state = { ...state, ...patch }; deps.changed(state); };
   return {
     async convert(coin: "USDT" | "USDC", amount: number, pin: string) {
-      if (state.stage !== "ready") return;
+      if (state.stage !== "ready" && state.stage !== "conversion_pending") return;
       if (!Number.isFinite(amount) || amount <= 0 || !/^\d{4}$/.test(pin)) throw new Error("Enter a valid amount and 4-digit transaction PIN.");
+      if (state.stage === "conversion_pending" && original) { coin = original.coin; amount = original.amount; }
+      original = { coin, amount, swapId: state.swapId };
       update({ stage: "converting", message: "Confirming conversion…" });
       try {
         const result = await deps.swap({ from: coin, to: "NGN", amount, pin, idempotencyKey: state.swapId });

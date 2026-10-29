@@ -36,13 +36,14 @@ describe("guarded two-step crypto bank review", () => {
     expect(t.swap).toHaveBeenCalledTimes(1);
     expect(t.withdraw).toHaveBeenCalledTimes(1);
   });
-  it("locks an uncertain conversion without submitting any bank withdrawal", async () => {
+  it("recovers an uncertain conversion with the original pair amount and key only", async () => {
     const t = setup(vi.fn().mockRejectedValue(new Error("timeout")));
-    await t.flow.convert("USDT", 1, "1234");
+    await t.flow.convert("USDC", 9, "1234");
     await t.flow.convert("USDT", 1, "1234");
     await t.flow.pay("1234");
     expect(t.state()?.stage).toBe("conversion_pending");
-    expect(t.swap).toHaveBeenCalledTimes(1);
+    expect(t.swap).toHaveBeenCalledTimes(2);
+    expect(t.swap).toHaveBeenNthCalledWith(2, { from: "USDC", to: "NGN", amount: 9, pin: "1234", idempotencyKey: "leg-1" });
     expect(t.withdraw).not.toHaveBeenCalled();
   });
   it("reserves the capped 80 NGN fee out of confirmed proceeds", async () => {
