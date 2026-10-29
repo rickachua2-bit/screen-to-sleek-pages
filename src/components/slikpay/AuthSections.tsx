@@ -39,7 +39,7 @@ export function RailsTicker() {
   const row = [...RAILS, ...RAILS];
   return (
     <div className="flex items-center overflow-hidden border-b-[1.5px] border-border bg-muted/40 py-2.5">
-      <span className="z-10 shrink-0 bg-background px-3 sm:px-5 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-cobalt">● Pan-African Rails</span>
+      <span className="z-10 shrink-0 bg-background px-3 sm:px-5 border-r border-border/80 pr-3 mr-1 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-cobalt">● Pan-African Rails</span>
       <div className="relative flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_6%,black_94%,transparent)]">
         <div className="flex w-max animate-[marquee_40s_linear_infinite] gap-10">
           {row.map((r, i) => <span key={i} className="whitespace-nowrap font-mono text-xs font-semibold text-body">{r}</span>)}

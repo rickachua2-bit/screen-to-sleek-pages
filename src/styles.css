@@ -181,6 +181,12 @@
   }
 
   /* Prevent mobile Safari & Chrome optical zoom on inputs (<16px forces auto-zoom) */
+  input, select, textarea, .field {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
   @media (max-width: 768px) {
     input, select, textarea, .field,
     input[type="text"], input[type="email"], input[type="password"],
@@ -336,6 +342,12 @@ html { scroll-behavior: smooth; }
   position: absolute; inset: -40px; border-radius: 9999px; pointer-events: none; z-index: -1;
   background: conic-gradient(var(--cobalt), var(--magenta), var(--cyan), var(--cobalt));
   filter: blur(70px); opacity: .45; animation: spin-slow 14s linear infinite;
+}
+@media (max-width: 768px) {
+  .halo {
+    inset: -10px !important;
+    filter: blur(35px) !important;
+  }
 }
 .theme-flame .panel { transition: border-color .3s, box-shadow .3s, transform .3s; }
 .theme-flame .panel:hover { border-color: color-mix(in oklab, var(--magenta) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--cyan) 15%, transparent), 0 20px 50px -20px color-mix(in oklab, var(--magenta) 45%, transparent); }

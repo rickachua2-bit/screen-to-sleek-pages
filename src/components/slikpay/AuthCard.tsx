@@ -429,10 +429,10 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
         <p className="text-sm font-medium text-body">Sign in and we'll take you straight to your account.</p>
       </div>
       <Field label="Email, Phone or @SlikTag" id="login-id" icon={AtSign} error={err["id"]} shake>
-        <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="you@company.com, 0803 000 0000 or @babatunde" />
+        <input id="login-id" autoComplete="username" className={inputCls()} value={id} onChange={(e) => setId(e.target.value)} placeholder="you@company.com, 0803… or @tag" />
       </Field>
       <div className="flex justify-end">
-        <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline">
+        <button type="button" onClick={() => { setPinMode(!pinMode); setErr({}); }} className="text-xs font-bold text-cobalt hover:underline text-right truncate">
           {pinMode ? "Use password instead" : "Use 4-digit Security PIN instead"}
         </button>
       </div>
@@ -445,9 +445,9 @@ function SignIn({ onDone }: { onDone: (p: Pending, remember: boolean) => void })
           <PasswordInput id="password" value={pw} onChange={setPw} autoComplete="current-password" placeholder="Your password" />
         </Field>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
         <label className="flex items-center gap-2 font-semibold text-body">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 accent-cobalt" /> Remember this device for 30 days
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 shrink-0 accent-cobalt" /> Remember this device
         </label>
         <button type="button" onClick={() => setForgot(true)} className="font-bold text-cobalt hover:underline">Forgot password?</button>
       </div>
@@ -936,9 +936,9 @@ function TypeSelect({ onPick }: { onPick: (r: Role) => void }) {
       <div className="mt-4 space-y-3">
         {opts.map(({ v, icon: Icon, tone, title, points }) => (
           <button key={v} type="button" onClick={() => setSel(v)} aria-pressed={sel === v}
-            className={`flex w-full gap-4 rounded-2xl border-2 p-4 text-left transition-all ${sel === v ? "border-cobalt bg-cobalt/5 ring-4 ring-cobalt/10" : "border-border hover:border-cyan"}`}>
-            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
-            <div className="flex-1">
+            className={`flex w-full min-w-0 gap-3 sm:gap-4 rounded-2xl border-2 p-3 sm:p-4 text-left transition-all ${sel === v ? "border-cobalt bg-cobalt/5 ring-4 ring-cobalt/10" : "border-border hover:border-cyan"}`}>
+            <span className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
               <div className="font-extrabold text-foreground">{title}</div>
               <ul className="mt-1 space-y-0.5">
                 {points.map((pt) => <li key={pt} className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground"><Check className="h-3 w-3 shrink-0 text-success" strokeWidth={3} /> {pt}</li>)}

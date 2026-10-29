@@ -39,13 +39,13 @@ function AuthPage() {
         <div className="animate-blob pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-cobalt/15 blur-3xl" />
         <div className="animate-blob pointer-events-none absolute -right-32 top-20 h-[460px] w-[460px] rounded-full bg-magenta/12 blur-3xl [animation-delay:-5s]" />
         <div className="animate-blob pointer-events-none absolute bottom-0 left-1/2 h-[340px] w-[340px] rounded-full bg-cyan/20 blur-3xl [animation-delay:-10s]" />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-3 sm:px-5 py-6 sm:py-12 lg:grid-cols-[1.25fr_1fr] lg:py-16">
-          <div className="order-2 lg:order-1"><HeroIntro /></div>
-          <div id="signin" className="order-1 lg:order-2">
-            <div className="relative isolate lg:sticky lg:top-24">
+        <div className="relative mx-auto grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] max-w-7xl gap-8 sm:gap-10 px-3 sm:px-5 py-6 sm:py-12 w-full min-w-0">
+          <div className="order-2 min-w-0 w-full max-w-full lg:order-1"><HeroIntro /></div>
+          <div id="signin" className="order-1 min-w-0 w-full max-w-full lg:order-2">
+            <div className="relative isolate min-w-0 w-full max-w-full lg:sticky lg:top-24">
               <div className="halo" />
               <FloatingChips />
-              <div className="panel glow-border relative rounded-2xl sm:rounded-3xl border-transparent bg-background/90 p-3.5 sm:p-6 md:p-8 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--cobalt)_35%,transparent)] backdrop-blur-2xl">
+              <div className="panel glow-border relative w-full min-w-0 max-w-full rounded-2xl sm:rounded-3xl border-transparent bg-background/90 p-3.5 sm:p-6 md:p-8 shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--cobalt)_35%,transparent)] backdrop-blur-2xl box-border">
                 <div className="mb-5 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-cobalt">
                   <ShieldCheck className="h-3 w-3" /> Secure authentication
                 </div>
