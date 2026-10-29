@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ quote: vi.fn(), send: vi.fn(), reconcile: vi.fn(), crypto: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/international.functions", () => ({ quoteGlobalPayout: mocks.quote, sendGlobalPayout: mocks.send, reconcileGlobalPayoutsFn: mocks.reconcile }));
-vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 500000 }, receipts: [] }, error: "", refresh: vi.fn() }) }));
+vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 500000 }, receipts: [] }, error: "", refresh: async () => {} }) }));
 vi.mock("@/components/slikpay/CryptoBankFunding", () => ({ CryptoBankFunding: (props: unknown) => { mocks.crypto(props); return <div>Crypto bank form</div>; } }));
 vi.mock("@/components/slikpay/InternationalAccounts", () => ({ ReceiveAccounts: () => <div>Receive</div>, HoldBalances: () => <div>Hold</div> }));
 import { InternationalServices } from "@/components/slikpay/InternationalServices";
@@ -63,6 +63,7 @@ describe("duplicate and quote protection", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
     await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Transaction PIN"), { target: { value: "1234" } });
     await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
     await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(2));
