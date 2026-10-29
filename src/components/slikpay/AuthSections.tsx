@@ -320,7 +320,7 @@ export function Footer() {
           <span className="text-xs font-semibold text-muted-foreground">© 2026 Slikpay Technologies Ltd.</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-5 text-xs font-bold text-body">
-          {[["Features", "#offer"], ["KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Developer Docs", DOCS_URL], ["Terms", "#legal"], ["Privacy", "#legal"]].map(([l, h]) => <a key={l} href={h} {...(h.startsWith("http") ? { target: "_blank", rel: "noreferrer noopener" } : {})} className="hover:text-cobalt">{l}</a>)}
+          {([["Features", "#offer"], ["KYC / KYB", "#kyb"], ["How It Works", "#how"], ["Developer Docs", DOCS_URL], ["Terms", "#legal"], ["Privacy", "#legal"]] as [string, string][]).map(([l, h]) => <a key={l} href={h} {...(h.startsWith("http") ? { target: "_blank", rel: "noreferrer noopener" } : {})} className="hover:text-cobalt">{l}</a>)}
         </nav>
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-muted-foreground"><ArrowLeftRight className="h-3 w-3" /> PCI-DSS L1 · TLS 1.3</span>
       </div>
