@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowUpRight, BadgeCheck, Check, Clock3, Copy, Loader2, Lock, Printer, QrCode, RefreshCw, Search, Speaker, Tag, TriangleAlert, Volume2 } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, Clock3, Copy, Loader2, Lock, Pencil, Printer, QrCode, RefreshCw, Search, Speaker, Tag, Trash2, TriangleAlert, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { chargeSmartTag, createSmartTag, listSmartTags, tagUrl, TAG_CURRENCIES, type SmartTagView, type TagChargeView } from "@/lib/smarttag.functions";
+import { chargeSmartTag, createSmartTag, listSmartTags, listSoundboxes, registerSoundbox, tagUrl, unlinkSoundbox, updateSoundbox, SOUNDBOX_VOICES, TAG_CURRENCIES, type SmartTagView, type SoundboxView, type TagChargeView } from "@/lib/smarttag.functions";
 import { useBankingProfile } from "./PaddleConsole";
 import hero from "@/assets/collections-hero.jpg";
 
