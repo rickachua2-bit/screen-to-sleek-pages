@@ -217,6 +217,9 @@ function CreateEscrowCard({ onCreated }: { onCreated: (e: EscrowView) => void })
         Milestones total {money(milestoneSum, currency)} of {money(total, currency)}{milestonesBalanced ? " — balanced" : ""}
       </p>
     </div>
+    </div>
+    <DealPreview title={title} total={total} currency={currency} buyerName={buyerName} sellerName={sellerName} milestones={milestones} />
+    </div>
     {error && <p role="alert" className="mt-3 text-xs text-destructive">{error}</p>}
     <Button type="submit" variant="brand" className="mt-4 w-full" disabled={!valid || busy}>
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}{busy ? "Opening…" : "Open escrow"}
