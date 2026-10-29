@@ -3,6 +3,7 @@ import { z } from "zod";
 import { slikpayTransferFee, payoutBody, payoutStatus } from "./transfer-validation";
 import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scopeOf } from "./paddle-policy";
 import { INTERNATIONAL_NOT_ACTIVE, isUnverifiedInternationalPayout } from "./international";
+import { cableValidationBody } from "./cable-tv";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
   const { bankingUser } = await import("./paddle.server");
@@ -62,6 +63,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     const access = accessFor(endpoint, role, mode);
     if (!access.allowed) throw new Error(access.reason);
     if (JSON.stringify(data.body).length > 20000) throw new Error("Request is too large.");
+    if (endpoint.id === "post-bills-cable-validate") data.body = cableValidationBody.parse(data.body);
     if (endpoint.id === "post-accounts-virtual") data.body = { ...data.body, bank: "sterling" };
     if (mode === "live" && review !== "approved") throw new Error("Complete verification before using live services.");
     const isTransfer = endpoint.id === "post-payouts-transfer";

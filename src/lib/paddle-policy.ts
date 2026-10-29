@@ -1,4 +1,5 @@
 import catalog from "./paddle-catalog";
+import { CABLE_VALIDATE } from "./cable-tv";
 
 export type PaddleField = { name: string; type: string; required?: boolean; enum?: string[]; example?: unknown; hint?: string };
 export type PaddleEndpoint = { id: string; method: "GET" | "POST" | "DELETE"; path: string; tag: string; summary: string; fields: PaddleField[]; params: { name: string; in: string; required?: boolean }[] };
@@ -6,7 +7,7 @@ export type Scope = "reference" | "owned" | "create" | "platform" | "internal" |
 export type Mode = "sandbox" | "live";
 export type Role = "merchant" | "personal";
 
-export const ENDPOINTS = catalog as PaddleEndpoint[];
+export const ENDPOINTS: PaddleEndpoint[] = [...catalog as PaddleEndpoint[], CABLE_VALIDATE];
 
 export const CATEGORIES = [
   { id: "accounts", label: "Accounts & Banking", match: /^\/v1\/(accounts|open-banking)/ },
@@ -37,6 +38,8 @@ const SANDBOX_ONLY = /^\/v1\/test\/simulate-inbound$/;
 const MONEY = /\/(payouts|cards\/create|cards$|fund|withdraw|topup|recharge|renew|purchase|pay$|order$|orders$|swap|release|refunds?|book-transfer|charge|allocate)(\/|$)/;
 
 export function scopeOf(e: Pick<PaddleEndpoint, "method" | "path">): Scope {
+  // Authenticated customer inquiry; never register returned identifiers as owned resources.
+  if (e.method === "POST" && e.path === CABLE_VALIDATE.path) return "reference";
   if (INTERNAL.test(e.path)) return "internal";
   if (SANDBOX_ONLY.test(e.path)) return "sandbox";
   if (e.method === "GET" && REFERENCE.test(e.path)) return "reference";

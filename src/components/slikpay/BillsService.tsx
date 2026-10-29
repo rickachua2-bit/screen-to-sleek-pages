@@ -12,6 +12,7 @@ import { SERVICES, reviewTotal, type FlowField, type ServiceDef } from "@/lib/se
 import { useBankingProfile } from "./PaddleConsole";
 import { FieldInput } from "./ServicesHub";
 import { useMeterCustomer } from "@/lib/electricity-verification";
+import { CableCustomerLookup, CableProviderPicker, useCableCustomer } from "./CableCustomerLookup";
 
 type Step = "details" | "review" | "done";
 interface Recent { label: string; values: Record<string, string>; at: string }
@@ -54,15 +55,25 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const missing = fields.find((f) => !values[f.name]?.trim() || (f.pattern && !f.pattern.test(values[f.name] ?? "")) || (f.kind === "amount" && !(Number(values[f.name]) > 0)));
   const short = balance !== null && totals.total > balance;
   const electricity = serviceId === "power";
+  const cable = serviceId === "tv";
   const lookupMeter = useCallback(async (body: { meterNumber: string; billerCode: string; itemCode: string }) => {
     const response = await run({ data: { id: "post-bills-electricity-validate", params: {}, body, idempotencyKey: crypto.randomUUID(), currency: "NGN" } });
     return JSON.parse(response.resultJson) as unknown;
   }, [run]);
   const meter = useMeterCustomer(electricity ? values["meterNumber"] ?? "" : "", str(picked["disco"]?.["code"]), str(picked["disco"]?.["itemCode"]), lookupMeter);
+  const lookupCable = useCallback(async (body: { provider: string; smartcardNumber: string }) => {
+    const response = await run({ data: { id: "post-bills-cable-validate", params: {}, body, idempotencyKey: crypto.randomUUID(), currency: "NGN" } });
+    return JSON.parse(response.resultJson) as unknown;
+  }, [run]);
+  const tv = useCableCustomer(cable ? values["provider"] ?? "" : "", values["smartCardNumber"] ?? "", lookupCable);
 
   if (!service || !flow) return null;
 
   const set = (f: FlowField, v: string, it?: Record<string, unknown>) => {
+    if (cable && (f.name === "provider" || f.name === "smartCardNumber")) {
+      setValues((p) => ({ ...p, [f.name]: v, plan: "", amount: "" }));
+      setPicked({}); setCheck(null); setError(""); return;
+    }
     setValues((p) => { const next = { ...p, [f.name]: v }; for (const g of fields) if (g.options?.dependsOn === f.name) delete next[g.name]; const amt = it && f.setsAmount?.(it); if (amt) next[amountKey] = String(amt); return next; });
     if (it) setPicked((p) => ({ ...p, [f.name]: it }));
     setError("");
@@ -89,6 +100,10 @@ export function BillsService({ serviceId }: { serviceId: string }) {
       if (!meter.details) { setError("Confirm the meter's customer name and address before continuing."); return; }
       setStep("review"); return;
     }
+    if (cable) {
+      if (!tv.customer || !picked["plan"]) { setError("Verify your account and select a package before continuing."); return; }
+      setStep("review"); return;
+    }
     if (!flow.validate) { setStep("review"); return; }
     setBusy(true);
     try {
@@ -102,6 +117,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const pay = async () => {
     setError("");
     if (electricity && !meter.details) { setError("Confirm the meter's customer name and address before paying."); return; }
+    if (cable && (!tv.customer || !picked["plan"])) { setError("Verify your account and select a package before paying."); return; }
     if (live && !/^\d{4}$/.test(pin)) { setError("Enter your 4-digit transaction PIN."); return; }
     setBusy(true);
     try {
@@ -114,7 +130,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   };
 
   const summary = fields.filter((f) => f.kind !== "amount").map((f) => [f.label, f.kind === "select" ? (f.choices?.find((c) => c.value === values[f.name])?.label ?? str(picked[f.name]?.["shortName"] ?? picked[f.name]?.["name"] ?? values[f.name])) : values[f.name]] as const);
-  const verification = electricity ? meter.details : check;
+  const verification: Record<string, unknown> | null = electricity ? meter.details : cable ? tv.customer ? { ...tv.customer } : null : check;
   const checked = verification ? (flow.validate?.show ?? []).map((k) => [k, verification[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
   const extras = result ? (flow.receipt ?? []).map((k) => [k, result.data[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
 
@@ -157,12 +173,12 @@ export function BillsService({ serviceId }: { serviceId: string }) {
         {recents.length > 0 && <div>
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-muted-foreground"><History className="h-3.5 w-3.5" />Pay again</p>
           <div className="flex flex-wrap gap-2">
-            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(electricity ? { ...r.values, disco: "" } : r.values); if (electricity) setPicked({}); setCheck(null); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
+            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(electricity ? { ...r.values, disco: "" } : cable ? { ...r.values, plan: "", amount: "" } : r.values); if (electricity || cable) setPicked({}); setCheck(null); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
           </div>
         </div>}
 
-        {fields.map((f) => <div key={f.name} className="space-y-3">
-          <FieldInput field={f} values={values} value={values[f.name] ?? ""} onChange={(v, it) => set(f, v, it)} />
+        {fields.filter((f) => !cable || (f.name !== "plan" && f.kind !== "amount") || Boolean(tv.customer)).map((f) => <div key={f.name} className="space-y-3">
+          {cable && f.name === "provider" ? <CableProviderPicker value={values[f.name] ?? ""} onChange={(v) => set(f, v)} /> : cable && f.name === "smartCardNumber" ? <CableCustomerLookup number={values[f.name] ?? ""} onChange={(v) => set(f, v)} lookup={tv} /> : cable && f.kind === "amount" ? <div><p className="text-xs text-muted-foreground">Package price</p><p className="mt-1 font-mono font-bold">{picked["plan"] ? naira(amount) : "—"}</p></div> : <FieldInput field={f} values={values} value={values[f.name] ?? ""} onChange={(v, it) => set(f, v, it)} />}
           {electricity && f.name === "meterNumber" && <div aria-live="polite">
             {meter.status === "loading" && <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Checking meter details…</p>}
             {meter.status === "failed" && <div className="flex flex-wrap items-center justify-between gap-2"><p role="alert" className="text-sm text-destructive">Couldn’t confirm the customer name and address. Check the meter and electricity company.</p><Button type="button" variant="outline" size="sm" onClick={meter.retry}>Retry verification</Button></div>}
@@ -179,9 +195,9 @@ export function BillsService({ serviceId }: { serviceId: string }) {
 
         {short && <p className="text-[11px] font-semibold text-destructive">This is more than your available balance of {naira(balance ?? 0)}.</p>}
         {error && <p className="text-xs font-semibold text-destructive">{error}</p>}
-        <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || !!missing || short || (electricity && !meter.details)} onClick={toReview}>
-          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{electricity ? "Continue" : flow.validate ? "Verify details" : "Continue"}
-        </Button>
+        {(!cable || tv.customer) && <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || !!missing || short || (electricity && !meter.details) || (cable && !picked["plan"])} onClick={toReview}>
+          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{cable ? "Renew Subscription" : electricity ? "Continue" : flow.validate ? "Verify details" : "Continue"}
+        </Button>}
       </div>}
 
       {step === "review" && <div className="space-y-5">
