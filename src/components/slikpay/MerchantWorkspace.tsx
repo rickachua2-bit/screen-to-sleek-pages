@@ -15,6 +15,7 @@ import { PaymentLinks } from "./PaymentLinks";
 import { SmartTag } from "./SmartTag";
 import { DirectDebits } from "./DirectDebits";
 import { Escrow } from "./Escrow";
+import { Cards } from "./Cards";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
@@ -42,7 +43,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "golive") return <KybFlow />;
   if (module === "banking") return <TransferCenter key="single" />;
   if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
-  if (module === "cards") return <><UsdCardPanel onFund={() => onAction("fund")} label="CORPORATE" /><section className="border-t border-border py-6"><h2 className="font-bold">Card controls</h2><p className="mt-2 text-sm text-muted-foreground">NGN issuance, card freeze and spending controls are not connected yet.</p></section></>;
+  if (module === "cards") return <Cards />;
   if (module === "treasury") return <InternationalServices />;
   if (module === "links") return <PaymentLinks />;
   if (module === "smarttag") return <SmartTag />;
