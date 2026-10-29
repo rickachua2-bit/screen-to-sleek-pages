@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/payment-links.functions", () => ({ listPaymentLinks: mocks.list, createPaymentLink: mocks.create }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "sandbox", balances: {}, receipts: [] }, error: "", refresh: vi.fn() }) }));
-vi.mock("@/lib/invoices.functions", () => ({ listInvoices: vi.fn().mockResolvedValue({ mode: "sandbox", invoices: [] }), createInvoice: vi.fn() }));
+vi.mock("@/lib/invoices.functions", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/invoices.functions")>()), listInvoices: vi.fn().mockResolvedValue({ mode: "sandbox", invoices: [] }), createInvoice: vi.fn() }));
 vi.mock("@/lib/products.functions", () => ({ listProducts: vi.fn().mockResolvedValue({ mode: "sandbox", products: [] }), createProduct: vi.fn(), deleteProduct: vi.fn(), checkoutProduct: vi.fn() }));
 import { PaymentLinks } from "@/components/slikpay/PaymentLinks";
 
