@@ -17,7 +17,7 @@ import { CURRENCIES, currencyDef } from "@/lib/wallets";
 import { switchAccountMode } from "@/lib/kyb.functions";
 
 export interface NavItem { label: string; icon: LucideIcon; id?: string }
-export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, onRefresh, bottomNav }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; onRefresh?: () => Promise<void>; bottomNav?: NavItem[] }) {
+export function AppShell({ mode, nav, children, greeting, activeModule, onModuleChange, search = "", onSearchChange, tierBadge, onAddMoney, onRefresh, bottomNav, bottomAction }: { mode: Role; nav: NavItem[]; children: ReactNode; greeting?: string; activeModule?: string; onModuleChange?: (id: string) => void; search?: string; onSearchChange?: (value: string) => void; tierBadge?: string; onAddMoney?: () => void; onRefresh?: () => Promise<void>; bottomNav?: NavItem[]; bottomAction?: { label: string; onClick: () => void } }) {
   const { user, profile, txns, ready, token, signOut, setRole } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState(nav[0]?.label ?? "Dashboard");
