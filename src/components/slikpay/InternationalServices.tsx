@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, BadgeCheck, Clock3, Globe2, History, Info, Loader2, RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowRight, BadgeCheck, Clock3, Globe2, History, Info, Loader2, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,10 @@ const money = (n: number, currency?: string) => `${n.toLocaleString(undefined, {
 
 interface ProfileLike { mode: string; balances: Record<string, number>; receipts: Array<{ id: string; operation: string; status: string; amount: number | string; currency: string; provider_reference: string | null; created_at: string }> }
 
-/** Cross-border / remittance payout composer, backed by the owner-confirmed provider contract. */
+/** Alternating brand tints for destination dots on the navy explorer rail. */
+const DOTS = ["bg-cyan", "bg-magenta", "bg-cobalt", "bg-success"];
+
+/** Cross-border / remittance payout composer — Destination Explorer layout, backed by the owner-confirmed provider contract. */
 function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-border" | "remittance"; profile: ProfileLike; refresh: () => void }) {
   const quoteFn = useServerFn(quoteGlobalPayout);
   const sendFn = useServerFn(sendGlobalPayout);
@@ -32,6 +35,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   const [fields, setFields] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
+  const [search, setSearch] = useState("");
   const [quote, setQuote] = useState<GlobalQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [quoteError, setQuoteError] = useState("");
@@ -44,6 +48,10 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   const corridor: Corridor | null = useMemo(() => CORRIDORS.find((c) => c.id === country) ?? null, [country]);
   const corridors = useMemo(() => source === "NGN" ? CORRIDORS : CORRIDORS.filter((c) => c.target === source), [source]);
   useEffect(() => { if (corridor && !corridors.some((c) => c.id === corridor.id)) { const next = corridors[0]; if (next) { setCountry(next.id); setFields({}); } } }, [corridor, corridors]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? corridors.filter((c) => `${c.label} ${c.target}`.toLowerCase().includes(q)) : corridors;
+  }, [corridors, search]);
 
   const amountValid = /^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) > 0;
   const fieldsFilled = Boolean(corridor && accountName.trim().length >= 2 && corridor.fields.every((fl) => (fields[fl.name] ?? "").trim()));
@@ -102,89 +110,132 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   const pending = profile.receipts.filter((r) => isInternationalReceipt(r.operation) && !["succeeded", "failed"].includes(r.status));
   const heading = purpose === "remittance" ? "Send money abroad" : "Pay a bank account abroad";
 
-  return <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <h3 className="text-lg font-bold">{heading}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Live rates and fees come from our banking partner. Funds are reserved at the exact total before any payment is dispatched.</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5"><Label htmlFor="xp-source">Pay from</Label>
-            <select id="xp-source" value={source} onChange={(e) => { setSource(e.target.value); setQuote(null); }}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
-              {sources.map((s) => <option key={s.code} value={s.code}>{s.code === "NGN" ? "Naira wallet (auto-convert)" : `${s.code} wallet`} — {money(s.balance, s.code)}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="xp-country">Destination</Label>
-            <select id="xp-country" value={country} onChange={(e) => { setCountry(e.target.value); setFields({}); setQuote(null); }}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
-              {corridors.map((c) => <option key={c.id} value={c.id}>{c.label} ({c.target})</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="xp-name">Recipient account name</Label>
-            <Input id="xp-name" value={accountName} maxLength={160} onChange={(e) => setAccountName(e.target.value)} placeholder="Full name on the receiving account" autoComplete="off" />
-          </div>
-          {corridor?.fields.map((fl) => <div key={fl.name} className="space-y-1.5">
-            <Label htmlFor={`xp-${fl.name}`}>{fl.label}</Label>
-            <Input id={`xp-${fl.name}`} value={fields[fl.name] ?? ""} onChange={(e) => setFields((p) => ({ ...p, [fl.name]: e.target.value }))}
-              placeholder={fl.hint} autoComplete="off" />
-          </div>)}
-          <div className="space-y-1.5"><Label htmlFor="xp-amount">Amount ({corridor?.target ?? ""})</Label>
-            <Input id="xp-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoComplete="off" />
-          </div>
-          {profile.mode === "live" && <div className="space-y-1.5"><Label htmlFor="xp-pin">Transaction PIN</Label>
-            <Input id="xp-pin" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} placeholder="4 digits" autoComplete="off" />
-          </div>}
+  return <div className="space-y-5">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
+      {/* Navy destination explorer rail */}
+      <aside className="p-4 text-white" style={{ background: "linear-gradient(160deg, hsl(var(--obsidian)) 0%, hsl(222 62% 16%) 100%)" }}>
+        <h3 className="text-sm font-bold tracking-wide">{heading}</h3>
+        <p className="mt-0.5 text-xs text-white/60">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search countries or currencies" aria-label="Search destinations"
+            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/40 focus:border-cyan focus:outline-none" />
         </div>
-        {sources.length === 0 && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><Info className="h-4 w-4" />Fund a wallet first — payouts need an available balance.</p>}
-      </div>
-
-      {pending.length > 0 && <div className="rounded-2xl border border-magenta/40 bg-magenta/5 p-5">
-        <h4 className="flex items-center gap-2 font-bold"><Clock3 className="h-4 w-4 text-magenta" />Payments awaiting confirmation</h4>
-        <ul className="mt-3 space-y-2 text-sm">
-          {pending.map((r) => <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-background/60 px-3 py-2">
-            <span className="font-mono text-xs">{r.provider_reference ?? r.id}</span>
-            <span className="tabular-nums">{Number(r.amount).toLocaleString()} {r.currency}</span>
-          </li>)}
+        <ul role="listbox" aria-label="Destinations" className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+          {filtered.map((c, i) => {
+            const active = c.id === country;
+            return <li key={c.id} className="shrink-0 lg:shrink">
+              <button type="button" role="option" aria-selected={active}
+                onClick={() => { setCountry(c.id); setFields({}); setQuote(null); setQuoteError(""); }}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors lg:border-l-2 ${active ? "border-cyan bg-white/10" : "border-transparent hover:bg-white/5"}`}>
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[i % DOTS.length]}`} aria-hidden="true" />
+                <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.label}</span><span className="text-xs text-white/55">{c.target}</span></span>
+                <span className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-cyan lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-cyan" aria-hidden="true" />Live</span>
+              </button>
+            </li>;
+          })}
+          {!filtered.length && <li className="px-3 py-2 text-xs text-white/50">No matching destination.</li>}
         </ul>
-        <p className="mt-2 text-xs text-muted-foreground">Reserved funds stay unavailable until the network confirms or declines each payment. Do not submit these payments again.</p>
-        <Button variant="outline" size="sm" className="mt-3" disabled={reconciling} onClick={() => void reconcile()}>
-          <RefreshCw className={reconciling ? "h-4 w-4 animate-spin" : "h-4 w-4"} />Check payment status
-        </Button>
-        {reconcileNote && <p className="mt-2 text-xs text-muted-foreground">{reconcileNote}</p>}
-      </div>}
+        <p className="mt-4 hidden border-t border-white/10 pt-3 text-xs leading-5 text-white/55 lg:block">Fees are priced live per corridor. Funds stay reserved if a network is slow, and are returned automatically on a confirmed decline.</p>
+      </aside>
 
-      {result && <div className={`rounded-2xl border p-5 ${result.status === "succeeded" ? "border-success/40 bg-success/5" : result.status === "failed" ? "border-destructive/40 bg-destructive/5" : "border-magenta/40 bg-magenta/5"}`} role="status">
-        {result.status === "succeeded" ? <>
-          <p className="flex items-center gap-2 font-bold text-success"><BadgeCheck className="h-5 w-5" />Payment completed</p>
-          <p className="mt-1 text-sm">{money(result.recipientGets, result.destinationCurrency)} is on its way to the recipient.</p>
-          <dl className="mt-3 space-y-1 text-xs text-muted-foreground">
-            {result.reference && <div className="flex gap-2"><dt className="font-semibold">Reference</dt><dd className="font-mono">{result.reference}</dd></div>}
-            {result.trackingReference && <div className="flex gap-2"><dt className="font-semibold">Tracking</dt><dd className="font-mono">{result.trackingReference}</dd></div>}
-            <div className="flex gap-2"><dt className="font-semibold">Total debited</dt><dd className="tabular-nums">{money(result.totalDebit, quote?.feeCurrency ?? source)}</dd></div>
-          </dl>
-        </> : result.status === "failed" ? <p className="flex items-start gap-2 text-sm text-destructive"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /><span>{result.reason}</span></p>
-          : <p className="flex items-start gap-2 text-sm text-muted-foreground"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><span>{result.note}</span></p>}
-      </div>}
-      {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</p>}
+      {/* White payment workspace */}
+      <div className="min-w-0 space-y-5 p-5">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-border p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowRight className="h-3.5 w-3.5 text-cobalt" />Exchange rate</p>
+            <p className="mt-1.5 text-sm font-bold tabular-nums">{quote?.rate ? `₦${quote.rate.toLocaleString(undefined, { maximumFractionDigits: 4 })} per ${quote.target}` : quoting ? "Pricing…" : "Live at review"}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Live rate, refreshed per payment</p>
+          </div>
+          <div className="rounded-xl border border-border p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5 text-magenta" />Transfer fee</p>
+            <p className="mt-1.5 text-sm font-bold tabular-nums">{quote ? money(quote.fee, quote.feeCurrency) : "0.5%"}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{quote ? quote.rule : "Naira-funded: min ₦5,000 · wallets: min 5, max 25"}</p>
+          </div>
+          <div className="rounded-xl border border-border p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5 text-cyan" />Minimum amount</p>
+            <p className="mt-1.5 text-sm font-bold tabular-nums">{quote ? money(quote.minimum, quote.target) : "USD 10 equiv."}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Confirmed by the payment network</p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border p-5">
+          <h4 className="text-base font-bold">Recipient details</h4>
+          <p className="mt-0.5 text-xs text-muted-foreground">Funds are reserved at the exact total before any payment is dispatched.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5"><Label htmlFor="xp-source">Pay from</Label>
+              <select id="xp-source" value={source} onChange={(e) => { setSource(e.target.value); setQuote(null); }}
+                className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+                {sources.map((s) => <option key={s.code} value={s.code}>{s.code === "NGN" ? "Naira wallet (auto-convert)" : `${s.code} wallet`} — {money(s.balance, s.code)}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5"><Label htmlFor="xp-amount">Amount ({corridor?.target ?? ""})</Label>
+              <Input id="xp-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoComplete="off" />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="xp-name">Recipient account name</Label>
+              <Input id="xp-name" value={accountName} maxLength={160} onChange={(e) => setAccountName(e.target.value)} placeholder="Full name on the receiving account" autoComplete="off" />
+            </div>
+            {corridor?.fields.map((fl) => <div key={fl.name} className="space-y-1.5">
+              <Label htmlFor={`xp-${fl.name}`}>{fl.label}</Label>
+              <Input id={`xp-${fl.name}`} value={fields[fl.name] ?? ""} onChange={(e) => setFields((p) => ({ ...p, [fl.name]: e.target.value }))}
+                placeholder={fl.hint} autoComplete="off" />
+            </div>)}
+            {profile.mode === "live" && <div className="space-y-1.5"><Label htmlFor="xp-pin">Transaction PIN</Label>
+              <Input id="xp-pin" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} placeholder="4 digits" autoComplete="off" />
+            </div>}
+          </div>
+          {sources.length === 0 && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><Info className="h-4 w-4" />Fund a wallet first — payouts need an available balance.</p>}
+          {quoteError && !quoting && <p className="mt-3 text-xs text-destructive">{quoteError}</p>}
+
+          {quote && <div className="mt-4 rounded-xl border border-cyan/40 bg-cyan/5 p-4 text-sm" role="status">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Recipient gets <strong className="tabular-nums text-foreground">{money(quote.recipientGets, quote.target)}</strong></span>
+              <span className="tabular-nums">Fee <strong>{money(quote.fee, quote.feeCurrency)}</strong></span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2 border-t border-cyan/20 pt-2">
+              <span className="text-muted-foreground">Total debited from {quote.feeCurrency} wallet</span>
+              <strong className="text-lg tabular-nums text-cobalt">{money(quote.totalDebit, quote.feeCurrency)}</strong>
+            </div>
+            <p className={`mt-1.5 text-xs ${sourceBalance >= quote.totalDebit ? "text-muted-foreground" : "text-destructive"}`}>Available: {money(sourceBalance, quote.feeCurrency)}{sourceBalance < quote.totalDebit ? " — not enough for this total yet" : ""}</p>
+          </div>}
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button variant="outline" className="border-magenta/50 text-magenta hover:bg-magenta/5" disabled={reconciling} onClick={() => void reconcile()}>
+              <RefreshCw className={reconciling ? "h-4 w-4 animate-spin" : "h-4 w-4"} />Check pending payments
+            </Button>
+            <Button className="min-w-44" disabled={!quote || sending || (profile.mode === "live" && pin.length !== 4)} onClick={() => void send()}>
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}{sending ? "Sending…" : "Send payment"}
+            </Button>
+          </div>
+          {reconcileNote && <p className="mt-2 text-xs text-muted-foreground">{reconcileNote}</p>}
+        </div>
+
+        {result && <div className={`rounded-2xl border p-5 ${result.status === "succeeded" ? "border-success/40 bg-success/5" : result.status === "failed" ? "border-destructive/40 bg-destructive/5" : "border-magenta/40 bg-magenta/5"}`} role="status">
+          {result.status === "succeeded" ? <>
+            <p className="flex items-center gap-2 font-bold text-success"><BadgeCheck className="h-5 w-5" />Payment completed</p>
+            <p className="mt-1 text-sm">{money(result.recipientGets, result.destinationCurrency)} is on its way to the recipient.</p>
+            <dl className="mt-3 space-y-1 text-xs text-muted-foreground">
+              {result.reference && <div className="flex gap-2"><dt className="font-semibold">Reference</dt><dd className="font-mono">{result.reference}</dd></div>}
+              {result.trackingReference && <div className="flex gap-2"><dt className="font-semibold">Tracking</dt><dd className="font-mono">{result.trackingReference}</dd></div>}
+              <div className="flex gap-2"><dt className="font-semibold">Total debited</dt><dd className="tabular-nums">{money(result.totalDebit, quote?.feeCurrency ?? source)}</dd></div>
+            </dl>
+          </> : result.status === "failed" ? <p className="flex items-start gap-2 text-sm text-destructive"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /><span>{result.reason}</span></p>
+            : <p className="flex items-start gap-2 text-sm text-muted-foreground"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><span>{result.note}</span></p>}
+        </div>}
+        {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{error}</p>}
+      </div>
     </div>
 
-    <aside className="h-fit space-y-4 rounded-2xl border border-border bg-obsidian p-5 text-white lg:sticky lg:top-4" style={{ background: "linear-gradient(150deg, hsl(var(--obsidian)) 0%, hsl(222 60% 14%) 100%)" }}>
-      <h4 className="flex items-center gap-2 font-bold"><Globe2 className="h-4 w-4 text-cyan" />Payment summary</h4>
-      {!quote && <p className="text-xs leading-6 text-white/70">{quoting ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Pricing this payment…</span> : quoteError || "Fill in the recipient and amount to see the exact rate, fee and total debit."}</p>}
-      {quoteError && !quoting && <p className="text-xs text-rose-300">{quoteError}</p>}
-      {quote && <dl className="space-y-3 text-sm">
-        <div><dt className="text-xs text-white/60">Recipient gets</dt><dd className="text-lg font-bold tabular-nums text-cyan">{money(quote.recipientGets, quote.target)}</dd></div>
-        {quote.rate && <div><dt className="text-xs text-white/60">Exchange rate</dt><dd className="tabular-nums">₦{quote.rate.toLocaleString(undefined, { maximumFractionDigits: 4 })} per {quote.target}</dd></div>}
-        <div><dt className="text-xs text-white/60">Fee</dt><dd className="tabular-nums">{money(quote.fee, quote.feeCurrency)}</dd></div>
-        <div><dt className="text-xs text-white/60">Total debited from {quote.feeCurrency} wallet</dt><dd className="text-lg font-bold tabular-nums">{money(quote.totalDebit, quote.feeCurrency)}</dd></div>
-        <p className="border-t border-white/10 pt-3 text-xs text-white/60">{quote.rule} · minimum {money(quote.minimum, quote.target)}</p>
-        <p className={`text-xs ${sourceBalance >= quote.totalDebit ? "text-white/60" : "text-rose-300"}`}>Available: {money(sourceBalance, quote.feeCurrency)}{sourceBalance < quote.totalDebit ? " — not enough for this total yet" : ""}</p>
-      </dl>}
-      <Button className="w-full" disabled={!quote || sending || (profile.mode === "live" && pin.length !== 4)} onClick={() => void send()}>
-        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}{sending ? "Sending…" : "Send payment"}
-      </Button>
-      <p className="flex items-start gap-2 text-xs text-white/50"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />If the network is slow, funds stay reserved and the payment completes or is returned automatically.</p>
-    </aside>
+    {pending.length > 0 && <div className="rounded-2xl border border-magenta/40 bg-magenta/5 p-5">
+      <h4 className="flex items-center gap-2 font-bold"><Clock3 className="h-4 w-4 text-magenta" />Payments awaiting confirmation</h4>
+      <ul className="mt-3 space-y-2 text-sm">
+        {pending.map((r) => <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-background/60 px-3 py-2">
+          <span className="font-mono text-xs">{r.provider_reference ?? r.id}</span>
+          <span className="tabular-nums">{Number(r.amount).toLocaleString()} {r.currency}</span>
+        </li>)}
+      </ul>
+      <p className="mt-2 text-xs text-muted-foreground">Reserved funds stay unavailable until the network confirms or declines each payment. Do not submit these payments again.</p>
+    </div>}
   </div>;
 }
 
