@@ -54,8 +54,8 @@ export const SERVICES: ServiceDef[] = [
   // Move money
   { id: "send", label: "Bank transfer", category: "move", keywords: "send transfer pay nip bank naira", icon: "Send", module: "banking" },
   { id: "bulk", label: "Bulk payouts", category: "move", keywords: "bulk payroll salaries many", icon: "Users", module: "payroll", businessOnly: true },
-  { id: "intl", label: "Cross-border payments", category: "move", keywords: "international global abroad ghana kenya usd gbp eur send cross border supplier", icon: "Globe", module: "treasury", workspace: "cross-border", activationPending: true, businessOnly: true },
-  { id: "remittance", label: "Remittances", category: "move", keywords: "remittance send money abroad international family diaspora tuition", icon: "Send", module: "treasury", workspace: "remittance", activationPending: true, businessOnly: true },
+  { id: "intl", label: "Cross-border payments", category: "move", keywords: "international global abroad ghana kenya usd gbp eur send cross border supplier", icon: "Globe", module: "treasury", workspace: "cross-border", businessOnly: true },
+  { id: "remittance", label: "Remittances", category: "move", keywords: "remittance send money abroad international family diaspora tuition", icon: "Send", module: "treasury", workspace: "remittance", businessOnly: true },
   { id: "swap", label: "Swap currencies", category: "move", keywords: "swap exchange fx convert usdt usdc", icon: "Repeat", module: "treasury" },
   // Get paid
   { id: "links", label: "Payment links & invoices", category: "paid", keywords: "link invoice request collect get paid", icon: "Link2", module: "links" },

@@ -11,20 +11,20 @@ const run = runPaddleOperation as unknown as (args: { data: Record<string, unkno
 const withdraw = withdrawFunds as unknown as typeof run;
 describe("international payment availability", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.user.mockResolvedValue({ user: { id: "owner" }, db: {}, role: "merchant", mode: "live", review: "approved" }); });
-  it.each(["post-payouts-global", "post-payouts-tuition"])("never reserves or dispatches unverified %s payments", async (id) => {
+  it.each(["post-payouts-global", "post-payouts-tuition"])("keeps %s off the generic catalog dispatch path", async (id) => {
     await expect(run({ data: { id, params: {}, body: { amount: 100 }, currency: "USD", pin: "1234", idempotencyKey: "key" } })).rejects.toThrow("not active yet");
     expect(mocks.call).not.toHaveBeenCalled(); expect(mocks.guard).not.toHaveBeenCalled();
   });
-  it("blocks the alternate foreign-wallet withdrawal entry point before reservation", async () => {
+  it("keeps wallet withdrawals on the dedicated NGN settlement path only", async () => {
     await expect(withdraw({ data: { currency: "USD", amount: 100, pin: "1234", idempotencyKey: "key" } })).rejects.toThrow("not active yet");
     expect(mocks.call).not.toHaveBeenCalled(); expect(mocks.guard).not.toHaveBeenCalled();
   });
-  it.each(["live", "sandbox"] as const)("does not represent unconfirmed remittances as active in %s", (mode) => {
+  it.each(["live", "sandbox"] as const)("offers cross-border and remittances to approved merchants in %s", (mode) => {
     for (const id of ["intl", "remittance"]) {
       const service = SERVICES.find((s) => s.id === id);
       expect(service).toBeDefined();
       if (!service) throw new Error("Missing international service");
-      expect(serviceStatus(service, { role: "merchant", mode, review: "approved" })).toBe("not_active");
+      expect(serviceStatus(service, { role: "merchant", mode, review: "approved" })).toBe(mode === "sandbox" ? "sandbox" : "available");
     }
   });
   it("keeps Remita government bills separate from international remittances", () => {
