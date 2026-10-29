@@ -6,7 +6,7 @@ A new look for the Business (and Personal) home screen that keeps the midnight-c
 - **Hero balance card**: a big glass card with a slow cobalt-to-cyan-to-magenta glow. The balance counts up when it loads, there is an eye button to hide amounts, and a small trend line shows the last 7 days.
 - **Account-number card**: shown as a real-looking bank card with a soft shine. Tap to flip it and see the account name and bank. One tap copies the details.
 - **Bento layout**: tiles in mixed sizes (balance, money in/out, top customers, go-live progress) in place of equal rows.
-- **Small touches**: amounts in JetBrains Mono, tiles that lift slightly under the cursor, colour-coded status chips, and a time-of-day greeting ("Good morning, Travsify").
+- **Small touches**: amounts in JetBrains Mono, tiles that lift slightly under the cursor, colour-coded status chips, and a time-of-day greeting ("Good morning, Slikpay").
 
 ## 2. Quick Action button
 - A floating round button (bottom-right, glowing magenta-to-cobalt). Tap it and a ring of actions opens: Send money, Request payment, Payment link, Fund card, Add beneficiary, Refresh.
