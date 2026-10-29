@@ -23,8 +23,10 @@ describe("owner-confirmed cross-border fee rules", () => {
     expect(nairaCrossBorderFee(2000000)).toBe(10000); // 0.5% = 10,000 above the floor
   });
   it("enforces the USD 10-equivalent minimum from live rates", () => {
-    expect(minimumTargetAmount("NGN", "USD", fx)).toBeCloseTo(10 * 1725 / 1725, 2); // buying USD at ask
-    expect(minimumTargetAmount("USD", "USD", fx)).toBeCloseTo(10 * 1725 / 1720, 2); // holding USD at bid
+    expect(minimumTargetAmount("NGN", "USD", fx)).toBe(10);
+    expect(minimumTargetAmount("USD", "USD", fx)).toBe(10);
+    expect(minimumTargetAmount("NGN", "GBP", fx)).toBeCloseTo(10 * 1720 / 2180, 2); // naira buys GBP at ask
+    expect(minimumTargetAmount("GBP", "GBP", fx)).toBeCloseTo(10 * 1720 / 2170, 2); // held GBP valued at bid
   });
 });
 
@@ -172,7 +174,7 @@ describe("recovery via the original payment key", () => {
 /** Minimal chainable ledger client mock: every builder method returns the chain, awaits resolve to the result. */
 function chainDb(result: { data: unknown; error: unknown }) {
   const c: Record<string, unknown> = {};
-  for (const m of ["select", "eq", "in", "order", "limit", "update", "upsert"]) c[m] = () => c;
+  for (const m of ["from", "select", "eq", "in", "order", "limit", "update", "upsert"]) c[m] = () => c;
   c["maybeSingle"] = async () => ({ data: result.data, error: result.error });
   c["then"] = (res: (v: unknown) => unknown) => Promise.resolve(result).then(res);
   return c;

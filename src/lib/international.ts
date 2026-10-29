@@ -10,6 +10,8 @@ export function isInternationalReceipt(operation: string) {
   return ["POST /v1/payouts/global", "POST /v1/payouts/tuition"].includes(operation) || /^WITHDRAW (GHS|KES|ZAR|USD|EUR|GBP)$/.test(operation);
 }
 
+export const INTERNATIONAL_NOT_ACTIVE = "International payments are not active yet. Supported destinations, recipient requirements, fees and payment tracking must be confirmed before money can be sent.";
+
 /* ---------- Owner-confirmed corridors, fees and recovery rules (29 Oct 2026) ---------- */
 
 export interface BeneficiaryField { name: string; label: string; pattern?: RegExp; hint?: string }
@@ -69,6 +71,7 @@ export function nairaCrossBorderFee(principal: number): number {
 
 /** Minimum payout amount: the target-currency equivalent of USD 10 at live rates. */
 export function minimumTargetAmount(source: string, target: string, fx: FxRates): number | null {
+  if (target === "USD") return 10;
   const usd = fx.bid["USD"];
   if (!usd) return null;
   const perUsd = source === target
