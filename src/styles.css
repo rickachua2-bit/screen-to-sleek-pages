@@ -400,7 +400,7 @@ html { scroll-behavior: smooth; }
   --overlay-surface: oklch(0.2 0.055 268);
   --overlay-field: oklch(0.15 0.04 268);
   --overlay-foreground: oklch(0.97 0.01 250);
-  --overlay-muted: oklch(0.75 0.035 255);
+  --overlay-muted: oklch(0.9 0.012 250);
   --overlay-border: oklch(0.62 0.22 262 / 45%);
   --overlay-hover: oklch(0.62 0.22 262 / 18%);
   --overlay-selected: linear-gradient(110deg, oklch(0.62 0.22 262 / 25%), oklch(0.68 0.32 328 / 14%));
@@ -425,7 +425,7 @@ html { scroll-behavior: smooth; }
   --cobalt: oklch(0.62 0.22 262);
   --cyan: oklch(0.9 0.16 195);
   --magenta: oklch(0.68 0.32 328);
-  --success: oklch(0.78 0.17 155);
+  --success: oklch(0.85 0.16 155);
   --success-soft: oklch(0.55 0.15 155 / 18%);
   --primary-foreground: oklch(1 0 0);
   color-scheme: dark;
@@ -498,7 +498,7 @@ html { scroll-behavior: smooth; }
 .merchant-console .rounded-lg, .merchant-console .panel { border-radius: 14px; }
 .merchant-console .merchant-sidebar { border-right-color: var(--border); }
 .merchant-console .merchant-nav-item { transition: background-color .15s ease, color .15s ease; }
-.merchant-console .merchant-nav-item svg { box-sizing: content-box; padding: 6px; border-radius: 8px; background: color-mix(in oklab, var(--cobalt) 12%, transparent); color: oklch(0.78 0.06 255); }
+.merchant-console .merchant-nav-item svg { box-sizing: content-box; padding: 6px; border-radius: 8px; background: color-mix(in oklab, var(--cobalt) 12%, transparent); color: oklch(0.96 0.01 255); }
 .merchant-console table tbody tr { transition: background-color .15s ease; }
 .merchant-console table tbody tr:hover { background: color-mix(in oklab, var(--cobalt) 7%, transparent); }
 .merchant-console .font-mono, .merchant-console .tabular { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -570,7 +570,7 @@ html { scroll-behavior: smooth; }
 .light-workspace nav[aria-label="Choose wallet currency"] button[aria-pressed="false"] { background: var(--card); color: var(--body); border-color: var(--border); box-shadow: 0 1px 2px oklch(0.3 0.05 262 / 6%); }
 .light-workspace nav[aria-label="Choose wallet currency"] button[aria-pressed="true"] { background: var(--cobalt); box-shadow: 0 8px 20px -10px var(--cobalt); }
 .light-workspace .balance-figure { font-family: var(--font-sans, inherit); letter-spacing: -0.03em; }
-.merchant-console .merchant-nav-item svg { background: transparent; padding: 0; color: oklch(0.8 0.04 255); }
+.merchant-console .merchant-nav-item svg { background: transparent; padding: 0; color: oklch(0.96 0.01 255); }
 .merchant-console .nav-pill-active { background: color-mix(in oklab, var(--cobalt) 35%, transparent); box-shadow: none; }
 .merchant-console .nav-pill-active svg { background: transparent !important; color: oklch(0.98 0 0) !important; }
 /* Modern compact sidebar */
@@ -579,7 +579,7 @@ html { scroll-behavior: smooth; }
 /* The menu is always deep navy, so its text is set to full white for maximum legibility. */
 .merchant-sidebar { color: oklch(1 0 0); }
 .merchant-sidebar .sidebar-search { color: oklch(1 0 0); }
-.merchant-sidebar .sidebar-search::placeholder { color: oklch(0.85 0.03 258); }
+.merchant-sidebar .sidebar-search::placeholder { color: oklch(0.92 0.015 258); }
 .merchant-sidebar .sidebar-group-title { color: oklch(0.92 0.03 258); transition: color .12s; }
 .merchant-sidebar .sidebar-group-title:hover { color: oklch(1 0 0); }
 .merchant-sidebar .sidebar-meta { color: oklch(0.9 0.03 258); }
@@ -699,7 +699,7 @@ html { scroll-behavior: smooth; }
 .topbar-midnight .topbar-chip { background: oklch(0.17 0.065 266) !important; color: var(--foreground) !important; border: 1.5px solid oklch(0.62 0.17 245) !important; box-shadow: 0 0 12px -6px oklch(0.62 0.17 245); }
 .topbar-midnight .topbar-chip:hover { border-color: oklch(0.82 0.15 205) !important; }
 .topbar-midnight .mode-switch { background: oklch(0.13 0.05 268); border: 1.5px solid oklch(0.82 0.15 205 / .55); }
-.topbar-midnight .mode-switch button { color: oklch(0.75 0.04 250); }
+.topbar-midnight .mode-switch button { color: oklch(0.95 0.01 250); }
 .topbar-midnight .mode-switch.is-live .mode-thumb { background: oklch(0.82 0.15 205 / .14); box-shadow: inset 0 0 0 1px oklch(0.82 0.15 205 / .6), 0 0 16px -2px oklch(0.82 0.15 205 / .7); }
 .topbar-midnight .mode-switch.is-live button[aria-checked="true"] { color: oklch(0.88 0.15 205); }
 .topbar-midnight .mode-switch.is-live button[aria-checked="true"] .mode-dot { background: oklch(0.88 0.15 205); box-shadow: 0 0 10px oklch(0.88 0.15 205); }
@@ -711,7 +711,7 @@ html { scroll-behavior: smooth; }
 .topbar-midnight::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, oklch(0.55 0.22 260), oklch(0.85 0.15 205), oklch(0.65 0.26 340), oklch(0.55 0.22 260)); background-size: 300% 100%; animation: topbar-flow 8s linear infinite; box-shadow: 0 0 12px oklch(0.85 0.15 205 / .6); }
 @keyframes topbar-flow { to { background-position: 300% 0; } }
 .topbar-midnight .topbar-search { border: 1.5px solid transparent; background: linear-gradient(oklch(0.13 0.05 268), oklch(0.13 0.05 268)) padding-box, linear-gradient(90deg, oklch(0.85 0.15 205), oklch(0.6 0.2 255), oklch(0.65 0.26 340), oklch(0.85 0.15 205)) border-box; background-size: 100% 100%, 300% 100%; animation: topbar-flow 6s linear infinite; }
-.topbar-midnight .topbar-search input::placeholder { color: oklch(0.75 0.05 240); }
+.topbar-midnight .topbar-search input::placeholder { color: oklch(0.88 0.02 240); }
 .topbar-midnight .topbar-icon { background: oklch(0.85 0.15 205 / .08); border: 1px solid oklch(0.85 0.15 205 / .25); }
 .topbar-midnight .topbar-icon:hover { box-shadow: 0 0 16px -2px oklch(0.85 0.15 205 / .7); transform: translateY(-1px) rotate(-8deg); }
 .topbar-midnight .topbar-chip { background: linear-gradient(135deg, oklch(0.26 0.1 262), oklch(0.18 0.07 266)) !important; transition: transform .18s, box-shadow .18s; }
@@ -832,7 +832,7 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { .services-item, .services-item-main .services-category-icon { transition: none; transform: none; } .services-item:hover { transform: none; } }
 
 /* Composer Split: white payment form, midnight account overview. */
-.transfer-center { --transfer-paper: oklch(0.995 0.002 255); --transfer-ink: oklch(0.22 0.04 265); --transfer-dim: oklch(0.49 0.035 260); --transfer-line: oklch(0.9 0.015 255); --transfer-soft: oklch(0.97 0.008 255); --transfer-night: oklch(0.18 0.05 265); --transfer-night-raised: oklch(0.23 0.055 265); --transfer-on-night: oklch(0.99 0.003 255); --transfer-night-muted: oklch(0.78 0.035 255); --transfer-shadow: 0 18px 38px -24px color-mix(in oklab, var(--cobalt) 28%, transparent); --foreground: var(--transfer-ink); --card: var(--transfer-paper); --background: var(--transfer-paper); --muted: var(--transfer-soft); --muted-foreground: var(--transfer-dim); --border: var(--transfer-line); --input: var(--transfer-line); --primary: var(--cobalt); }
+.transfer-center { --transfer-paper: oklch(0.995 0.002 255); --transfer-ink: oklch(0.22 0.04 265); --transfer-dim: oklch(0.49 0.035 260); --transfer-line: oklch(0.9 0.015 255); --transfer-soft: oklch(0.97 0.008 255); --transfer-night: oklch(0.18 0.05 265); --transfer-night-raised: oklch(0.23 0.055 265); --transfer-on-night: oklch(0.99 0.003 255); --transfer-night-muted: oklch(0.92 0.012 250); --transfer-shadow: 0 18px 38px -24px color-mix(in oklab, var(--cobalt) 28%, transparent); --foreground: var(--transfer-ink); --card: var(--transfer-paper); --background: var(--transfer-paper); --muted: var(--transfer-soft); --muted-foreground: var(--transfer-dim); --border: var(--transfer-line); --input: var(--transfer-line); --primary: var(--cobalt); }
 .transfer-tabs { display: inline-flex; padding: 4px; border: 1px solid var(--transfer-line); background: var(--transfer-paper); border-radius: 8px; gap: 3px; }
 .transfer-tabs [role="tab"] { font-size: 12px; color: var(--transfer-dim); }
 .transfer-tabs [aria-selected="true"] { color: var(--primary-foreground); background: var(--cobalt); box-shadow: var(--shadow-cobalt); }
@@ -1027,3 +1027,59 @@ html { scroll-behavior: smooth; }
 .mission-webhook-metric { min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
 @media (max-width: 1100px) { .mission-activity-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .mission-bottom-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .mission-activity-grid, .mission-keys > .mission-key-list { grid-template-columns: minmax(0, 1fr); } .mission-metric { padding: 14px; } .mission-metric strong { font-size: 26px; } .mission-workspace { padding-block: 22px; } .mission-section { padding-block: 18px; } .mission-key-row > div:last-child { flex-wrap: wrap; } }
+
+/* ============ Dark surface legibility ============
+   Every dark surface resolves its text tokens to bright white, so labels,
+   hints and secondary copy never fall back to the workspace's grey. */
+.theme-flame,
+.merchant-sidebar,
+.topbar-midnight,
+.light-workspace .hero-surface,
+.light-workspace .merchant-popover,
+.receiving-account,
+.transfer-story,
+.qr-stand,
+.bg-navy-rail,
+.bulk-studio-overview,
+.team-studio-rail,
+.developer-console-banner,
+.developer-studio-rail,
+.mission-navigation,
+.mission-code,
+.slik-popup,
+.slik-dropdown,
+.merchant-popover,
+.theme-flame .panel.dropdown-list,
+[data-sonner-toast] {
+  --foreground: oklch(1 0 0);
+  --body: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.92 0.012 250);
+  --card-foreground: oklch(1 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --accent-foreground: oklch(1 0 0);
+  --destructive-foreground: oklch(1 0 0);
+  color: var(--foreground);
+}
+/* Secondary copy on dark surfaces stays near-white instead of grey. */
+.theme-flame { --muted-foreground: oklch(0.92 0.012 250); --body: oklch(0.95 0.01 250); }
+.topbar-midnight { --muted-foreground: oklch(0.92 0.012 250); }
+.light-workspace .hero-surface, .light-workspace .merchant-popover, .receiving-account, .team-studio-rail { --muted-foreground: oklch(0.92 0.012 250); }
+/* Icons and placeholders on navy keep the same bright treatment. */
+.merchant-sidebar .sidebar-item svg, .merchant-sidebar .sidebar-icon-btn { color: oklch(0.98 0.008 255); }
+.topbar-midnight .topbar-search input::placeholder, .bg-navy-rail input::placeholder, .transfer-story input::placeholder, .qr-stand input::placeholder { color: oklch(0.88 0.012 250); }
+
+/* Brand-blue links and green status text stay bright on dark surfaces. */
+:is(.merchant-sidebar, .topbar-midnight, .receiving-account, .transfer-story, .qr-stand, .bg-navy-rail,
+    .bulk-studio-overview, .team-studio-rail, .developer-console-banner, .developer-studio-rail,
+    .mission-navigation, .mission-code, .slik-popup, .slik-dropdown, .merchant-popover,
+    .light-workspace .hero-surface, [data-sonner-toast]) :is(.text-cobalt, .text-primary, .text-success) {
+  color: oklch(0.86 0.12 200);
+}
+:is(.merchant-sidebar, .topbar-midnight, .receiving-account, .transfer-story, .qr-stand, .bg-navy-rail,
+    .bulk-studio-overview, .team-studio-rail, .developer-console-banner, .developer-studio-rail,
+    .mission-navigation, .mission-code, .slik-popup, .slik-dropdown, .merchant-popover,
+    .light-workspace .hero-surface, [data-sonner-toast]) .text-success { color: oklch(0.85 0.16 155); }
+.theme-flame:not(:has(.light-workspace)) :is(.text-cobalt, .text-primary) { color: oklch(0.86 0.12 200); }
+.theme-flame:not(:has(.light-workspace)) .text-success { color: oklch(0.85 0.16 155); }

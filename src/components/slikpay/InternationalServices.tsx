@@ -115,11 +115,11 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
       {/* Navy destination explorer rail */}
       <aside className="bg-navy-rail p-4 text-white">
         <h3 className="text-sm font-bold tracking-wide">{heading}</h3>
-        <p className="mt-0.5 text-xs text-white/60">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
+        <p className="mt-0.5 text-xs text-white/90">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
         <div className="relative mt-3">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/85" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search countries or currencies" aria-label="Search destinations"
-            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/40 focus:border-cyan focus:outline-none" />
+            className="h-9 w-full rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-sm text-white placeholder:text-white/80 focus:border-cyan focus:outline-none" />
         </div>
         <ul role="listbox" aria-label="Destinations" className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
           {filtered.map((c, i) => {
@@ -129,14 +129,14 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
                 onClick={() => { setCountry(c.id); setFields({}); setQuote(null); setQuoteError(""); }}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors lg:border-l-2 ${active ? "border-cyan bg-white/10" : "border-transparent hover:bg-white/5"}`}>
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[i % DOTS.length]}`} aria-hidden="true" />
-                <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.label}</span><span className="text-xs text-white/55">{c.target}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.label}</span><span className="text-xs text-white/90">{c.target}</span></span>
                 <span className="hidden items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-cyan lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-cyan" aria-hidden="true" />Live</span>
               </button>
             </li>;
           })}
-          {!filtered.length && <li className="px-3 py-2 text-xs text-white/50">No matching destination.</li>}
+          {!filtered.length && <li className="px-3 py-2 text-xs text-white/85">No matching destination.</li>}
         </ul>
-        <p className="mt-4 hidden border-t border-white/10 pt-3 text-xs leading-5 text-white/55 lg:block">Fees are priced live per corridor. Funds stay reserved if a network is slow, and are returned automatically on a confirmed decline.</p>
+        <p className="mt-4 hidden border-t border-white/10 pt-3 text-xs leading-5 text-white/90 lg:block">Fees are priced live per corridor. Funds stay reserved if a network is slow, and are returned automatically on a confirmed decline.</p>
       </aside>
 
       {/* White payment workspace */}

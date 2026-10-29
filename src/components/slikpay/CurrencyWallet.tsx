@@ -82,17 +82,17 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
     {!compact && <div className="hero-surface p-6 md:p-8">
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-xs font-bold text-foreground/85"><span className="text-xl">{def.flag}</span>{def.name} wallet{!live && <span className="rounded-full bg-chart-4/20 px-2 py-0.5 text-[10px] text-chart-4">Sandbox</span>}</p>
-          <div className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/70">Available balance<PrivacyToggle className="h-7 w-7" /></div>
+          <p className="flex items-center gap-2 text-xs font-bold text-foreground/95"><span className="text-xl">{def.flag}</span>{def.name} wallet{!live && <span className="rounded-full bg-chart-4/20 px-2 py-0.5 text-[10px] text-chart-4">Sandbox</span>}</p>
+          <div className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/90">Available balance<PrivacyToggle className="h-7 w-7" /></div>
           <div className="balance-figure">{wallets ? mask(fmt(code, balance), hidden) : <Loader2 className="h-8 w-8 animate-spin" />}</div>
-          <p className="mt-1 text-xs font-semibold text-foreground/75">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· live rate</span></> : (pricing ? "Live rate unavailable right now" : "Loading live rate…"))}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
+          <p className="mt-1 text-xs font-semibold text-foreground/90">{code !== "NGN" && (ngnEq !== null ? <>≈ {mask(naira(ngnEq), hidden)} <span className="opacity-70">· live rate</span></> : (pricing ? "Live rate unavailable right now" : "Loading live rate…"))}{pending > 0 && <> · Pending {mask(fmt(code, pending), hidden)}</>}</p>
         </div>
         <div className="flex flex-col items-end gap-3">
           <StatusPill status={w?.status} />
           {def.kind === "crypto" && w?.accountNumber && <button type="button" onClick={() => setDialog("receive")} title="Tap Receive to see the full address and QR code" className="group flex max-w-[16rem] items-center gap-3 rounded-2xl border border-border bg-background/40 px-3.5 py-2.5 text-left backdrop-blur-md transition-all hover:border-cyan/60 hover:bg-background/60">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-tri text-primary-foreground"><QrCode className="h-4 w-4" /></span>
             <span className="min-w-0">
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-foreground/70">Deposit address · {w.network ?? def.network}</span>
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-foreground/90">Deposit address · {w.network ?? def.network}</span>
               <span className="block truncate font-mono text-xs font-bold">{w.accountNumber.slice(0, 6)}…{w.accountNumber.slice(-6)}</span>
             </span>
           </button>}
@@ -100,7 +100,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
       </div>
       {error && <p className="relative mt-3 text-xs font-semibold text-destructive">{error}</p>}
       {w && w.status !== "active" && code !== "NGN" && <div className="relative mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/40 p-3">
-        <p className="flex-1 text-xs text-foreground/85">{w.status === "not_active" ? <><Lock className="mr-1 inline h-3.5 w-3.5" />{NOT_ACTIVE}. You can still swap into {code} and hold a balance.</> : `No ${code} ${def.kind === "crypto" ? "wallet" : "account"} yet. Issue one to receive ${code}, or swap into it right now.`}</p>
+        <p className="flex-1 text-xs text-foreground/95">{w.status === "not_active" ? <><Lock className="mr-1 inline h-3.5 w-3.5" />{NOT_ACTIVE}. You can still swap into {code} and hold a balance.</> : `No ${code} ${def.kind === "crypto" ? "wallet" : "account"} yet. Issue one to receive ${code}, or swap into it right now.`}</p>
         <Button variant="brand" size="sm" className="rounded-full" disabled={busy || w.status === "not_active"} onClick={doIssue}>{busy ? <Loader2 className="animate-spin" /> : <Plus />}{w.status === "not_active" ? NOT_ACTIVE : "Issue account"}</Button>
       </div>}
       {actionGrid}
@@ -140,7 +140,7 @@ export function CurrencyWallet({ code, mode, onNavigate, compact }: { code: stri
 }
 
 function StatusPill({ status }: { status?: string | undefined }) {
-  const s = status === "active" ? ["Account active", "bg-success-soft text-success"] : status === "not_active" ? [NOT_ACTIVE, "bg-chart-4/20 text-chart-4"] : ["Not issued", "bg-background/40 text-foreground/80"];
+  const s = status === "active" ? ["Account active", "bg-success-soft text-success"] : status === "not_active" ? [NOT_ACTIVE, "bg-chart-4/20 text-chart-4"] : ["Not issued", "bg-background/40 text-foreground/95"];
   return <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${s[1]}`}>● {s[0]}</span>;
 }
 function LimitsList({ code }: { code: string }) {
