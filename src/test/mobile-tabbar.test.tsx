@@ -4,7 +4,7 @@ import { Home, LayoutGrid, Send } from "lucide-react";
 
 const mocks = vi.hoisted(() => ({ navigate: vi.fn(), moduleChange: vi.fn(), action: vi.fn() }));
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...p }: Record<string, unknown>) => <a {...p}>{children}</a>,
+  Link: ({ children, ...p }: { children?: React.ReactNode } & Record<string, unknown>) => <a {...p}>{children}</a>,
   useNavigate: () => mocks.navigate,
 }));
 vi.mock("@/lib/auth", () => ({
