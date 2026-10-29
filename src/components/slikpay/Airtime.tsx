@@ -163,18 +163,18 @@ export function Airtime() {
     <aside className="bg-navy-rail relative overflow-hidden rounded-3xl p-6 text-white md:p-8">
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">Bills & top-up</p>
       <h2 className="mt-2 text-2xl font-extrabold md:text-3xl">Airtime in seconds</h2>
-      <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">We detect the network from the number, you pick an amount, and the top-up lands instantly.</p>
+      <p className="mt-2 max-w-sm text-sm leading-6 text-white/95">We detect the network from the number, you pick an amount, and the top-up lands instantly.</p>
       <ol className="mt-6 space-y-3">
         {["Enter the phone number", "Pick or type an amount", "Confirm and pay"].map((s, i) => {
           const active = (step === "details" && i === 0) || (step === "review" && i <= 2) || step === "done";
           return <li key={s} className="flex items-center gap-3 text-sm font-semibold">
-            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${active ? "bg-gradient-tri text-white" : "border border-white/25 text-white/60"}`}>{i + 1}</span>
-            <span className={active ? "text-white" : "text-white/60"}>{s}</span>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${active ? "bg-gradient-tri text-white" : "border border-white/25 text-white/90"}`}>{i + 1}</span>
+            <span className={active ? "text-white" : "text-white/90"}>{s}</span>
           </li>;
         })}
       </ol>
       <div className="mt-8 rounded-2xl border border-white/15 bg-white/5 p-4">
-        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/60"><Wallet className="h-3.5 w-3.5 text-cyan" />Wallet balance</p>
+        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/90"><Wallet className="h-3.5 w-3.5 text-cyan" />Wallet balance</p>
         <p className="mt-1 font-mono text-2xl font-extrabold tabular-nums">{balance === null ? "…" : naira(balance)}</p>
         {!live && <p className="mt-1 text-[11px] font-semibold text-amber-300">Sandbox mode — no real money moves</p>}
       </div>

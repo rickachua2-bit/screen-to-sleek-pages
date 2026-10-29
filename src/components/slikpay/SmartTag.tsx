@@ -204,7 +204,7 @@ function QrStands({ tags }: { tags: SmartTagView[] }) {
       <p className="mt-1 truncate text-lg font-extrabold text-primary-foreground">{tag.name}</p>
       <div className="mx-auto mt-4 w-fit rounded-2xl bg-white p-3"><QRCodeSVG value={url} size={180} aria-label={`QR code for @${tag.handle}`} role="img" /></div>
       <p className="mt-3 font-mono text-sm font-bold text-cyan">@{tag.handle}</p>
-      <p className="mt-1 text-[11px] text-primary-foreground/70">{tag.amount ? money(tag.amount, tag.currency) : `Any amount · ${tag.currency}`} · Powered by Slikpay</p>
+      <p className="mt-1 text-[11px] text-primary-foreground/90">{tag.amount ? money(tag.amount, tag.currency) : `Any amount · ${tag.currency}`} · Powered by Slikpay</p>
     </div>
   </div>;
 }

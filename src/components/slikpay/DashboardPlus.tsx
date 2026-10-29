@@ -40,16 +40,16 @@ export function DashboardHero({ name, business, balance, mode, txns, onOpenComma
   return <section className="hero-surface p-6 md:p-8">
     <div className="relative flex flex-wrap items-start justify-between gap-6">
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-foreground/80">{hour === null ? "Welcome back" : greetingFor(hour)}, {name.split(" ")[0]} 👋</p>
-        <h2 className="mt-1 truncate text-sm font-bold text-foreground/90">{business ?? "Your business"}</h2>
-        <div className="mt-5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/70">Settlement balance<PrivacyToggle className="h-7 w-7" /></div>
+        <p className="text-xs font-semibold text-foreground/95">{hour === null ? "Welcome back" : greetingFor(hour)}, {name.split(" ")[0]} 👋</p>
+        <h2 className="mt-1 truncate text-sm font-bold text-foreground">{business ?? "Your business"}</h2>
+        <div className="mt-5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-foreground/90">Settlement balance<PrivacyToggle className="h-7 w-7" /></div>
         <div className="balance-figure text-foreground" aria-live="polite">{mask(naira(shown), hidden)}</div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button onClick={live ? undefined : onGoLive} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${live ? "bg-success-soft text-success" : "bg-chart-4/20 text-chart-4"}`}><span className={`h-1.5 w-1.5 rounded-full motion-safe:animate-pulse ${live ? "bg-success" : "bg-chart-4"}`} />{live ? "Live mode" : "Sandbox · tap to go live"}</button>
-          <button onClick={onOpenCommand} className="flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-[11px] font-semibold text-foreground/80 hover:text-foreground"><Search className="h-3 w-3" />Quick search<kbd className="rounded bg-muted px-1.5 font-mono text-[10px]">Ctrl K</kbd></button>
+          <button onClick={onOpenCommand} className="flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-[11px] font-semibold text-foreground/95 hover:text-foreground"><Search className="h-3 w-3" />Quick search<kbd className="rounded bg-muted px-1.5 font-mono text-[10px]">Ctrl K</kbd></button>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1"><span className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">Inflow · 7 days</span><Sparkline values={spark} /><span className="font-mono text-sm font-bold text-foreground">{mask(naira(spark.reduce((a, b) => a + b, 0)), hidden)}</span></div>
+      <div className="flex flex-col items-end gap-1"><span className="text-[10px] font-bold uppercase tracking-wider text-foreground/90">Inflow · 7 days</span><Sparkline values={spark} /><span className="font-mono text-sm font-bold text-foreground">{mask(naira(spark.reduce((a, b) => a + b, 0)), hidden)}</span></div>
     </div>
   </section>;
 }
