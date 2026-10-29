@@ -13,10 +13,10 @@ import { TransferCenter } from "./TransferCenter";
 import { InternationalServices } from "./InternationalServices";
 import { PaymentLinks } from "./PaymentLinks";
 import { SmartTag } from "./SmartTag";
+import { DirectDebits } from "./DirectDebits";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
-  mandates: { tabs: ["Mandates", "Billing schedules"], action: "Draft mandate", fields: ["Customer name", "Amount (NGN)", "Billing frequency"], columns: ["Customer", "Amount", "Frequency"] },
   payroll: { tabs: ["Batch payouts", "Beneficiary book"], action: "Add beneficiary draft", fields: ["Beneficiary name", "Bank", "Account number"], columns: ["Beneficiary", "Bank", "Account number"] },
   shifts: { tabs: ["Shifts", "Cashiers", "Reconciliation"], action: "Draft shift", fields: ["Shift name", "Cashier", "Opening till (NGN)"], columns: ["Shift", "Cashier", "Opening till"] },
   disputes: { tabs: ["Open cases", "Evidence", "Resolution timeline"], action: "Prepare evidence", fields: ["Transaction reference", "Case reference", "Evidence summary"], columns: ["Transaction", "Case", "Summary"] },
@@ -44,6 +44,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "treasury") return <InternationalServices />;
   if (module === "links") return <PaymentLinks />;
   if (module === "smarttag") return <SmartTag />;
+  if (module === "mandates") return <DirectDebits />;
   if (!config) return null;
   const rows = drafts.filter((d) => d.tab === tab && d.values.join(" ").toLowerCase().includes(search.toLowerCase()));
   return <>
