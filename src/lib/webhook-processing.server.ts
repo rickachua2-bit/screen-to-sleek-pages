@@ -3,9 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { inboundCredit, postCredit } from "./collections.server";
 
 const eventSchema = z.object({
-  event: z.string().max(80).optional(), type: z.string().max(80).optional(),
+  event: z.string().trim().min(1).max(80).optional(), type: z.string().trim().min(1).max(80).optional(),
   id: z.string().min(1).max(120).optional(), data: z.record(z.string(), z.unknown()).default({}),
-});
+}).refine((ev) => Boolean(ev.event || ev.type), "Missing event type");
 export function parseWebhook(raw: string) {
   try { return eventSchema.safeParse(JSON.parse(raw)); }
   catch { return { success: false as const }; }
@@ -46,8 +46,8 @@ export async function processWebhook(db: SupabaseClient, ev: z.infer<typeof even
       if (!c) return new Response("Collection outcome needs reconciliation", { status: 503 });
       await postCredit(db, owner.data.user_id, mode, c);
     }
-    const done = await db.from("webhook_events").update({ processed: true }).eq("id", eventId);
-    if (done.error) return new Response("Processing incomplete", { status: 503 });
+    const done = await db.from("webhook_events").update({ processed: true }).eq("id", eventId).select("id,processed").maybeSingle();
+    if (done.error || done.data?.processed !== true) return new Response("Processing incomplete", { status: 503 });
     return new Response("ok");
   } catch { return new Response("Processing incomplete", { status: 503 }); }
 }

@@ -1,4 +1,5 @@
 import { payoutStatus } from "./transfer-validation";
+export { redactConsole } from "./developer-console";
 
 /** Presentation only: a successful HTTP request is not payment settlement. */
 export function consolePaymentStatus(value: unknown) {
