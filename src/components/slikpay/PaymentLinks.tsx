@@ -105,24 +105,23 @@ function ComingSoon({ icon: Icon, title, text }: { icon: typeof FileText; title:
   </div>;
 }
 
-export function PaymentLinks({ previewLinks }: { previewLinks?: PaymentLinkView[] }) {
+export function PaymentLinks() {
   const listFn = useServerFn(listPaymentLinks);
   const { profile } = useBankingProfile();
   const [tab, setTab] = useState<"links" | "invoices" | "catalog">("links");
-  const [links, setLinks] = useState<PaymentLinkView[] | null>(previewLinks ?? null);
+  const [links, setLinks] = useState<PaymentLinkView[] | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!previewLinks);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<PaymentLinkView | null>(null);
 
   const load = useCallback(async () => {
-    if (previewLinks) return;
     setLoading(true); setError("");
     try { const r = await listFn({ data: {} }); setLinks(r.links); }
     catch (e) { setError(e instanceof Error ? e.message : "Your payment links could not be loaded. Try again."); }
     finally { setLoading(false); }
-  }, [listFn, previewLinks]);
+  }, [listFn]);
   useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
