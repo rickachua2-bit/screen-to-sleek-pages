@@ -944,6 +944,11 @@ html { scroll-behavior: smooth; }
 .crypto-submit { width: 100%; min-height: 46px; background: var(--cobalt); color: var(--transfer-on-night); }
 @media (max-width: 760px) { .crypto-composer .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .crypto-story h2 { font-size: 24px; } .crypto-coins { width: 240px; max-width: 100%; margin-top: 16px; } .crypto-coin-labels, .crypto-stages, .crypto-story-security { display: none; } }
 
+.collections-composer .transfer-composer-layout { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: stretch; }
+.collections-hero { width: 100%; max-width: 400px; margin: 22px auto 26px; border-radius: 12px; display: block; box-shadow: 0 18px 50px -18px color-mix(in oklab, var(--cyan) 35%, transparent); }
+.collections-composer .crypto-stages { margin-top: 4px; }
+@media (max-width: 760px) { .collections-composer .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .collections-hero { max-width: 260px; margin: 14px auto 18px; } }
+
 /* Guided Studio: white bulk-payment workbench and independently themed navy overview. */
 .bulk-studio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .44fr); background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; align-items: stretch; }
 .bulk-studio-workspace { min-width: 0; padding: 24px; }

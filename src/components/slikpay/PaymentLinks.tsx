@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, BadgeCheck, Check, Clock3, Copy, FileText, Link2, Loader2, Package, Plus, RefreshCw, Search, TriangleAlert, X } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, Clock3, Copy, FileText, Link2, Loader2, Lock, Package, RefreshCw, Search, Share2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { createPaymentLink, listPaymentLinks, type PaymentLinkView } from "@/lib/payment-links.functions";
 import { useBankingProfile } from "./PaddleConsole";
 import { CatalogPanel, InvoicesPanel } from "./InvoiceCatalog";
+import hero from "@/assets/collections-hero.jpg";
 
 const money = (n: number, currency: string) => `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 const CURRENCIES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"];
@@ -27,7 +28,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   }}>{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}Copy</Button>;
 }
 
-function CreateLinkDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (l: PaymentLinkView) => void }) {
+function CreateLinkCard({ onCreated }: { onCreated: (l: PaymentLinkView) => void }) {
   const createFn = useServerFn(createPaymentLink);
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("NGN");
@@ -45,43 +46,45 @@ function CreateLinkDialog({ onClose, onCreated }: { onClose: () => void; onCreat
     try {
       const link = await createFn({ data: { amount: Number(amount), currency: currency as never, email: email.trim(), name: name.trim() || undefined, reference: `SLKLINK-${crypto.randomUUID()}` } });
       toast.success("Payment link created");
+      setAmount(""); setEmail(""); setName("");
       onCreated(link);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create this link. Try again.");
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label="Create payment link" className="slik-popup w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="font-bold">Create payment link</h2>
-        <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X /></Button>
+  return <form className="rounded-2xl border border-border bg-card p-5 shadow-sm" onSubmit={(e) => void submit(e)} aria-label="Create payment link">
+    <h3 className="font-bold">Create a payment link</h3>
+    <p className="mt-0.5 text-xs text-muted-foreground">Set an amount, add your customer and share the secure checkout link.</p>
+    <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div className="space-y-1.5"><Label htmlFor="pl-amount">Amount</Label>
+        <Input id="pl-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoComplete="off" required className="h-11 text-lg font-bold tabular-nums" />
       </div>
-      <form className="space-y-4" onSubmit={(e) => void submit(e)}>
-        <div className="grid grid-cols-[1fr_110px] gap-3">
-          <div className="space-y-1.5"><Label htmlFor="pl-amount">Amount</Label>
-            <Input id="pl-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoComplete="off" required />
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="pl-currency">Currency</Label>
-            <select id="pl-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
+      <div className="space-y-1.5"><Label id="pl-currency-label">Currency</Label>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="pl-currency-label">
+          {CURRENCIES.slice(0, 4).map((c) => <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
+            className={`h-11 rounded-lg border px-3 text-xs font-bold transition-colors ${currency === c ? "border-cobalt bg-cobalt text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-cobalt/50"}`}>{c}</button>)}
+          <select aria-label="More currencies" value={CURRENCIES.slice(0, 4).includes(currency) ? "" : currency} onChange={(e) => e.target.value && setCurrency(e.target.value)}
+            className={`h-11 rounded-lg border px-2 text-xs font-bold ${CURRENCIES.slice(0, 4).includes(currency) ? "border-border bg-background text-muted-foreground" : "border-cobalt bg-cobalt text-primary-foreground"}`}>
+            <option value="">More</option>
+            {CURRENCIES.slice(4).map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
-        <div className="space-y-1.5"><Label htmlFor="pl-email">Customer email</Label>
-          <Input id="pl-email" type="email" value={email} maxLength={160} onChange={(e) => setEmail(e.target.value)} placeholder="customer@example.com" autoComplete="off" required />
-        </div>
-        <div className="space-y-1.5"><Label htmlFor="pl-name">Customer name <span className="text-muted-foreground">(optional)</span></Label>
-          <Input id="pl-name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is paying?" autoComplete="off" />
-        </div>
-        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-        <Button type="submit" className="w-full" disabled={!amountValid || !emailValid || busy}>
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}{busy ? "Creating…" : "Create link"}
-        </Button>
-      </form>
+      </div>
     </div>
-  </div>;
+    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1.5"><Label htmlFor="pl-email">Customer email</Label>
+        <Input id="pl-email" type="email" value={email} maxLength={160} onChange={(e) => setEmail(e.target.value)} placeholder="customer@example.com" autoComplete="off" required />
+      </div>
+      <div className="space-y-1.5"><Label htmlFor="pl-name">Customer name <span className="text-muted-foreground">(optional)</span></Label>
+        <Input id="pl-name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is paying?" autoComplete="off" />
+      </div>
+    </div>
+    {error && <p role="alert" className="mt-3 text-xs text-destructive">{error}</p>}
+    <Button type="submit" variant="brand" className="mt-4 w-full" disabled={!amountValid || !emailValid || busy}>
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}{busy ? "Creating…" : "Create link"}
+    </Button>
+  </form>;
 }
 
 function CreatedPanel({ link, onDone }: { link: PaymentLinkView; onDone: () => void }) {
@@ -97,6 +100,11 @@ function CreatedPanel({ link, onDone }: { link: PaymentLinkView; onDone: () => v
   </div>;
 }
 
+const TABS = [
+  { id: "links", label: "Payment links", icon: Link2 },
+  { id: "invoices", label: "Invoices", icon: FileText },
+  { id: "catalog", label: "Product catalog", icon: Package },
+] as const;
 
 export function PaymentLinks() {
   const listFn = useServerFn(listPaymentLinks);
@@ -106,7 +114,6 @@ export function PaymentLinks() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<PaymentLinkView | null>(null);
 
   const load = useCallback(async () => {
@@ -126,83 +133,92 @@ export function PaymentLinks() {
   const paid = (links ?? []).filter((l) => l.status === "paid");
   const awaiting = (links ?? []).filter((l) => l.status === "awaiting");
 
-  return <section className="space-y-5" aria-label="Payment links">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 className="text-xl font-extrabold">Payment links</h2>
-        <p className="mt-1 text-xs text-muted-foreground">{profile ? (profile.mode === "live" ? "Live account" : "Sandbox account") : "Checking account…"} · hosted checkout on every link</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" aria-label="Refresh payment links" disabled={loading} onClick={() => void load()}><RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} /></Button>
-        <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Create link</Button>
-      </div>
+  return <section className="transfer-center collections-composer space-y-5" aria-label="Collections">
+    <div>
+      <h2 className="text-2xl font-bold text-foreground">Collections</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{profile ? (profile.mode === "live" ? "Live account" : "Sandbox account") : "Checking account…"} · payment links, invoices and product checkouts</p>
     </div>
+    <div className="transfer-composer-layout">
+      <aside className="transfer-story">
+        <span className="transfer-eyebrow"><Share2 className="h-4 w-4" />PAYMENT TOOLS</span>
+        <h2>Get paid<br /><span>anywhere</span></h2>
+        <p className="crypto-story-description">Create payment links and invoices in seconds. Share them with anyone and get paid — the money lands in your Slikpay balance.</p>
+        <img src={hero} alt="A glowing Slikpay payment link card beside a paid invoice" width={1152} height={640} className="collections-hero" />
+        <ol className="crypto-stages">{[
+          ["Create", "Set the amount, add customer details and create a link or invoice."],
+          ["Share", "Send it by chat, email or social — or just copy the link."],
+          ["Get paid", "Your customer pays on a secure hosted page. You are notified instantly."],
+        ].map(([title, detail], i) => <li key={title}><span className="crypto-stage-number">{i + 1}</span><div><strong>{title}</strong><p>{detail}</p></div></li>)}</ol>
+        <p className="crypto-story-security"><Lock className="h-3.5 w-3.5" />Hosted checkout · Live payment status</p>
+      </aside>
 
-    <div className="flex flex-wrap gap-2 border-b border-border pb-4" role="group" aria-label="Collections">
-      <Button variant={tab === "links" ? "default" : "outline"} aria-pressed={tab === "links"} onClick={() => setTab("links")}><Link2 />Payment links</Button>
-      <Button variant={tab === "invoices" ? "default" : "outline"} aria-pressed={tab === "invoices"} onClick={() => setTab("invoices")}><FileText />Invoices</Button>
-      <Button variant={tab === "catalog" ? "default" : "outline"} aria-pressed={tab === "catalog"} onClick={() => setTab("catalog")}><Package />Product catalog</Button>
+      <section className="transfer-composer space-y-4" aria-label="Collections workspace">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Collections">
+          {TABS.map((t) => <Button key={t.id} variant={tab === t.id ? "default" : "outline"} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}><t.icon />{t.label}</Button>)}
+        </div>
+
+        {tab === "invoices" && <InvoicesPanel />}
+        {tab === "catalog" && <CatalogPanel />}
+
+        {tab === "links" && <>
+          <CreateLinkCard onCreated={(l) => { setCreated(l); setLinks((prev) => (prev ? [l, ...prev] : prev)); }} />
+          {created && <CreatedPanel link={created} onDone={() => setCreated(null)} />}
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-card p-3.5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Link2 className="h-3.5 w-3.5 text-cobalt" />Links created</p>
+              <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links?.length ?? "—"}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3.5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><BadgeCheck className="h-3.5 w-3.5 text-success" />Paid</p>
+              <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links ? paid.length : "—"}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3.5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5 text-magenta" />Awaiting payment</p>
+              <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links ? awaiting.length : "—"}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by customer, email or reference" aria-label="Search payment links"
+                className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:border-cobalt focus:outline-none" />
+            </div>
+            <Button variant="outline" size="icon" aria-label="Refresh payment links" disabled={loading} onClick={() => void load()}><RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} /></Button>
+          </div>
+
+          {error && <p role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>}
+          {loading && !links && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your links…</p>}
+
+          {links && !filtered.length && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan/10"><Link2 className="h-6 w-6 text-cyan" /></span>
+            <h3 className="mt-4 font-bold">{links.length ? "No links match your search" : "No payment links yet"}</h3>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">{links.length ? "Try a different customer, email or reference." : "Create your first link above and share it anywhere — your customer pays on a secure hosted page and the money lands in your Slikpay balance."}</p>
+          </div>}
+
+          <ul className="space-y-3">
+            {filtered.map((l) => {
+              const st = STATUS_STYLE[l.status];
+              return <li key={l.reference} className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-cobalt">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-base font-extrabold tabular-nums">{money(l.amount, l.currency)}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">{l.name ? `${l.name} · ` : ""}{l.email}</p>
+                    <p className="mt-1 font-mono text-[11px] text-muted-foreground">{l.reference}{l.createdAt ? ` · ${new Date(l.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}</p>
+                  </div>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${st.className}`}>{st.label}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                  <code className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{l.url}</code>
+                  <CopyButton text={l.url} label={`Copy payment link ${l.reference}`} />
+                  <a href={l.url} target="_blank" rel="noreferrer" aria-label={`Open payment link ${l.reference}`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-cobalt hover:bg-muted/50">Open<ArrowUpRight className="h-3.5 w-3.5" /></a>
+                </div>
+              </li>;
+            })}
+          </ul>
+        </>}
+      </section>
     </div>
-
-    {tab === "invoices" && <InvoicesPanel />}
-    {tab === "catalog" && <CatalogPanel />}
-
-    {tab === "links" && <>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-3.5">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Link2 className="h-3.5 w-3.5 text-cobalt" />Links created</p>
-          <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links?.length ?? "—"}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3.5">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><BadgeCheck className="h-3.5 w-3.5 text-success" />Paid</p>
-          <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links ? paid.length : "—"}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3.5">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5 text-magenta" />Awaiting payment</p>
-          <p className="mt-1.5 text-lg font-extrabold tabular-nums">{links ? awaiting.length : "—"}</p>
-        </div>
-      </div>
-
-      {created && <CreatedPanel link={created} onDone={() => setCreated(null)} />}
-
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by customer, email or reference" aria-label="Search payment links"
-          className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:border-cobalt focus:outline-none" />
-      </div>
-
-      {error && <p role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>}
-      {loading && !links && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your links…</p>}
-
-      {links && !filtered.length && <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan/10"><Link2 className="h-6 w-6 text-cyan" /></span>
-        <h3 className="mt-4 font-bold">{links.length ? "No links match your search" : "No payment links yet"}</h3>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">{links.length ? "Try a different customer, email or reference." : "Create your first link and share it anywhere — your customer pays on a secure hosted page and the money lands in your Slikpay balance."}</p>
-        {!links.length && <Button className="mt-5" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Create your first link</Button>}
-      </div>}
-
-      <ul className="space-y-3">
-        {filtered.map((l) => {
-          const st = STATUS_STYLE[l.status];
-          return <li key={l.reference} className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-cobalt">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-base font-extrabold tabular-nums">{money(l.amount, l.currency)}</p>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">{l.name ? `${l.name} · ` : ""}{l.email}</p>
-                <p className="mt-1 font-mono text-[11px] text-muted-foreground">{l.reference}{l.createdAt ? ` · ${new Date(l.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}</p>
-              </div>
-              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${st.className}`}>{st.label}</span>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-              <code className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{l.url}</code>
-              <CopyButton text={l.url} label={`Copy payment link ${l.reference}`} />
-              <a href={l.url} target="_blank" rel="noreferrer" aria-label={`Open payment link ${l.reference}`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-cobalt hover:bg-muted/50">Open<ArrowUpRight className="h-3.5 w-3.5" /></a>
-            </div>
-          </li>;
-        })}
-      </ul>
-    </>}
-
-    {creating && <CreateLinkDialog onClose={() => setCreating(false)} onCreated={(l) => { setCreating(false); setCreated(l); setLinks((prev) => (prev ? [l, ...prev] : prev)); }} />}
   </section>;
 }

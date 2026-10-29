@@ -31,10 +31,10 @@ describe("payment links page", () => {
     mocks.create.mockResolvedValue({ ...LINKS[0], reference: "SLKLINK-new", url: "https://pay.example.com/new", status: "awaiting" });
     render(<PaymentLinks />);
     await waitFor(() => expect(screen.getByText("25,000.00 NGN")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: /Create link/i }));
-    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "5000" } });
-    fireEvent.change(screen.getByLabelText("Customer email"), { target: { value: "buyer@example.com" } });
-    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /^Create link$/i }));
+    const form = screen.getByRole("form", { name: "Create payment link" });
+    fireEvent.change(within(form).getByLabelText("Amount"), { target: { value: "5000" } });
+    fireEvent.change(within(form).getByLabelText("Customer email"), { target: { value: "buyer@example.com" } });
+    fireEvent.click(within(form).getByRole("button", { name: /^Create link$/i }));
     await waitFor(() => expect(mocks.create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: 5000, currency: "NGN", email: "buyer@example.com", reference: expect.stringMatching(/^SLKLINK-/) }) }));
     await waitFor(() => expect(screen.getByText("Your payment link is ready")).toBeTruthy());
     expect(screen.getAllByText("https://pay.example.com/new").length).toBeGreaterThan(0);
