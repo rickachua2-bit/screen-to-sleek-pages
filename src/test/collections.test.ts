@@ -15,6 +15,8 @@ describe("inbound collections", () => {
   });
   it("ignores pending or failed transfers", () => {
     expect(inboundCredit({ ...tx, status: "PENDING" }, new Set(["9747648649"]))).toBeNull();
+    expect(inboundCredit({ ...tx, status: "unsuccessful" }, new Set(["9747648649"]))).toBeNull();
+    expect(inboundCredit({ ...tx, status: "unpaid" }, new Set(["9747648649"]))).toBeNull();
   });
 });
 
