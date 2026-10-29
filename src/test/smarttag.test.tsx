@@ -6,8 +6,8 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, crea
 vi.mock("@/lib/smarttag.functions", () => ({
   listSmartTags: mocks.list, createSmartTag: mocks.create, chargeSmartTag: mocks.charge,
   tagUrl: (h: string) => `https://pay.slikpay.africa/@${h}`,
+  TAG_CURRENCIES: ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"],
 }));
-vi.mock("@/lib/checkout-links.server", () => ({ LINK_CURRENCIES: ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"] }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "sandbox", balances: {}, receipts: [] }, error: "", refresh: vi.fn() }) }));
 import { SmartTag } from "@/components/slikpay/SmartTag";
 
