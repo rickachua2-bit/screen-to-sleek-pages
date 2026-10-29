@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import * as Icons from "lucide-react";
 import { ArrowRight, Check, ChevronLeft, Copy, History, Loader2, Lock, Share2, Wallet } from "lucide-react";
@@ -11,6 +11,7 @@ import { naira } from "@/lib/api";
 import { SERVICES, reviewTotal, type FlowField, type ServiceDef } from "@/lib/services-registry";
 import { useBankingProfile } from "./PaddleConsole";
 import { FieldInput } from "./ServicesHub";
+import { useMeterCustomer } from "@/lib/electricity-verification";
 
 type Step = "details" | "review" | "done";
 interface Recent { label: string; values: Record<string, string>; at: string }
@@ -52,6 +53,12 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   const planSetsAmount = fields.some((f) => f.setsAmount);
   const missing = fields.find((f) => !values[f.name]?.trim() || (f.pattern && !f.pattern.test(values[f.name] ?? "")) || (f.kind === "amount" && !(Number(values[f.name]) > 0)));
   const short = balance !== null && totals.total > balance;
+  const electricity = serviceId === "power";
+  const lookupMeter = useCallback(async (body: { meterNumber: string; billerCode: string; itemCode: string }) => {
+    const response = await run({ data: { id: "post-bills-electricity-validate", params: {}, body, idempotencyKey: crypto.randomUUID(), currency: "NGN" } });
+    return JSON.parse(response.resultJson) as unknown;
+  }, [run]);
+  const meter = useMeterCustomer(electricity ? values["meterNumber"] ?? "" : "", str(picked["disco"]?.["code"]), str(picked["disco"]?.["itemCode"]), lookupMeter);
 
   if (!service || !flow) return null;
 
@@ -78,6 +85,10 @@ export function BillsService({ serviceId }: { serviceId: string }) {
     setError("");
     if (missing) { setError(missing.patternHint && values[missing.name] ? `${missing.label}: ${missing.patternHint}.` : `Enter ${missing.label.toLowerCase()}.`); return; }
     if (short) { setError(`This is more than your available balance of ${naira(balance ?? 0)}.`); return; }
+    if (electricity) {
+      if (!meter.details) { setError("Confirm the meter's customer name and address before continuing."); return; }
+      setStep("review"); return;
+    }
     if (!flow.validate) { setStep("review"); return; }
     setBusy(true);
     try {
@@ -90,6 +101,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
 
   const pay = async () => {
     setError("");
+    if (electricity && !meter.details) { setError("Confirm the meter's customer name and address before paying."); return; }
     if (live && !/^\d{4}$/.test(pin)) { setError("Enter your 4-digit transaction PIN."); return; }
     setBusy(true);
     try {
@@ -102,7 +114,8 @@ export function BillsService({ serviceId }: { serviceId: string }) {
   };
 
   const summary = fields.filter((f) => f.kind !== "amount").map((f) => [f.label, f.kind === "select" ? (f.choices?.find((c) => c.value === values[f.name])?.label ?? str(picked[f.name]?.["shortName"] ?? picked[f.name]?.["name"] ?? values[f.name])) : values[f.name]] as const);
-  const checked = check ? (flow.validate?.show ?? []).map((k) => [k, check[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
+  const verification = electricity ? meter.details : check;
+  const checked = verification ? (flow.validate?.show ?? []).map((k) => [k, verification[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
   const extras = result ? (flow.receipt ?? []).map((k) => [k, result.data[k]] as const).filter(([, v]) => v !== undefined && v !== null && v !== "") : [];
 
   const canShare = typeof navigator !== "undefined" && "share" in navigator;
@@ -144,11 +157,18 @@ export function BillsService({ serviceId }: { serviceId: string }) {
         {recents.length > 0 && <div>
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-muted-foreground"><History className="h-3.5 w-3.5" />Pay again</p>
           <div className="flex flex-wrap gap-2">
-            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(r.values); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
+            {recents.map((r) => <Button key={r.at} variant="outline" size="sm" className="max-w-full rounded-full" onClick={() => { setValues(electricity ? { ...r.values, disco: "" } : r.values); if (electricity) setPicked({}); setCheck(null); setError(""); }}><History className="h-3.5 w-3.5 shrink-0 text-cobalt" /><span className="truncate">{r.label}</span></Button>)}
           </div>
         </div>}
 
-        {fields.map((f) => <FieldInput key={f.name} field={f} values={values} value={values[f.name] ?? ""} onChange={(v, it) => set(f, v, it)} />)}
+        {fields.map((f) => <div key={f.name} className="space-y-3">
+          <FieldInput field={f} values={values} value={values[f.name] ?? ""} onChange={(v, it) => set(f, v, it)} />
+          {electricity && f.name === "meterNumber" && <div aria-live="polite">
+            {meter.status === "loading" && <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Checking meter details…</p>}
+            {meter.status === "failed" && <div className="flex flex-wrap items-center justify-between gap-2"><p role="alert" className="text-sm text-destructive">Couldn’t confirm the customer name and address. Check the meter and electricity company.</p><Button type="button" variant="outline" size="sm" onClick={meter.retry}>Retry verification</Button></div>}
+            {meter.details && <dl className="space-y-3 rounded-lg border border-border bg-muted p-4"><div><dt className="text-xs text-muted-foreground">Customer name</dt><dd className="mt-1 break-words font-semibold text-foreground">{meter.details.customerName}</dd></div><div><dt className="text-xs text-muted-foreground">Address</dt><dd className="mt-1 break-words text-sm text-foreground">{meter.details.address}</dd></div></dl>}
+          </div>}
+        </div>)}
 
         {!planSetsAmount && <div className="space-y-1.5">
           <p className="text-xs font-bold">Quick amounts</p>
@@ -159,8 +179,8 @@ export function BillsService({ serviceId }: { serviceId: string }) {
 
         {short && <p className="text-[11px] font-semibold text-destructive">This is more than your available balance of {naira(balance ?? 0)}.</p>}
         {error && <p className="text-xs font-semibold text-destructive">{error}</p>}
-        <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || !!missing || short} onClick={toReview}>
-          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{flow.validate ? "Verify details" : "Continue"}
+        <Button variant="brand" className="h-12 w-full rounded-full text-sm" disabled={busy || !!missing || short || (electricity && !meter.details)} onClick={toReview}>
+          {busy ? <Loader2 className="animate-spin" /> : <ArrowRight />}{electricity ? "Continue" : flow.validate ? "Verify details" : "Continue"}
         </Button>
       </div>}
 
