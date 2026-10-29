@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, KeyRound, Loader2, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, Copy, KeyRound, Loader2, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { listBusinessKeys, manageBusinessKey } from "@/lib/business-keys.functions";
-import { API_PATHS } from "@/lib/business-api";
+import { API_PATHS, DOCS_SECTIONS, DOCS_URL, docsLink } from "@/lib/business-api";
 type Key = Awaited<ReturnType<typeof listBusinessKeys>>[number];
 export function BusinessApiKeys() {
   const load = useServerFn(listBusinessKeys);
@@ -35,4 +35,21 @@ export function BusinessApiKeys() {
     {selected && <div className="fixed inset-0 z-50 flex items-center justify-center slik-overlay-backdrop p-4"><form className="slik-popup w-full max-w-md p-6 space-y-4" role="dialog" aria-modal="true" aria-label="Confirm key action" onSubmit={submit}><div className="flex items-center justify-between"><h3 className="font-bold">{selected.action === "claim" ? "Claim secret once" : selected.action === "rotate" ? "Rotate secret key" : "Revoke secret key"}</h3><Button type="button" variant="ghost" size="icon" disabled={busy} aria-label="Close key action" onClick={() => setSelected(null)}><X /></Button></div><p className="text-xs text-muted-foreground">{selected.action === "rotate" ? "The old key stops working immediately. Update your integration with the replacement." : selected.action === "revoke" ? "Your integration loses access immediately." : "The secret cannot be displayed again. Rotate it if you lose it."}</p><label className="block text-sm">Transaction PIN<input type="password" className="field mt-2 w-full" autoComplete="off" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g,""))} /></label><Button className="w-full" disabled={busy || pin.length !== 4}>{busy && <Loader2 className="animate-spin" />}Confirm</Button></form></div>}
   </section>;
 }
-export function BusinessApiDocs() { return <section className="space-y-5"><h2 className="text-2xl font-bold">Business API reference</h2><p className="text-sm text-muted-foreground">GET requests use Authorization: Bearer &lt;your business secret key&gt;. Use your published Slikpay site’s address.</p>{API_PATHS.map((e) => <div key={e.path} className="border-b border-border py-4"><p className="break-all font-mono text-xs text-primary">GET {e.path}</p><p className="mt-2 text-sm">{e.description}</p><p className="mt-2 text-xs text-muted-foreground">Scope: {e.scope}</p></div>)}<p className="text-xs text-muted-foreground">401: inactive or invalid key · 429: rate limited (Retry-After) · 503: service unavailable. Receipts return the latest 50 records. Balances are owner-scoped account-ledger balances, not the shared platform wallet. No payment write endpoint is enabled.</p></section>; }
+export function BusinessApiDocs() {
+  return <section className="space-y-6">
+    <header className="flex flex-wrap items-start justify-between gap-3">
+      <div><h2 className="text-2xl font-bold">Business API reference</h2><p className="mt-2 text-sm text-muted-foreground">GET requests use Authorization: Bearer &lt;your business secret key&gt;.</p></div>
+      <Button asChild variant="brand" className="shine bg-gradient-tri"><a href={DOCS_URL} target="_blank" rel="noreferrer noopener">Open full documentation<ArrowUpRight /></a></Button>
+    </header>
+    <a href={DOCS_URL} target="_blank" rel="noreferrer noopener" className="developer-docs-hero flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/25 bg-primary/5 p-5 transition-colors hover:bg-primary/10">
+      <span className="flex items-start gap-3"><BookOpen className="mt-0.5 size-5 shrink-0 text-primary" /><span><span className="block text-sm font-bold">Slikpay developer documentation</span><span className="mt-1 block break-all font-mono text-xs text-muted-foreground">{DOCS_URL}</span></span></span>
+      <span className="flex items-center gap-1.5 text-xs font-bold text-primary">Guides, endpoints, webhooks and error codes<ArrowUpRight className="size-4" /></span>
+    </a>
+    <div>
+      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Jump to a guide</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">{DOCS_SECTIONS.map((s) => <a key={s.id} href={docsLink(s.id)} target="_blank" rel="noreferrer noopener" className="developer-docs-link flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 text-sm font-semibold transition-colors hover:border-primary/40 hover:bg-primary/5"><span>{s.name}</span><ArrowUpRight className="size-4 shrink-0 text-muted-foreground" /></a>)}</div>
+    </div>
+    <div className="border-t border-border pt-2">{API_PATHS.map((e) => <div key={e.path} className="border-b border-border py-4"><p className="break-all font-mono text-xs text-primary">GET {e.path}</p><p className="mt-2 text-sm">{e.description}</p><p className="mt-2 text-xs text-muted-foreground">Scope: {e.scope}</p></div>)}</div>
+    <p className="text-xs text-muted-foreground">401: inactive or invalid key · 429: rate limited (Retry-After) · 503: service unavailable. Receipts return the latest 50 records. Balances are owner-scoped account-ledger balances, not the shared platform wallet. No payment write endpoint is enabled. Full request formats, signing and troubleshooting live at <a className="font-semibold text-primary underline underline-offset-4" href={DOCS_URL} target="_blank" rel="noreferrer noopener">docs.slikpay.online</a>.</p>
+  </section>;
+}

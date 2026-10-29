@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, expect, it, vi } from "vitest";
-import { keyAction, liveKeyEligible } from "@/lib/business-api";
+import { DOCS_URL, docsLink, keyAction, liveKeyEligible } from "@/lib/business-api";
 const mocks = vi.hoisted(() => ({ db: vi.fn(), digest: vi.fn(), provider: vi.fn() }));
 vi.mock("@/lib/merchant-verification.server", () => ({ accountAdmin: mocks.db, digest: mocks.digest }));
 vi.mock("@/lib/paddle.server", () => ({ callPaddle: mocks.provider, providerBalances: mocks.provider }));
@@ -48,4 +48,16 @@ it("issues live keys only on trusted approval", () => {
 it("makes claims one-time and rotations revoke previous active keys", () => {
   expect(sql).toContain("claimed_at=now(),encrypted_secret=null");
   expect(sql).toMatch(/if p_rotate then update business_api_keys set revoked_at=/);
+});
+it("points every documentation surface at the official docs site", () => {
+  expect(DOCS_URL).toBe("https://docs.slikpay.online");
+  expect(docsLink()).toBe(DOCS_URL);
+  expect(docsLink("section-webhooks")).toBe(`${DOCS_URL}/#section-webhooks`);
+});
+it("shares one documentation address instead of repeating it per screen", () => {
+  for (const file of ["src/components/slikpay/BusinessApiKeys.tsx", "src/components/slikpay/AuthSections.tsx", "src/components/slikpay/MerchantWorkspace.tsx"]) {
+    const source = readFileSync(file, "utf8");
+    expect(source).toContain('from "@/lib/business-api"');
+    expect(source).not.toMatch(/https?:\/\/(?!docs\.slikpay\.online|api\.slikpay\.online)[a-z0-9.-]*slikpay\.(online|com|app)/);
+  }
 });
