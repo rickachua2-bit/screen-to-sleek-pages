@@ -67,7 +67,43 @@ describe("duplicate and quote protection", () => {
     fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
     await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(2));
     const [a, b] = mocks.send.mock.calls.map((c) => (c[0] as { data: { idempotencyKey: string; confirmedTotal: number } }).data);
-    expect(a!.idempotencyKey).toBe(b!.idempotencyKey);
-    expect(a!.confirmedTotal).toBe(177500);
+    expect(a?.idempotencyKey).toBe(b?.idempotencyKey);
+    expect(a?.confirmedTotal).toBe(177500);
+  });
+});
+
+
+describe("international quote readiness", () => {
+  beforeEach(() => { vi.clearAllMocks(); mocks.quote.mockResolvedValue(QUOTE); });
+  it("blocks sending when the fee-inclusive total exceeds available funds", async () => {
+    mocks.quote.mockResolvedValue({ ...QUOTE, totalDebit: 500001 });
+    render(<InternationalServices initial="cross-border" />);
+    fillForm();
+    await waitFor(() => expect(mocks.quote).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it("does not accept an old amount's quote after the amount changes", async () => {
+    let resolveOld: ((value: typeof QUOTE) => void) | undefined;
+    mocks.quote.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    render(<InternationalServices initial="cross-border" />);
+    fillForm();
+    await waitFor(() => expect(mocks.quote).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Amount (USD)"), { target: { value: "200" } });
+    resolveOld?.(QUOTE);
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeDisabled());
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it("blocks another dispatch once the original payment is pending", async () => {
+    mocks.send.mockResolvedValue({ status: "pending", note: "Awaiting network confirmation" });
+    render(<InternationalServices initial="cross-border" />);
+    fillForm();
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Send payment/i })).toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: /Send payment/i }));
+    expect(mocks.send).toHaveBeenCalledTimes(1);
   });
 });
