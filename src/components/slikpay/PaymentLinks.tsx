@@ -118,7 +118,7 @@ export function PaymentLinks() {
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
-    try { const r = await listFn({ data: {} }); setLinks(r.links); }
+    try { const r = await listFn(); setLinks(r.links); }
     catch (e) { setError(e instanceof Error ? e.message : "Your payment links could not be loaded. Try again."); }
     finally { setLoading(false); }
   }, [listFn]);
