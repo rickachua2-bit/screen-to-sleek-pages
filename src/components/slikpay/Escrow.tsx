@@ -81,6 +81,46 @@ function DisputeDialog({ escrow, busy, onCancel, onConfirm }: { escrow: EscrowVi
 
 interface MilestoneDraft { title: string; amount: string }
 
+const initials = (name: string) => name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "–";
+
+function DealPreview({ title, total, currency, buyerName, sellerName, milestones }: {
+  title: string; total: number; currency: string; buyerName: string; sellerName: string; milestones: MilestoneDraft[];
+}) {
+  const filled = milestones.filter((m) => m.title.trim() || Number(m.amount) > 0);
+  return <aside className="h-fit rounded-xl border border-border bg-background p-4" aria-label="Deal preview">
+    <p className="text-xs font-bold text-muted-foreground">Deal preview</p>
+    <p className="mt-2 truncate text-sm font-extrabold">{title.trim() || "Untitled deal"}</p>
+    <p className="mt-0.5 text-lg font-extrabold tabular-nums text-cobalt">{money(total, currency)}</p>
+    <span className="mt-1.5 inline-block rounded-full border border-cyan/40 bg-cyan/10 px-2.5 py-0.5 text-[10px] font-bold text-cyan">Escrow (Unfunded)</span>
+    <div className="mt-4 border-t border-border pt-3">
+      <p className="text-[11px] font-bold text-muted-foreground">Milestones · {filled.length}</p>
+      <ul className="mt-2 space-y-2">
+        {filled.map((m, i) => {
+          const amt = Number(m.amount) || 0;
+          const pct = total > 0 ? Math.round((amt / total) * 100) : 0;
+          return <li key={i} className="flex items-center gap-2 text-[11px]">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${i === 0 ? "bg-cobalt" : "bg-border"}`} />
+            <span className="min-w-0 flex-1 truncate font-semibold">{m.title.trim() || `Milestone ${i + 1}`}</span>
+            <span className="tabular-nums text-muted-foreground">{pct}%</span>
+          </li>;
+        })}
+        {!filled.length && <li className="text-[11px] text-muted-foreground">Add milestones to see the split.</li>}
+      </ul>
+    </div>
+    <div className="mt-4 space-y-2 border-t border-border pt-3">
+      {([["Buyer", buyerName, "bg-cobalt/10 text-cobalt"], ["Seller", sellerName, "bg-magenta/10 text-magenta"]] as const).map(([role, name, tone]) => (
+        <div key={role} className="flex items-center gap-2">
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${tone}`}>{initials(name)}</span>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-bold">{name.trim() || "—"}</p>
+            <p className="text-[10px] text-muted-foreground">{role}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </aside>;
+}
+
 function CreateEscrowCard({ onCreated }: { onCreated: (e: EscrowView) => void }) {
   const createFn = useServerFn(createEscrow);
   const [title, setTitle] = useState("");
