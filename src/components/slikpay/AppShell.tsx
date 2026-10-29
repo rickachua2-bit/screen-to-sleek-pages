@@ -118,14 +118,32 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         {currency !== "NGN" && (!activeModule || activeModule === "overview" || activeModule === "home") && <CurrencyWallet key={currency} code={currency} mode={banking?.mode} onNavigate={onModuleChange} />}
         {children}<ComplianceFooter /></main>
       {bottomNav && (
-        <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden">
-          {bottomNav.map(({ label, icon: Icon, id }) => {
+        <nav aria-label="Quick navigation" className="mobile-tabbar fixed inset-x-3 bottom-3 z-40 flex items-stretch justify-around gap-1 rounded-3xl border border-border bg-background/90 px-2 py-1.5 shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--cobalt)_45%,transparent)] backdrop-blur-2xl lg:hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
+          {bottomNav.map(({ label, icon: Icon, id }, i) => {
             const selected = activeModule ? activeModule === id : active === label;
+            const isMore = id === "more";
             return (
-              <button key={label} onClick={() => { if (onModuleChange && id) onModuleChange(id); else setActive(label); }} aria-current={selected ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-bold ${selected ? "text-cyan" : "text-muted-foreground"}`}>
-                <Icon className="h-5 w-5" />
-                {label}
-              </button>
+              <div key={label} className="flex flex-1 items-center justify-center">
+                <button
+                  onClick={() => { if (isMore) { setOpen(true); return; } if (onModuleChange && id) onModuleChange(id); else setActive(label); }}
+                  aria-current={selected ? "page" : undefined}
+                  aria-label={isMore ? "Open full menu" : label}
+                  className={`flex min-h-[52px] w-full flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[10px] font-bold transition-colors ${selected ? "bg-cobalt/10 text-cobalt" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Icon className="h-5 w-5" strokeWidth={selected ? 2.4 : 2} />
+                  <span className="truncate">{label}</span>
+                  <span className={`h-1 w-1 rounded-full transition-opacity ${selected ? "bg-magenta opacity-100" : "opacity-0"}`} aria-hidden />
+                </button>
+                {bottomAction && i === Math.floor((bottomNav.length - 1) / 2) && (
+                  <button
+                    onClick={bottomAction.onClick}
+                    aria-label={bottomAction.label}
+                    className="shine mx-1 flex h-12 w-12 shrink-0 -translate-y-3 items-center justify-center rounded-2xl bg-gradient-tri text-primary-foreground shadow-cobalt transition-transform active:scale-95"
+                  >
+                    <Plus className="h-6 w-6" strokeWidth={2.5} />
+                  </button>
+                )}
+              </div>
             );
           })}
         </nav>
