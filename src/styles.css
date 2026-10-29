@@ -425,7 +425,7 @@ html { scroll-behavior: smooth; }
   --cobalt: oklch(0.62 0.22 262);
   --cyan: oklch(0.9 0.16 195);
   --magenta: oklch(0.68 0.32 328);
-  --success: oklch(0.78 0.17 155);
+  --success: oklch(0.85 0.16 155);
   --success-soft: oklch(0.55 0.15 155 / 18%);
   --primary-foreground: oklch(1 0 0);
   color-scheme: dark;
@@ -1069,3 +1069,17 @@ html { scroll-behavior: smooth; }
 /* Icons and placeholders on navy keep the same bright treatment. */
 .merchant-sidebar .sidebar-item svg, .merchant-sidebar .sidebar-icon-btn { color: oklch(0.98 0.008 255); }
 .topbar-midnight .topbar-search input::placeholder, .bg-navy-rail input::placeholder, .transfer-story input::placeholder, .qr-stand input::placeholder { color: oklch(0.88 0.012 250); }
+
+/* Brand-blue links and green status text stay bright on dark surfaces. */
+:is(.merchant-sidebar, .topbar-midnight, .receiving-account, .transfer-story, .qr-stand, .bg-navy-rail,
+    .bulk-studio-overview, .team-studio-rail, .developer-console-banner, .developer-studio-rail,
+    .mission-navigation, .mission-code, .slik-popup, .slik-dropdown, .merchant-popover,
+    .light-workspace .hero-surface, [data-sonner-toast]) :is(.text-cobalt, .text-primary, .text-success) {
+  color: oklch(0.86 0.12 200);
+}
+:is(.merchant-sidebar, .topbar-midnight, .receiving-account, .transfer-story, .qr-stand, .bg-navy-rail,
+    .bulk-studio-overview, .team-studio-rail, .developer-console-banner, .developer-studio-rail,
+    .mission-navigation, .mission-code, .slik-popup, .slik-dropdown, .merchant-popover,
+    .light-workspace .hero-surface, [data-sonner-toast]) .text-success { color: oklch(0.85 0.16 155); }
+.theme-flame:not(:has(.light-workspace)) :is(.text-cobalt, .text-primary) { color: oklch(0.86 0.12 200); }
+.theme-flame:not(:has(.light-workspace)) .text-success { color: oklch(0.85 0.16 155); }
