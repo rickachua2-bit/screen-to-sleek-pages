@@ -1,6 +1,6 @@
 import type { Mode, Role } from "./paddle-policy";
 
-export type ServiceStatus = "available" | "sandbox" | "verify" | "business";
+export type ServiceStatus = "available" | "sandbox" | "verify" | "business" | "not_active";
 export type CategoryId = "move" | "paid" | "cards" | "bills" | "gov" | "grow" | "travel" | "business" | "dev";
 
 export const SERVICE_CATEGORIES: { id: CategoryId; label: string; blurb: string }[] = [
@@ -37,6 +37,8 @@ export interface Flow {
 export interface ServiceDef {
   id: string; label: string; category: CategoryId; keywords: string; icon: string;
   businessOnly?: boolean; flow?: Flow; module?: string; note?: string;
+  workspace?: "cross-border" | "remittance";
+  activationPending?: boolean;
 }
 
 const str = (v: unknown) => (typeof v === "string" || typeof v === "number" ? String(v) : "");
@@ -52,7 +54,8 @@ export const SERVICES: ServiceDef[] = [
   // Move money
   { id: "send", label: "Bank transfer", category: "move", keywords: "send transfer pay nip bank naira", icon: "Send", module: "banking" },
   { id: "bulk", label: "Bulk payouts", category: "move", keywords: "bulk payroll salaries many", icon: "Users", module: "payroll", businessOnly: true },
-  { id: "intl", label: "International transfer", category: "move", keywords: "international global abroad ghana kenya usd gbp eur send", icon: "Globe", module: "treasury" },
+  { id: "intl", label: "Cross-border payments", category: "move", keywords: "international global abroad ghana kenya usd gbp eur send cross border supplier", icon: "Globe", module: "treasury", workspace: "cross-border", activationPending: true, businessOnly: true },
+  { id: "remittance", label: "Remittances", category: "move", keywords: "remittance send money abroad international family diaspora tuition", icon: "Send", module: "treasury", workspace: "remittance", activationPending: true, businessOnly: true },
   { id: "swap", label: "Swap currencies", category: "move", keywords: "swap exchange fx convert usdt usdc", icon: "Repeat", module: "treasury" },
   // Get paid
   { id: "links", label: "Payment links & invoices", category: "paid", keywords: "link invoice request collect get paid", icon: "Link2", module: "links" },
@@ -157,14 +160,15 @@ export const SERVICES: ServiceDef[] = [
   { id: "dev", label: "API console", category: "dev", keywords: "api developer webhook keys console advanced", icon: "Code2", module: "developer", businessOnly: true },
 ];
 
-export function serviceStatus(s: Pick<ServiceDef, "businessOnly">, ctx: { role: Role; mode: Mode; review: string }): ServiceStatus {
+export function serviceStatus(s: Pick<ServiceDef, "businessOnly" | "activationPending">, ctx: { role: Role; mode: Mode; review: string }): ServiceStatus {
   if (s.businessOnly && ctx.role === "personal") return "business";
+  if (s.activationPending) return "not_active";
   if (ctx.mode === "sandbox") return "sandbox";
   if (ctx.review !== "approved") return "verify";
   return "available";
 }
 
-export const STATUS_LABEL: Record<ServiceStatus, string> = { available: "Available", sandbox: "Sandbox", verify: "Verify to unlock", business: "Business only" };
+export const STATUS_LABEL: Record<ServiceStatus, string> = { available: "Available", sandbox: "Sandbox", verify: "Verify to unlock", business: "Business only", not_active: "Account not active yet" };
 
 export function searchServices(q: string, items: ServiceDef[] = SERVICES) {
   const terms = q.toLowerCase().split(/\s+/).filter((t) => t && !["pay", "my", "a", "to", "buy", "for"].includes(t));

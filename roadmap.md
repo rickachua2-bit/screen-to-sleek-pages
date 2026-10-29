@@ -1,4 +1,5 @@
 # Roadmap — global-standard dashboard
+- [ ] Add provider-backed cross-border and remittance services; confirm supported corridors, recipient fields, fee quotes and payout recovery before enabling money movement.
 - [x] Remove placeholder content (sidebar business, tier badge, notifications)
 - [x] Swap review shows last-rate estimate with clear label
 - [x] Full-precision crypto amounts (needs `supabase/slikpay_precision.sql` run manually)

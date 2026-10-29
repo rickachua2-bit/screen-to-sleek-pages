@@ -12,6 +12,7 @@ import type { Role } from "@/lib/paddle-policy";
 import { SERVICES, reviewTotal, serviceStatus, type FlowField, type OptionItem, type ServiceDef } from "@/lib/services-registry";
 import { useBankingProfile } from "./PaddleConsole";
 import { ServicesCatalog } from "./ServicesCatalog";
+import { InternationalServices } from "./InternationalServices";
 
 const PERSONAL_MODULES: Record<string, string> = { banking: "send", cards: "cards", treasury: "savings" };
 const naira = (n: number) => `₦${n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -44,6 +45,7 @@ export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?
   const launch = (s: ServiceDef) => {
     const st = serviceStatus(s, ctx);
     if (st === "business") { toast.message("Available on business accounts."); return; }
+    if (s.workspace) { setOpen(s); return; }
     if (s.flow) { setOpen(s); return; }
     const mod = role === "merchant" ? s.module : PERSONAL_MODULES[s.module ?? ""];
     if (!mod) return;
@@ -53,6 +55,7 @@ export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?
 
   return <section className="space-y-6">
     <ServicesCatalog items={items} ctx={ctx} title={title} favourites={prefs.fav} recent={prefs.recent} launch={launch} toggleFavourite={toggleFav} />
+    {open?.workspace && <Dialog open onOpenChange={(value) => !value && setOpen(null)}><DialogContent className="theme-flame max-h-[85dvh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>{open.label}</DialogTitle></DialogHeader><InternationalServices initial={open.workspace} /></DialogContent></Dialog>}
     {open?.flow && <GuidedService service={open} live={ctx.mode === "live"} onClose={() => setOpen(null)} onDone={(label) => addRecent(open.id, label)} />}
   </section>;
 }

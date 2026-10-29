@@ -3,6 +3,7 @@ import { z } from "zod";
 import { CURRENCIES, NOT_ACTIVE, type WalletStatus } from "./wallets";
 import { UNCERTAIN_PAYMENT } from "./wallet-safety";
 import { payoutStatus, slikpayTransferFee } from "./transfer-validation";
+import { INTERNATIONAL_NOT_ACTIVE } from "./international";
 
 export interface WalletView { code: string; status: WalletStatus; balance: number; accountNumber: string | null; accountName: string | null; bankName: string | null; routing: string | null; network: string | null; note: string | null }
 
@@ -97,6 +98,7 @@ export const withdrawFunds = createServerFn({ method: "POST" })
     const { isOwnPayoutAccount } = await import("./wallet-actions");
     const { currencyDef } = await import("./wallets");
     const ctx = await bankingUser();
+    if (data.currency !== "NGN") throw new Error(INTERNATIONAL_NOT_ACTIVE);
     const acct = data.currency === "NGN"
       ? await readRecord<PayoutAccount | null>(ctx.db, ctx.user.id, "settlement_account", null)
       : (await readRecord<Record<string, PayoutAccount>>(ctx.db, ctx.user.id, `payout_accounts_${ctx.mode}`, {}))[data.currency] ?? null;
