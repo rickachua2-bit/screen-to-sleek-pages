@@ -43,6 +43,7 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
+- [x] Apply selected Guided Studio design: white workbench, Import/Verify/Review progress, document artwork and navy/cyan batch overview; 24 selected tests pass, isolated desktop/mobile rendering checked without overflow. Live signed-in payments remain unverified.
 - [x] Improve bulk-payout workspace: compact layout, CSV column mapping/import review, local corrections before recipient verification, search/status filters, searchable history and separate PIN review. 29 tests pass; isolated desktop/mobile layout checked without overflow. Live signed-in execution remains unavailable to verify; bank-name import, spreadsheet support and saved-row corrections are not implemented.
 - [ ] Background batch execution, maker-checker approvals, scheduling and automatic payout reconciliation — blocked: durable server workflow, account permissions and provider status contract; not represented as active controls.
 - [x] Show clear, white-labelled withdrawal failure reasons without misreporting uncertain payments; inline errors, insufficient funds, PIN, recipient, verification and declined/unknown outcomes covered. 20 tests pass and build OK; live signed-in failure checks remain unverified.
