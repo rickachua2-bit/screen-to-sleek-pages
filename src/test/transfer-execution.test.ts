@@ -11,7 +11,8 @@ describe("bank payout transactional execution", () => {
     const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
     const eq = vi.fn().mockReturnValue({ maybeSingle });
     const select = vi.fn().mockReturnValue({ eq });
-    mocks.user.mockResolvedValue({ db: { from: vi.fn().mockReturnValue({ select }) }, user: { id: "user" }, role: "merchant", mode: "live", review: "approved" });
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    mocks.user.mockResolvedValue({ db: { from: vi.fn().mockReturnValue({ select, upsert }) }, user: { id: "user" }, role: "merchant", mode: "live", review: "approved" });
     mocks.guard.mockResolvedValue(undefined);
     mocks.settle.mockResolvedValue(undefined);
     mocks.call.mockResolvedValueOnce({ data: { accountName: "Verified recipient" } });
