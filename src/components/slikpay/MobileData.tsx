@@ -69,6 +69,26 @@ export function toDataPlans(d: unknown, ...matchers: string[]): DataPlan[] {
     .sort((a, b) => a.amount - b.amount);
 }
 
+const NET_ALIASES: [RegExp, string][] = [[/9mobile|etisalat/i, "9mobile"], [/mtn/i, "mtn"], [/glo/i, "glo"], [/airtel/i, "airtel"]];
+const normNet = (s: string) => s.toLowerCase().replace(/nigeria|nig|limited|ltd|plc|\bng\b/g, "").replace(/\W+/g, " ").trim();
+const aliasOf = (s: string) => NET_ALIASES.find(([re]) => re.test(s))?.[1] ?? "";
+
+/** Match a detect payload to an operator from the provider list — by id, by name, or by well-known alias. */
+export function matchOperator(d: unknown, operators: Operator[]): Operator | null {
+  const o = (Array.isArray(d) ? d[0] : d) as Record<string, unknown> | null;
+  if (!o || !operators.length) return null;
+  const id = str(o["operatorId"]) || str(o["operator_id"]) || str(o["id"]) || str(o["code"]);
+  if (id) { const byId = operators.find((op) => op.id === id); if (byId) return byId; }
+  const name = detectedNetwork(o);
+  if (!name) return null;
+  const nName = normNet(name);
+  const aName = aliasOf(name);
+  return operators.find((op) => {
+    const nLabel = normNet(op.label);
+    return op.id === name || (nName && (nLabel.includes(nName) || nName.includes(nLabel))) || (aName && aliasOf(op.label) === aName);
+  }) ?? null;
+}
+
 function loadRecents(): Recent[] {
   try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]") as Recent[]; } catch { return []; }
 }
@@ -126,11 +146,13 @@ export function MobileData() {
       run({ data: { id: "post-bills-airtime-detect", params: {}, body: { phone }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
         .then((r) => {
           if (detectSeq.current !== seq) return;
-          const name = detectedNetwork(JSON.parse(r.resultJson));
-          setDetected(name);
-          if (name && operators?.length) {
-            const match = operators.find((o) => o.label.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(o.label.toLowerCase()));
-            if (match) setOperatorId(match.id);
+          const payload = JSON.parse(r.resultJson);
+          const match = matchOperator(payload, operators ?? []);
+          if (match) {
+            setOperatorId(match.id);
+            setDetected(match.label);
+          } else {
+            setDetected(detectedNetwork(payload));
           }
         })
         .catch(() => undefined)
