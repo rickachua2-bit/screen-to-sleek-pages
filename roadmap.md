@@ -8,7 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] Apply selected Split Studio design across Team, Security, Profile and Activity without changing access rules.
+- [x] Applied selected Split Studio across all four tabs: navy information rail, custom cyan lock artwork, white workspace and underline navigation. All 15 focused tests passed; live signed-in visual checks remain unavailable without an external session.
 - [x] Team screen upgrade: colour-rich Team/Security/Profile/Activity, seven validated requested invitation roles, resend, status/search filters and activity export; focused tests passed.
 - [x] Team & Security: branded tabs, owner profile, authenticator setup, current-password-protected password/session actions, PIN replacement, pending invitation notices/revocation and activity; focused tests added.
 - [ ] Team activation: manually apply the updated supabase/slikpay_team_security.sql (requested roles, invitations, PIN attempt limits and audit storage). Shared-team roles/access need workspace authorization across banking operations; authenticated live actions and layouts remain unverified without an external account session.
