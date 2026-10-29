@@ -225,23 +225,24 @@ const TABS = [
   { id: "soundboxes", label: "Soundboxes", icon: Speaker },
 ] as const;
 
-export function SmartTag() {
+export function SmartTag({ preview }: { preview?: { tags: SmartTagView[]; charges: TagChargeView[] } }) {
   const listFn = useServerFn(listSmartTags);
   const { profile } = useBankingProfile();
   const [tab, setTab] = useState<"tags" | "stands" | "soundboxes">("tags");
-  const [tags, setTags] = useState<SmartTagView[] | null>(null);
-  const [charges, setCharges] = useState<TagChargeView[] | null>(null);
+  const [tags, setTags] = useState<SmartTagView[] | null>(preview?.tags ?? null);
+  const [charges, setCharges] = useState<TagChargeView[] | null>(preview?.charges ?? null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!preview);
   const [search, setSearch] = useState("");
   const [charging, setCharging] = useState<SmartTagView | null>(null);
 
   const load = useCallback(async () => {
+    if (preview) return;
     setLoading(true); setError("");
     try { const r = await listFn(); setTags(r.tags); setCharges(r.charges); }
     catch (e) { setError(e instanceof Error ? e.message : "Your SmartTags could not be loaded. Try again."); }
     finally { setLoading(false); }
-  }, [listFn]);
+  }, [listFn, preview]);
   useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
