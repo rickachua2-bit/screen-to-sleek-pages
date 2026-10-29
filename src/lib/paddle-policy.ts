@@ -40,6 +40,7 @@ const MONEY = /\/(payouts|cards\/create|cards$|fund|withdraw|topup|recharge|rene
 export function scopeOf(e: Pick<PaddleEndpoint, "method" | "path">): Scope {
   // Authenticated customer inquiry; never register returned identifiers as owned resources.
   if (e.method === "POST" && (e.path === CABLE_VALIDATE.path || e.path === "/v1/bills/betting/validate")) return "reference";
+  if (e.method === "POST" && /^\/v1\/bills\/(firs|remita)\/validate$/.test(e.path)) return "reference";
   if (INTERNAL.test(e.path)) return "internal";
   if (SANDBOX_ONLY.test(e.path)) return "sandbox";
   if (e.method === "GET" && REFERENCE.test(e.path)) return "reference";
@@ -54,7 +55,7 @@ export function movesMoney(e: Pick<PaddleEndpoint, "method" | "path">) {
 }
 
 const PERSONAL_CATS = new Set(["accounts", "payouts", "cards", "bills", "flights", "invest", "crypto", "identity", "pricing"]);
-const PERSONAL_BLOCK = /^\/v1\/(payouts\/bulk|payouts\/global|accounts\/domiciliary|identity\/(cac|credit-bureau|vehicle-plate|address\/physical|ip-intelligence|email-intelligence|sim-swap|phone-intelligence))/;
+const PERSONAL_BLOCK = /^\/v1\/(bills\/firs|payouts\/bulk|payouts\/global|accounts\/domiciliary|identity\/(cac|credit-bureau|vehicle-plate|address\/physical|ip-intelligence|email-intelligence|sim-swap|phone-intelligence))/;
 
 export type Access = { allowed: true } | { allowed: false; reason: string };
 

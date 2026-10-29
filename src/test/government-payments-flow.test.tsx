@@ -1,0 +1,41 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ lookup: vi.fn(), history: vi.fn(), run: vi.fn(), refresh: vi.fn() }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: string) => fn === "lookup" ? mocks.lookup : fn === "history" ? mocks.history : mocks.run }));
+vi.mock("@/lib/government-payments.functions", () => ({ getGovernmentAssessment: "lookup", getGovernmentHistory: "history" }));
+vi.mock("@/lib/paddle.functions", () => ({ runPaddleOperation: "run" }));
+vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "live", balances: { NGN: 50000 } }, refresh: mocks.refresh }) }));
+import { GovernmentPayments } from "@/components/slikpay/GovernmentPayments";
+const assessment = { identifier: "123456789012", name: "Ada", organisation: "Revenue office", amount: 1000, fee: 50, total: 1050, ready: true, dueDate: "", assessmentReference: "assessment-1" };
+beforeEach(() => { vi.resetAllMocks(); mocks.history.mockResolvedValue([]); });
+it("automatically verifies RRR, reviews assessed fees, then submits with PIN and blocks pending retries", async () => {
+  mocks.lookup.mockResolvedValue(assessment);
+  mocks.run.mockResolvedValue({ receipt: { status: "pending", reference: "pay-1" } });
+  render(<GovernmentPayments service="remita" />);
+  fireEvent.change(screen.getByLabelText("Remita Retrieval Reference (RRR)"), { target: { value: "123456789012" } });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Review payment" }) as HTMLButtonElement).disabled).toBe(false));
+  expect(mocks.lookup).toHaveBeenCalledWith({ data: { service: "remita", identifier: "123456789012" } });
+  fireEvent.click(screen.getByRole("button", { name: "Review payment" }));
+  fireEvent.change(screen.getByLabelText("Transaction PIN"), { target: { value: "1234" } });
+  fireEvent.click(screen.getByRole("button", { name: "Authorize payment" }));
+  await waitFor(() => expect(mocks.run).toHaveBeenCalledWith({ data: expect.objectContaining({ id: "post-bills-remita-pay", pin: "1234", body: { identifier: "123456789012", expectedAmount: 1000, expectedFee: 50 } }) }));
+  await waitFor(() => expect((screen.getByRole("button", { name: "New payment" }) as HTMLButtonElement).disabled).toBe(true));
+  expect(mocks.run).toHaveBeenCalledOnce();
+});
+it("blocks payment when the service cannot confirm fees", async () => {
+  mocks.lookup.mockResolvedValue({ ...assessment, fee: null, total: null, ready: false });
+  render(<GovernmentPayments service="remita" />);
+  fireEvent.change(screen.getByLabelText("Remita Retrieval Reference (RRR)"), { target: { value: "123456789012" } });
+  await waitFor(() => expect(mocks.lookup).toHaveBeenCalled());
+  await waitFor(() => expect(screen.getByText("Ada")).toBeTruthy());
+  expect((screen.getByRole("button", { name: "Review payment" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(mocks.run).not.toHaveBeenCalled();
+});
+it("drops verification immediately when the entered RRR changes", async () => {
+  mocks.lookup.mockResolvedValue(assessment);
+  render(<GovernmentPayments service="remita" />);
+  fireEvent.change(screen.getByLabelText("Remita Retrieval Reference (RRR)"), { target: { value: "123456789012" } });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Review payment" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.change(screen.getByLabelText("Remita Retrieval Reference (RRR)"), { target: { value: "123456789013" } });
+  expect((screen.getByRole("button", { name: "Review payment" }) as HTMLButtonElement).disabled).toBe(true);
+});
