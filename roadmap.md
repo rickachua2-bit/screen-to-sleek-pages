@@ -9,3 +9,4 @@
 
 ## Open
 - [ ] Logo for Slikpay: 4 concepts generated (Flow S, Pulse Tile, Secure S, Orbit Coin) in /mnt/documents/slikpay/; user to pick, then refine + favicon + app header
+- [ ] Escrow page (/dashboard?module=svc-escrow): full lifecycle (create/fund/release/dispute/refund, live status), production-ready, then 3 design mockups for user to pick
