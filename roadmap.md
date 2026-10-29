@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] API console upgrade: searchable explorer, owner-scoped webhook monitoring and reconciliation, redacted responses, bounded signed deliveries and regression tests.
 - [x] API console safety: explicit payment statuses, one reference per mounted attempt, lock payment resubmission, remove partner hints, retry unfinished webhooks, reject malformed JSON and propagate partial credit failures; focused tests passed.
 - [ ] API console live validation: external signed-in session unavailable; cross-session attempt recovery, full operation-specific fee contracts and business API delivery remain unverified.
 - [ ] Merchant API platform: scoped business keys, external API endpoints, outbound webhook queue, rate limits, request logs and published documentation; not yet implemented.
