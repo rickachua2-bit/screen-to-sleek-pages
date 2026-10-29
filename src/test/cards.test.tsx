@@ -32,7 +32,7 @@ describe("Cards page", () => {
 
   it("lists cards with balances, statuses and controls summary", async () => {
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     expect(screen.getByText("Greta Müller")).toBeTruthy();
     expect(screen.getByText("250.00 USD")).toBeTruthy();
     expect(screen.getAllByText("Active").length).toBeGreaterThan(0);
@@ -44,7 +44,7 @@ describe("Cards page", () => {
   it("issues a virtual card with brand, currency and initial funding", async () => {
     mocks.issue.mockResolvedValue({ ...CARDS[0]!, id: "card-3", holderName: "New Holder", last4: "7777" });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     const form = screen.getByRole("form", { name: "Issue a virtual card" });
     fireEvent.change(within(form).getByLabelText("Card holder name"), { target: { value: "New Holder" } });
     fireEvent.click(within(form).getByRole("button", { name: "Visa" }));
@@ -58,7 +58,7 @@ describe("Cards page", () => {
   it("funds a card through the amount dialog", async () => {
     mocks.fund.mockResolvedValue({ ...CARDS[0]!, balance: 350 });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Fund$/i })[0]!);
     const dialog = screen.getByRole("dialog", { name: /Fund Mastercard ···4421/i });
     fireEvent.change(within(dialog).getByLabelText(/Amount/), { target: { value: "100" } });
@@ -68,7 +68,7 @@ describe("Cards page", () => {
 
   it("blocks withdrawing more than the card holds", async () => {
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Withdraw$/i })[0]!);
     const dialog = screen.getByRole("dialog", { name: /Withdraw from ···4421/i });
     fireEvent.change(within(dialog).getByLabelText(/Amount/), { target: { value: "999" } });
@@ -79,7 +79,7 @@ describe("Cards page", () => {
   it("freezes and unfreezes a card", async () => {
     mocks.freeze.mockResolvedValue({ ...CARDS[0]!, status: "frozen" });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Freeze$/i })[0]!);
     await waitFor(() => expect(mocks.freeze).toHaveBeenCalledWith({ data: { cardId: "card-1", frozen: true } }));
   });
@@ -87,7 +87,7 @@ describe("Cards page", () => {
   it("saves spending controls", async () => {
     mocks.controls.mockResolvedValue({ ...CARDS[0]!, controls: { online: false, atm: false, international: true, spendingLimit: 1000 } });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Controls$/i })[0]!);
     const dialog = screen.getByRole("dialog", { name: /Card controls ···4421/i });
     fireEvent.click(within(dialog).getByRole("switch", { name: "Online payments" }));
@@ -99,7 +99,7 @@ describe("Cards page", () => {
   it("reveals card details once with copy actions", async () => {
     mocks.reveal.mockResolvedValue({ pan: "5399 8300 0000 4421", cvv: "318", expiry: "12/29", billingAddress: "12 Marina, Lagos" });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Reveal$/i })[0]!);
     const dialog = screen.getByRole("dialog", { name: /Card details ···4421/i });
     fireEvent.click(within(dialog).getByRole("button", { name: /^Reveal details$/i }));
@@ -111,7 +111,7 @@ describe("Cards page", () => {
   it("loads card activity on demand", async () => {
     mocks.txns.mockResolvedValue({ transactions: [{ id: "t1", description: "Netflix", amount: 15.99, currency: "USD", status: "SUCCESSFUL", at: "2026-10-28" }] });
     render(<Cards />);
-    await waitFor(() => expect(screen.getByText("Tunde Adeleke")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
     fireEvent.click(screen.getAllByRole("button", { name: /^Activity$/i })[0]!);
     await waitFor(() => expect(screen.getByText("Netflix")).toBeTruthy());
     expect(screen.getByText("15.99 USD")).toBeTruthy();
