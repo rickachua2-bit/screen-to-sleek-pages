@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), listSchedules: vi.fn(), createSchedule: vi.fn(), runSchedule: vi.fn(), toggleSchedule: vi.fn(), deleteSchedule: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, createServerFn: () => ({ inputValidator: () => ({ handler: () => ({}) }), handler: () => ({}) }) }));
 vi.mock("@/lib/mandates.functions", () => ({
   listDirectDebits: mocks.list, createDirectDebit: mocks.create,
+  listSchedules: mocks.listSchedules, createSchedule: mocks.createSchedule, runSchedule: mocks.runSchedule,
+  setScheduleActive: mocks.toggleSchedule, deleteSchedule: mocks.deleteSchedule,
   DEBIT_CURRENCIES: ["USD", "EUR", "GBP"],
+  SCHEDULE_FREQUENCIES: ["weekly", "monthly"],
 }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "sandbox", balances: {}, receipts: [] }, error: "", refresh: vi.fn() }) }));
 import { DirectDebits } from "@/components/slikpay/DirectDebits";
