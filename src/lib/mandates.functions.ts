@@ -92,9 +92,9 @@ export const createDirectDebit = createServerFn({ method: "POST" })
       customerEmail: data.customerEmail,
       customerName: data.customerName,
     };
-    if (data.currency === "USD") { body.routingNumber = data.routingNumber; body.accountNumber = data.accountNumber; }
-    if (data.currency === "EUR") body.iban = data.iban;
-    if (data.currency === "GBP") { body.sortCode = data.sortCode; body.accountNumber = data.accountNumber; }
+    if (data.currency === "USD") { body["routingNumber"] = data.routingNumber; body["accountNumber"] = data.accountNumber; }
+    if (data.currency === "EUR") body["iban"] = data.iban;
+    if (data.currency === "GBP") { body["sortCode"] = data.sortCode; body["accountNumber"] = data.accountNumber; }
     await callPaddle(mode, "POST", "/v1/gateway/bank-debit/charge", body, data.reference);
     const view: DirectDebitView = {
       reference: data.reference,
