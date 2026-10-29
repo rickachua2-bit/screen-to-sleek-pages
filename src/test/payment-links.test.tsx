@@ -2,9 +2,11 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn() }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn, createServerFn: () => ({ inputValidator: () => ({ handler: () => ({}) }), handler: () => ({}) }) }));
 vi.mock("@/lib/payment-links.functions", () => ({ listPaymentLinks: mocks.list, createPaymentLink: mocks.create }));
 vi.mock("@/components/slikpay/PaddleConsole", () => ({ useBankingProfile: () => ({ profile: { mode: "sandbox", balances: {}, receipts: [] }, error: "", refresh: vi.fn() }) }));
+vi.mock("@/lib/invoices.functions", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/invoices.functions")>()), listInvoices: vi.fn().mockResolvedValue({ mode: "sandbox", invoices: [] }), createInvoice: vi.fn() }));
+vi.mock("@/lib/products.functions", () => ({ listProducts: vi.fn().mockResolvedValue({ mode: "sandbox", products: [] }), createProduct: vi.fn(), deleteProduct: vi.fn(), checkoutProduct: vi.fn() }));
 import { PaymentLinks } from "@/components/slikpay/PaymentLinks";
 
 const LINKS = [
@@ -45,11 +47,11 @@ describe("payment links page", () => {
     expect(screen.getByText(/could not be loaded/i)).toBeTruthy();
   });
 
-  it("keeps invoices and catalog clearly marked as not connected", async () => {
+  it("renders real invoices and catalog panels", async () => {
     render(<PaymentLinks />);
     fireEvent.click(screen.getByRole("button", { name: /Invoices/i }));
-    expect(screen.getByText("Not connected yet")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("No invoices yet")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /Product catalog/i }));
-    expect(screen.getByText("Not connected yet")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Your catalog is empty")).toBeTruthy());
   });
 });

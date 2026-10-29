@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createPaymentLink, listPaymentLinks, type PaymentLinkView } from "@/lib/payment-links.functions";
 import { useBankingProfile } from "./PaddleConsole";
+import { CatalogPanel, InvoicesPanel } from "./InvoiceCatalog";
 
 const money = (n: number, currency: string) => `${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 const CURRENCIES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"];
@@ -96,14 +97,6 @@ function CreatedPanel({ link, onDone }: { link: PaymentLinkView; onDone: () => v
   </div>;
 }
 
-function ComingSoon({ icon: Icon, title, text }: { icon: typeof FileText; title: string; text: string }) {
-  return <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
-    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cobalt/10"><Icon className="h-6 w-6 text-cobalt" /></span>
-    <h3 className="mt-4 font-bold">{title}</h3>
-    <p className="mt-2 max-w-sm text-sm text-muted-foreground">{text}</p>
-    <p className="mt-4 rounded-full border border-magenta/40 bg-magenta/5 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-magenta">Not connected yet</p>
-  </div>;
-}
 
 export function PaymentLinks() {
   const listFn = useServerFn(listPaymentLinks);
@@ -151,8 +144,8 @@ export function PaymentLinks() {
       <Button variant={tab === "catalog" ? "default" : "outline"} aria-pressed={tab === "catalog"} onClick={() => setTab("catalog")}><Package />Product catalog</Button>
     </div>
 
-    {tab === "invoices" && <ComingSoon icon={FileText} title="Invoices aren't connected yet" text="Once invoicing is connected to your account, you'll create, send and track professional invoices here — with the same hosted checkout your payment links use." />}
-    {tab === "catalog" && <ComingSoon icon={Package} title="Product catalog isn't connected yet" text="Once the catalog is connected, you'll list products once and turn any of them into a shareable checkout link in one tap." />}
+    {tab === "invoices" && <InvoicesPanel />}
+    {tab === "catalog" && <CatalogPanel />}
 
     {tab === "links" && <>
       <div className="grid gap-3 sm:grid-cols-3">
