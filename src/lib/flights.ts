@@ -8,7 +8,25 @@ export type Cabin = (typeof CABINS)[number];
 export type Airport = { code: string; name: string; city: string; country: string };
 export type FlightSegment = { from: string; to: string; departAt: string; arriveAt: string; carrier: string; flightNumber: string };
 export type FlightSlice = { from: string; fromCity: string; to: string; toCity: string; departAt: string; arriveAt: string; duration: string | null; stops: number; segments: FlightSegment[] };
-export type FlightOffer = { id: string; amount: number; currency: string; airline: string; airlineCode: string; slices: FlightSlice[]; baggage: string | null; expiresAt: string | null; passengerIds: string[] };
+export type FlightOffer = { 
+  id: string; 
+  amount: number; 
+  currency: string; 
+  airline: string; 
+  airlineCode: string; 
+  slices: FlightSlice[]; 
+  baggage: string | null; 
+  expiresAt: string | null; 
+  passengerIds: string[];
+  convertedAmounts?: {
+    ngn?: number;
+    usd?: number;
+    gbp?: number;
+    eur?: number;
+    usdt?: number;
+  };
+  logoUrl?: string | null;
+};
 export type FlightSearchResult = { searchId: string | null; complete: boolean; offers: FlightOffer[] };
 
 const iata = z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "Choose an airport");
@@ -36,6 +54,8 @@ export const flightBooking = z.object({
   offerId: z.string().min(1).max(200),
   expectedAmount: z.number().positive(),
   expectedCurrency: z.string().regex(/^[A-Z]{3,4}$/),
+  paymentCurrency: z.string().regex(/^[A-Z]{3,4}$/).optional(),
+  expectedDebitAmount: z.number().positive().optional(),
   passengers: z.array(passenger).min(1).max(9),
   pin: z.string().regex(/^\d{4}$/).optional(),
   idempotencyKey: z.string().min(8).max(100),
@@ -88,14 +108,25 @@ export function parseOffer(raw: unknown): FlightOffer | null {
   const rawPax = obj((rawSeg["passengers"] as unknown[] | undefined)?.[0]);
   const bags = rawPax["baggages"];
   const bagCount = Array.isArray(bags) ? bags.reduce((n: number, b) => n + (num(obj(b)["quantity"]) || 0), 0) : NaN;
+  const conv = obj(f["convertedAmounts"]);
+  const convertedAmounts = conv ? {
+    ngn: num(conv["ngn"], f["ngnEquivalent"]) || undefined,
+    usd: num(conv["usd"], f["usdEquivalent"]) || undefined,
+    gbp: num(conv["gbp"], f["gbpEquivalent"]) || undefined,
+    eur: num(conv["eur"], f["eurEquivalent"]) || undefined,
+    usdt: num(conv["usdt"], f["usdtEquivalent"]) || undefined,
+  } : undefined;
+
   return {
     id, amount, currency,
     airline: str(owner["name"], f["airlineName"], f["airline"]) || (slices[0]!.segments[0]?.carrier ?? ""),
-    airlineCode: str(owner["iata_code"], f["airlineCode"]),
+    airlineCode: str(owner["iata_code"], f["carrierCode"], f["airlineCode"]),
     slices: slices as FlightSlice[],
-    baggage: Number.isFinite(bagCount) ? (bagCount > 0 ? `${bagCount} bag${bagCount > 1 ? "s" : ""} included` : "No checked bag") : null,
+    baggage: str(f["baggagePolicy"], f["baggage"]) || (Number.isFinite(bagCount) ? (bagCount > 0 ? `${bagCount} bag${bagCount > 1 ? "s" : ""} included` : "No checked bag") : null),
     expiresAt: str(f["expires_at"], f["expiresAt"]) || null,
     passengerIds: (Array.isArray(f["passengers"]) ? f["passengers"] : []).map((p) => str(obj(p)["id"])).filter(Boolean),
+    convertedAmounts,
+    logoUrl: str(f["logoUrl"], f["logoFallbackUrl"]) || null,
   };
 }
 
@@ -126,9 +157,23 @@ export function parseFlightOrder(data: unknown, expectedAmount: number, expected
 }
 
 export function money(amount: number, currency: string) {
-  try { return new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount); }
-  catch { return `${currency} ${amount.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`; }
+  const curr = currency.toUpperCase();
+  if (curr === "USDT" || curr === "USDC") {
+    return `${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${curr}`;
+  }
+  if (curr === "BTC") {
+    return `₿${amount.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 })}`;
+  }
+  if (curr === "ETH") {
+    return `Ξ${amount.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 5 })}`;
+  }
+  try { 
+    return new Intl.NumberFormat("en-NG", { style: "currency", currency: curr, maximumFractionDigits: 2 }).format(amount); 
+  } catch { 
+    return `${curr} ${amount.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`; 
+  }
 }
+
 export function prettyDuration(iso: string | null) {
   if (!iso) return null;
   const m = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(iso);

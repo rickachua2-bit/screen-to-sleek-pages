@@ -1,6 +1,8 @@
 import { bankingUser, callPaddle } from "./paddle.server";
 import { guardMoney, settleMoney } from "./wallets.server";
 import { FLIGHT_ORDER_OP, flightBooking, flightSearch, parseAirports, parseFlightOrder, parseSearch } from "./flights";
+import { liveFxRates } from "./global-payout.server";
+import { quoteSwap } from "./pricing";
 import type { z } from "zod";
 
 async function travelUser() {
@@ -17,7 +19,7 @@ export async function flightHealth() {
 
 export async function flightAirports(search: string) {
   const ctx = await bankingUser();
-  const r = await callPaddle(ctx.mode, "GET", "/v1/flights/airports", { search, limit: 10 });
+  const r = await callPaddle(ctx.mode, "GET", "/v1/flights/airports", { search, limit: 15 });
   return parseAirports(r.data);
 }
 
@@ -43,9 +45,33 @@ export async function flightBook(raw: unknown) {
   if (!offer) throw new Error("This fare is no longer available. Search again.");
   if (offer.amount !== input.expectedAmount || offer.currency !== input.expectedCurrency) throw new Error("The fare has changed. Review the new price before booking.");
   if (offer.expiresAt && Date.parse(offer.expiresAt) < Date.now()) throw new Error("This fare has expired. Search again.");
-  await guardMoney(ctx, offer.currency, offer.amount, input.pin, FLIGHT_ORDER_OP, input.idempotencyKey);
+
+  // Multi-currency wallet payment:
+  const payCur = (input.paymentCurrency || offer.currency).toUpperCase();
+  let debitAmount = offer.amount;
+  if (payCur !== offer.currency) {
+    const fx = await liveFxRates(ctx.mode).catch(() => null);
+    if (fx) {
+      const q = quoteSwap(offer.currency, payCur, offer.amount, fx);
+      if (q && q.amount > 0) {
+        debitAmount = Math.round(q.amount * 100) / 100;
+      }
+    }
+  }
+
+  await guardMoney(ctx, payCur, debitAmount, input.pin, FLIGHT_ORDER_OP, input.idempotencyKey);
   const s0 = offer.slices[0]!;
-  const summary = { offerId: offer.id, principal: offer.amount, currency: offer.currency, airline: offer.airline, route: offer.slices.map((s) => `${s.from}-${s.to}`).join(" / "), departAt: s0.departAt, passengers: input.passengers.map((p) => `${p.givenName} ${p.familyName}`) };
+  const summary = { 
+    offerId: offer.id, 
+    principal: offer.amount, 
+    currency: offer.currency, 
+    paymentCurrency: payCur, 
+    paymentAmount: debitAmount, 
+    airline: offer.airline, 
+    route: offer.slices.map((s) => `${s.from}-${s.to}`).join(" / "), 
+    departAt: s0.departAt, 
+    passengers: input.passengers.map((p) => `${p.givenName} ${p.familyName}`) 
+  };
   const saved = await ctx.db.from("payment_receipts").update({ summary }).eq("user_id", ctx.user.id).eq("idempotency_key", input.idempotencyKey);
   if (saved.error) { await settleMoney(ctx, input.idempotencyKey, "failed", null, summary); throw new Error("Booking could not be prepared. You were not charged."); }
   const passengers = input.passengers.map((p, i) => ({
@@ -68,6 +94,18 @@ export async function flightTrips() {
   if (r.error) throw new Error("Your trips are unavailable right now.");
   return (r.data ?? []).map((row) => {
     const s = (row.summary ?? {}) as Record<string, unknown>;
-    return { key: String(row.idempotency_key), status: String(row.status), amount: Number(s["principal"] ?? row.amount), currency: String(s["currency"] ?? "NGN"), createdAt: String(row.created_at), airline: String(s["airline"] ?? ""), route: String(s["route"] ?? ""), departAt: String(s["departAt"] ?? ""), pnr: typeof s["pnr"] === "string" ? s["pnr"] : null, tickets: Array.isArray(s["tickets"]) ? (s["tickets"] as string[]) : [], passengers: Array.isArray(s["passengers"]) ? (s["passengers"] as string[]) : [] };
+    return { 
+      key: String(row.idempotency_key), 
+      status: String(row.status), 
+      amount: Number(s["paymentAmount"] ?? s["principal"] ?? row.amount), 
+      currency: String(s["paymentCurrency"] ?? s["currency"] ?? "NGN"), 
+      createdAt: String(row.created_at), 
+      airline: String(s["airline"] ?? ""), 
+      route: String(s["route"] ?? ""), 
+      departAt: String(s["departAt"] ?? ""), 
+      pnr: typeof s["pnr"] === "string" ? s["pnr"] : null, 
+      tickets: Array.isArray(s["tickets"]) ? (s["tickets"] as string[]) : [], 
+      passengers: Array.isArray(s["passengers"]) ? (s["passengers"] as string[]) : [] 
+    };
   });
 }
