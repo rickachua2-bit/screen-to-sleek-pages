@@ -2,7 +2,7 @@ import { callPaddle } from "./paddle.server";
 import { guardMoney, settleMoney } from "./wallets.server";
 import { parseFxRates, type FxRates } from "./pricing";
 import type { Mode } from "./paddle-policy";
-import { QUOTE_CHANGED, quoteStillMatches, beneficiaryFor, corridorFor, globalWalletFee, minimumTargetAmount, nairaCrossBorderFee, safeDeclineReason } from "./international";
+import { QUOTE_CHANGED, quoteStillMatches, beneficiaryFor, corridorFor, globalFundingSupported, globalWalletFee, minimumTargetAmount, nairaCrossBorderFee, safeDeclineReason } from "./international";
 import { payoutStatus } from "./transfer-validation";
 import { UNCERTAIN_PAYMENT } from "./wallet-safety";
 
@@ -33,7 +33,7 @@ export async function buildGlobalQuote(ctx: GlobalCtx, input: GlobalQuoteInput) 
   const corridor = corridorFor(input.country);
   if (!corridor) throw new Error("Choose a supported destination country.");
   const source = input.sourceCurrency;
-  if (source !== "NGN" && source !== corridor.target) throw new Error("Wallet payments must match the destination currency. Use your naira wallet to convert instead.");
+  if (!globalFundingSupported(source, corridor.target)) throw new Error("This funding pair is not active yet. Choose the destination-currency wallet or NGN. Other conversions and direct coin payouts need confirmed transfer terms.");
   const beneficiary = beneficiaryFor(corridor, input.accountName, input.beneficiary);
   const fx = await liveFxRates(ctx.mode);
   const minimum = minimumTargetAmount(source, corridor.target, fx);

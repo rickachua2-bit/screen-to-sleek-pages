@@ -107,6 +107,11 @@ export function trackSteps(status: string): TrackStep[] {
 export const GLOBAL_SOURCES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"] as const;
 export type GlobalSource = (typeof GLOBAL_SOURCES)[number];
 
+/** Only confirmed funding pairs may reach the global payout executor. */
+export function globalFundingSupported(source: string, target: string) {
+  return GLOBAL_SOURCES.some((code) => code === source) && (source === "NGN" || source === target);
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Fee for a payout funded from a foreign-currency wallet: 0.5% with a 5-unit floor and a 25-unit cap, in the wallet currency. */
