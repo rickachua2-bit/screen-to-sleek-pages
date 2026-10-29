@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, BadgeCheck, Check, CheckCircle2, Clock3, Copy, FileText, Link2, Loader2, Lock, Package, Plus, RefreshCw, Search, Share2, TriangleAlert } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, Clock3, Copy, FileText, Link2, Loader2, Lock, Package, RefreshCw, Search, Share2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
