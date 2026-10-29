@@ -32,3 +32,4 @@
 - Bulk payment files use Papa Parse and server-owned saved batches with stable row references; the UI resumes original receipts rather than minting new references on re-upload, to prevent duplicate payouts.
 - Wallet and NIP bank-transfer reservations and settlement use service-only transactional RPCs from the payment reliability script; unknown outcomes retain holds. Receipt summaries store principal and NIP session ID separately from fee-inclusive reserved amounts to keep ledger displays accurate.
 - All conversion execution entry points must enforce the server-side verified-contract gate until binding quotes and authoritative reconciliation are supported; a disabled cash-out screen alone cannot protect generic swap calls.
+- Crypto cash-out previews use authenticated crypto/rates sell and wholesale pairs; their difference is the embedded provider spread, not an extra charge. Rate previews never authorize conversion.
