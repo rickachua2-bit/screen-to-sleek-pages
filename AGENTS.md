@@ -13,7 +13,7 @@
 - Auth state lives in `src/lib/auth.tsx` (React context backed by localStorage/sessionStorage); the backend is external, not Lovable Cloud.
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
 - Unconnected operations stay labelled drafts. TeamSecurity stores validated requested roles on owner-scoped invitations, never profiles; these are notice-only intentions, not access grants, until workspace authorization covers every protected operation.
-- Slikpay overlays and the developer rail theme independently with global tokens; BrandSelect wraps Radix Select so portal content stays branded.
+- Overlays/developer rail theme independently; BrandSelect wraps Radix. Business keys are DB-trigger-issued, owner/mode/scoped, one-time PIN claims; API reads never expose shared funds.
 - External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
 - Merchant onboarding uses durable server-only verification challenges and an Auth insertion trigger from `supabase/slikpay_verification.sql` (run manually) so direct client sign-up cannot bypass OTP and registry proof.
