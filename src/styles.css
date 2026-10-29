@@ -910,3 +910,35 @@ html { scroll-behavior: smooth; }
 .recipient-bank-option > span:last-child { flex-shrink: 0; color: var(--primary); }
 .light-workspace .transfer-composer .recipient-bank-search, .light-workspace .transfer-composer .recipient-bank-results { background: var(--transfer-paper); color: var(--transfer-ink); border-color: var(--transfer-line); }
 @media (max-width: 1000px) and (min-width: 761px) { .transfer-composer-layout { grid-template-columns: minmax(0, .65fr) minmax(0, 1fr); } .transfer-story { padding: 18px; } }
+
+/* Crypto cash-out: selected Composer Split presentation. */
+.crypto-composer .transfer-composer-layout { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: stretch; }
+.crypto-story h2 { margin-top: 20px; font-size: 28px; line-height: 1.25; }
+.crypto-story-description { margin-top: 14px; color: var(--transfer-night-muted); font-size: 13px; line-height: 1.65; max-width: 34ch; }
+.crypto-coins { width: 100%; aspect-ratio: 2 / 1; object-fit: contain; margin-top: 28px; border-radius: 8px; }
+.crypto-coin-labels { display: grid; grid-template-columns: 1fr 1fr 1.5fr; text-align: center; font-size: 11px; font-weight: 700; color: var(--transfer-night-muted); margin: 8px 0 26px; }
+.crypto-stages { display: grid; gap: 26px; padding-top: 24px; border-top: 1px solid color-mix(in oklab, var(--cyan) 18%, transparent); }
+.crypto-stages li { display: flex; gap: 14px; align-items: flex-start; }
+.crypto-stage-number { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border: 1px solid var(--cobalt); border-radius: 50%; color: var(--cyan); font-size: 13px; }
+.crypto-stages [aria-current="step"] .crypto-stage-number { background: var(--cobalt); color: var(--transfer-on-night); }
+.crypto-stages strong { display: block; font-size: 13px; padding-top: 3px; }
+.crypto-stages p { margin-top: 5px; font-size: 12px; line-height: 1.6; color: var(--transfer-night-muted); }
+.crypto-story-security { display: flex; align-items: center; gap: 7px; color: var(--transfer-night-muted); font-size: 11px; margin-top: 32px; }
+.crypto-field-label { display: block; font-size: 12px; font-weight: 600; color: var(--transfer-ink); margin-bottom: 8px; }
+.crypto-asset { height: 64px; justify-content: flex-start; gap: 12px; background: var(--transfer-paper); border-color: var(--transfer-line); }
+.crypto-asset[aria-pressed="true"] { background: color-mix(in oklab, var(--cobalt) 6%, var(--transfer-paper)); border-color: var(--cobalt); }
+.crypto-asset-symbol { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; background: var(--cobalt); color: var(--transfer-on-night); font-size: 23px; }
+.crypto-tether { background: var(--success); }
+.crypto-amount { position: relative; }
+.crypto-amount input { padding-right: 65px; font-variant-numeric: tabular-nums; }
+.crypto-amount > span { position: absolute; right: 13px; top: 14px; font-size: 12px; color: var(--transfer-dim); }
+.crypto-estimates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.crypto-estimates > div, .crypto-recipient, .crypto-bank-fee { padding: 12px; border-radius: 8px; background: var(--transfer-soft); }
+.crypto-estimates dt { font-size: 11px; color: var(--transfer-dim); }
+.crypto-estimates dd { margin-top: 8px; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.crypto-recipient { display: flex; gap: 8px; align-items: center; font-size: 12px; min-height: 42px; overflow-wrap: anywhere; }
+.crypto-bank-fee { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: var(--transfer-dim); }
+.crypto-bank-fee strong { color: var(--transfer-ink); font-variant-numeric: tabular-nums; }
+.crypto-payment-status { padding: 12px 0; border-top: 1px solid var(--transfer-line); font-size: 12px; color: var(--primary); }
+.crypto-submit { width: 100%; min-height: 46px; background: var(--cobalt); color: var(--transfer-on-night); }
+@media (max-width: 760px) { .crypto-composer .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .crypto-story h2 { font-size: 24px; } .crypto-coins { width: 240px; max-width: 100%; margin-top: 16px; } .crypto-coin-labels, .crypto-stages, .crypto-story-security { display: none; } }
