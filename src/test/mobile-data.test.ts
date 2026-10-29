@@ -40,12 +40,41 @@ describe("toDataPlans", () => {
     expect(plans.map((p) => p.code)).toEqual(["A1"]);
   });
 
-  it("keeps untagged plans when filtering by network", () => {
+  it("drops untagged plans when the payload is tagged and a network is chosen", () => {
     const plans = toDataPlans([
       { code: "A1", name: "1GB", amount: 350, network: "Airtel" },
       { code: "U1", name: "1GB universal", amount: 400 },
     ], "airtel");
-    expect(plans.map((p) => p.code)).toEqual(["A1", "U1"]);
+    expect(plans.map((p) => p.code)).toEqual(["A1"]);
+  });
+
+  it("keeps everything when no plan carries a network tag", () => {
+    const plans = toDataPlans([
+      { code: "P1", name: "1GB", amount: 350 },
+      { code: "P2", name: "2GB", amount: 700 },
+    ], "airtel");
+    expect(plans).toHaveLength(2);
+  });
+
+  it("reads plans nested under the matching network key", () => {
+    const plans = toDataPlans({ airtel: [{ code: "A1", name: "Airtel 1GB", amount: 350 }], mtn: [{ code: "M1", name: "MTN 1GB", amount: 350 }] }, "Airtel");
+    expect(plans.map((p) => p.code)).toEqual(["A1"]);
+  });
+
+  it("reads plans nested inside the matching operator entry", () => {
+    const plans = toDataPlans({ operators: [
+      { name: "MTN", plans: [{ code: "M1", name: "MTN 1GB", amount: 350 }] },
+      { name: "Airtel", plans: [{ code: "A1", name: "Airtel 2GB", amount: 700 }] },
+    ] }, "airtel");
+    expect(plans.map((p) => p.code)).toEqual(["A1"]);
+  });
+
+  it("recognises biller and serviceType as network tags", () => {
+    const plans = toDataPlans([
+      { code: "A1", name: "1GB", amount: 350, biller: "Airtel NG" },
+      { code: "M1", name: "1GB", amount: 350, serviceType: "mtn-data" },
+    ], "airtel");
+    expect(plans.map((p) => p.code)).toEqual(["A1"]);
   });
 
   it("returns an empty list for unrecognised payloads", () => {

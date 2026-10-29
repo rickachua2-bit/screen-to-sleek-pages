@@ -146,10 +146,10 @@ export function MobileData() {
     const seq = ++plansSeq.current;
     const label = operators?.find((o) => o.id === operatorId)?.label ?? "";
     setPlans(null); setPlansFailed(false); setPlanCode(""); setAmount("");
-    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, network: label || operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
+    run({ data: { id: "get-bills-data-plans", params: {}, body: { operator: operatorId, operatorId, network: label || operatorId, provider: label || operatorId }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
       .then((r) => {
         if (plansSeq.current !== seq) return;
-        const list = toDataPlans(JSON.parse(r.resultJson), label || undefined);
+        const list = toDataPlans(JSON.parse(r.resultJson), label, operatorId);
         setPlans(list);
         setPlansFailed(list.length === 0);
       })
