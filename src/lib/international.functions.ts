@@ -38,7 +38,7 @@ export const sendGlobalPayout = createServerFn({ method: "POST" })
 
 /** Recovery: queries the original payment key and settles only confirmed outcomes. */
 export const checkGlobalPayout = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ idempotencyKey: z.string().uuid(), confirmedTotal: z.number().positive().max(1e13).optional(), purpose: z.enum(PAYMENT_PURPOSES).optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ idempotencyKey: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const { bankingUser } = await import("./paddle.server");
     const { checkGlobalPayoutStatus } = await import("./global-payout.server");
