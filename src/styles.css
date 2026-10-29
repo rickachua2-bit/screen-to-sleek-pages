@@ -981,3 +981,16 @@ html { scroll-behavior: smooth; }
   color: var(--foreground);
   border-top: 3px solid var(--cyan);
 }
+
+.developer-console-banner {
+  --foreground: var(--transfer-on-night, var(--primary-foreground));
+  --muted-foreground: var(--transfer-night-muted);
+  --background: var(--navy);
+  --accent: color-mix(in oklab, var(--cyan) 12%, var(--navy));
+  --accent-foreground: var(--foreground);
+  --input: color-mix(in oklab, var(--cyan) 30%, var(--navy));
+  color: var(--foreground);
+  background: linear-gradient(120deg, var(--navy), var(--obsidian));
+  border-left: 3px solid var(--cyan);
+  border-radius: 8px;
+}
