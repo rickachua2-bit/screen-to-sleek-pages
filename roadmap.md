@@ -43,6 +43,7 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
+- [ ] Resolve remaining signed-in payment and crypto cash-out blockers requested on 29 Oct 2026 — investigate authenticated access and authoritative provider contracts; never bypass verification or uncertain-payment holds.
 - [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
 - [x] Add Fiat/Crypto choices and gated USDT/USDC-to-NGN bank funding preview; no execution enabled without verified rails
 - [x] CSV quoted-cell parsing, duplicates, numeric checks, fee-inclusive totals, template and results downloads; saved batch restore uses original receipts
