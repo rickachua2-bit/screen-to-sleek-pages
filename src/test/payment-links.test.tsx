@@ -35,7 +35,7 @@ describe("payment links page", () => {
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /^Create link$/i }));
     await waitFor(() => expect(mocks.create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: 5000, currency: "NGN", email: "buyer@example.com", reference: expect.stringMatching(/^SLKLINK-/) }) }));
     await waitFor(() => expect(screen.getByText("Your payment link is ready")).toBeTruthy());
-    expect(screen.getByText("https://pay.example.com/new")).toBeTruthy();
+    expect(screen.getAllByText("https://pay.example.com/new").length).toBeGreaterThan(0);
   });
 
   it("shows the safe error when loading fails", async () => {
