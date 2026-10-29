@@ -116,21 +116,20 @@ function InvoiceDialog({ onClose, onCreated }: { onClose: () => void; onCreated:
   </Dialog>;
 }
 
-export function InvoicesPanel({ previewInvoices }: { previewInvoices?: InvoiceView[] }) {
+export function InvoicesPanel() {
   const listFn = useServerFn(listInvoices);
-  const [invoices, setInvoices] = useState<InvoiceView[] | null>(previewInvoices ?? null);
+  const [invoices, setInvoices] = useState<InvoiceView[] | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!previewInvoices);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
-    if (previewInvoices) return;
     setLoading(true); setError("");
     try { const r = await listFn(); setInvoices(r.invoices); }
     catch (e) { setError(e instanceof Error ? e.message : "Your invoices could not be loaded. Try again."); }
     finally { setLoading(false); }
-  }, [listFn, previewInvoices]);
+  }, [listFn]);
   useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
