@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CheckCircle2, Copy, Loader2, Lock, Search, Send, ShieldCheck, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Copy, Loader2, Lock, Search, Send, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { naira } from "@/lib/api";
@@ -14,6 +14,7 @@ import { SERVICES } from "@/lib/services-registry";
 import { useBankingProfile } from "./PaddleConsole";
 import { GuidedService } from "./ServicesHub";
 import { isDuplicate, rememberRecipient, type Recipient } from "@/lib/transfer-rules";
+import { paymentFeedback } from "@/lib/payment-feedback";
 
 const RECENTS_KEY = "slikpay.recentRecipients";
 const loadRecents = (): Recipient[] => { try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]"); } catch { return []; } };
@@ -99,6 +100,7 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   // A flat fee confirmed by the provider is reused for every amount until the modal closes.
   const flatFee = useRef<number | null>(null);
   const [resultStatus, setResultStatus] = useState("pending");
+  const [sendError, setSendError] = useState("");
   const [key] = useState(() => crypto.randomUUID());
   const [recents, setRecents] = useState<Recipient[]>([]);
   useEffect(() => { setRecents(loadRecents()); }, []);
@@ -139,6 +141,7 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
     if (live && !/^\d{4}$/.test(pin)) { toast.error("Enter your 4-digit transaction PIN."); return; }
     if (!bank || !name || !validTransferAmount(amount) || feeValue === null || sending.current || (balance !== undefined && amt + feeValue > balance)) return;
     sending.current = true;
+    setSendError("");
     setBusy(true);
     try {
       const r = await run({ data: { id: "post-payouts-transfer", params: {}, body: { amount: amt, destinationBankCode: bank?.code, destinationAccountNumber: acct, destinationAccountName: name, narration: narration || undefined, reference: key }, idempotencyKey: key, currency: "NGN", ...(pin ? { pin } : {}) } });
@@ -146,12 +149,12 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
       setRef(r.receipt.reference ?? null); setResultStatus(r.receipt.status ?? "pending"); setStep("done");
       const next = rememberRecipient(recents, { bankCode: bank?.code, bankName: bank?.name, account: acct, name, amount: amt, at: Date.now() });
       setRecents(next); try { localStorage.setItem(RECENTS_KEY, JSON.stringify(next)); } catch { /* storage full */ }
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Transfer status is unavailable. Check your ledger before retrying."); } finally { sending.current = false; setBusy(false); }
+    } catch (e) { const message = paymentFeedback(e, "transfer"); setSendError(message); toast.error(message); } finally { sending.current = false; setBusy(false); setPin(""); }
   };
   if (step === "done") {
     const text = `Slikpay transfer receipt\n${naira(amt)} to ${name}\n${bank?.name} · ${acct}${ref ? `\nReference ${ref}` : ""}`;
     return <div className="print-area py-2 text-center">
-      <CheckCircle2 className="mx-auto h-14 w-14 text-success" /><p className="mt-3 text-lg font-bold text-foreground">{naira(amt)} {resultStatus === "succeeded" ? "sent to" : resultStatus === "failed" ? "not sent to" : "submitted for"} {name}</p>
+      {resultStatus === "succeeded" ? <CheckCircle2 className="mx-auto h-14 w-14 text-success" /> : resultStatus === "failed" ? <AlertCircle className="mx-auto h-14 w-14 text-destructive" /> : <Clock3 className="mx-auto h-14 w-14 text-warning" />}<p className="mt-3 text-lg font-bold text-foreground">{naira(amt)} {resultStatus === "succeeded" ? "sent to" : resultStatus === "failed" ? "not sent to" : "submitted for"} {name}</p>
       <p role="status" className="mt-3 text-sm text-muted-foreground">{resultStatus === "succeeded" ? "The bank confirmed this transfer." : resultStatus === "failed" ? "The bank declined this transfer. Check your ledger for the final balance." : "Awaiting bank confirmation. Check your ledger before sending again."}</p>
       {ref && <p className="mt-3 text-xs text-muted-foreground">Reference <span className="font-mono">{ref}</span></p>}
       <div className="mt-5 flex gap-2"><Button variant="crisp" className="flex-1" onClick={async () => { try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast.success("Receipt copied"); } } catch { /* cancelled */ } }}>Share</Button><Button variant="crisp" className="flex-1" onClick={() => window.print()}>Print</Button></div>
@@ -160,7 +163,8 @@ export function SendNip({ live, onClose, balance, onPreviewChange }: { live: boo
   if (step === "review") return <div className="space-y-4">
     <dl className="space-y-2 rounded-xl border border-border p-4 text-sm">{[["To", name], ["Bank", bank?.name], ["Account", acct], ["Amount", naira(amt)], ["Fee", fee], ...(feeValue !== null ? [["Total debit", naira(amt + feeValue)]] : []), ...(narration ? [["Note", narration]] : [])].map(([k, v]) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-bold">{v}</dd></div>)}</dl>
     {live && <input className="field text-center font-mono tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} placeholder="PIN" aria-label="Transaction PIN" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} />}
-    {feeValue !== null && balance !== undefined && amt + feeValue > balance && <p role="alert" className="text-sm text-destructive">Insufficient balance including the transfer fee.</p>}
+    {feeValue !== null && balance !== undefined && amt + feeValue > balance && <p role="alert" className="text-sm text-destructive">Insufficient funds. Total required: {naira(amt + feeValue)} · Available: {naira(balance)}. Add funds or reduce the amount.</p>}
+    {sendError && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{sendError}</p>}
     {feeValue === null && !feeBusy && <Button variant="outline" onClick={review}>Retry fee quote</Button>}
     <div className="flex gap-2"><Button variant="crisp" disabled={busy} onClick={() => setStep("form")}>Edit</Button><Button variant="brand" className="flex-1" disabled={busy || feeBusy || feeValue === null || (live && !/^\d{4}$/.test(pin)) || (balance !== undefined && amt + (feeValue ?? 0) > balance)} onClick={send}>{busy ? <Loader2 className="animate-spin" /> : <Lock />}Send {naira(amt)}</Button></div>
   </div>;
