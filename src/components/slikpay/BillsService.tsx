@@ -192,7 +192,7 @@ export function BillsService({ serviceId }: { serviceId: string }) {
         {extras.map(([k, v]) => <div key={k} className="rounded-2xl border border-cyan/40 bg-cyan/10 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-cyan">{label(k)}</p><p className="break-all font-mono text-lg font-bold">{String(v)}</p></div>)}
         {result.ref && <p className="text-xs text-muted-foreground">Reference <span className="font-mono">{result.ref}</span></p>}
         <div className="flex gap-2">
-          <Button variant="crisp" className="flex-1 rounded-full" onClick={share}>{"share" in navigator ? <Share2 /> : <Copy />}{"share" in navigator ? "Share receipt" : "Copy receipt"}</Button>
+          <Button variant="crisp" className="flex-1 rounded-full" onClick={share}>{canShare ? <Share2 /> : <Copy />}{canShare ? "Share receipt" : "Copy receipt"}</Button>
           <Button variant="brand" className="flex-1 rounded-full" onClick={reset}>New payment</Button>
         </div>
       </div>}
