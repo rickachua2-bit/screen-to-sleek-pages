@@ -174,3 +174,56 @@ export const chargeSmartTag = createServerFn({ method: "POST" })
     }, (u) => ({ reference: data.reference, url: u, amount: data.amount, currency: parsed.currency, handle: data.handle, createdAt: new Date().toISOString() }));
     return { reference: data.reference, url, amount: data.amount, currency: parsed.currency, handle: data.handle, createdAt: new Date().toISOString(), status: "awaiting" };
   });
+
+/** Registers a soundbox device against one of the user's SmartTags. Device IDs are unique per mode. */
+export const registerSoundbox = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => soundboxSchema.parse(d))
+  .handler(async ({ data }): Promise<SoundboxView> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode } = await bankingUser();
+    const tag = await db.from("paddle_resources").select("resource_id").eq("user_id", user.id).eq("mode", mode).eq("operation", `${TAG_OP} ${data.handle}`).maybeSingle();
+    if (tag.error || !tag.data) throw new Error("That SmartTag was not found on this account.");
+    const taken = await db.from("paddle_resources").select("user_id").eq("mode", mode).eq("operation", `${SOUNDBOX_OP} ${data.deviceId}`).maybeSingle();
+    if (taken.error) throw new Error("Could not check that device ID. Try again.");
+    if (taken.data) throw new Error("That device ID is already registered. Check the device label and try again.");
+    const view: SoundboxView = { deviceId: data.deviceId, label: data.label, handle: data.handle, voice: data.voice, createdAt: new Date().toISOString() };
+    const row = await db.from("paddle_resources").insert({
+      user_id: user.id, mode, operation: `${SOUNDBOX_OP} ${data.deviceId}`, resource_id: JSON.stringify(view),
+    });
+    if (row.error) throw new Error("The soundbox could not be saved. Try again.");
+    return view;
+  });
+
+export const listSoundboxes = createServerFn({ method: "POST" }).handler(async (): Promise<{ soundboxes: SoundboxView[] }> => {
+  const { bankingUser } = await import("./paddle.server");
+  const { listDetails } = await import("./checkout-links.server");
+  const { db, user, mode } = await bankingUser();
+  const soundboxes = await listDetails(db, user.id, mode, SOUNDBOX_OP, parseSoundbox, 50);
+  return { soundboxes };
+});
+
+/** Renames a soundbox or changes its announcement voice; the linked tag and device ID stay fixed. */
+export const updateSoundbox = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => soundboxUpdateSchema.parse(d))
+  .handler(async ({ data }): Promise<SoundboxView> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode } = await bankingUser();
+    const existing = await db.from("paddle_resources").select("resource_id").eq("user_id", user.id).eq("mode", mode).eq("operation", `${SOUNDBOX_OP} ${data.deviceId}`).maybeSingle();
+    if (existing.error || !existing.data) throw new Error("That soundbox was not found on this account.");
+    const parsed = parseSoundbox(existing.data.resource_id);
+    if (!parsed) throw new Error("That soundbox record is damaged. Contact support.");
+    const view: SoundboxView = { ...parsed, label: data.label, voice: data.voice };
+    const row = await db.from("paddle_resources").update({ resource_id: JSON.stringify(view) }).eq("user_id", user.id).eq("mode", mode).eq("operation", `${SOUNDBOX_OP} ${data.deviceId}`);
+    if (row.error) throw new Error("The soundbox could not be updated. Try again.");
+    return view;
+  });
+
+export const unlinkSoundbox = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => soundboxDeleteSchema.parse(d))
+  .handler(async ({ data }): Promise<{ deviceId: string }> => {
+    const { bankingUser } = await import("./paddle.server");
+    const { db, user, mode } = await bankingUser();
+    const row = await db.from("paddle_resources").delete().eq("user_id", user.id).eq("mode", mode).eq("operation", `${SOUNDBOX_OP} ${data.deviceId}`);
+    if (row.error) throw new Error("The soundbox could not be unlinked. Try again.");
+    return { deviceId: data.deviceId };
+  });
