@@ -14,7 +14,7 @@ export function PersonalRewards() {
 
   const [referralCode, setReferralCode] = useState(() => {
     return user?.name 
-      ? `SLK-${user.name.split(" ")[0].toUpperCase()}-${(user.email || "99").slice(0, 3).toUpperCase()}`
+      ? `SLK-${(user.name.split(" ")[0] ?? "FRIEND").toUpperCase()}-${(user.email || "99").slice(0, 3).toUpperCase()}`
       : "SLK-FRIEND-772";
   });
 

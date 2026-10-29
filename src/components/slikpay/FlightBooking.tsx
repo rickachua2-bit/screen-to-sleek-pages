@@ -256,9 +256,10 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
 
   const handleStartBooking = (offer: FlightOffer) => {
     setSelectedOffer(offer);
-    if (profile?.business_name) {
-      setFirstName(profile.business_name.split(" ")[0] || "Authorized");
-      setLastName(profile.business_name.split(" ")[1] || "Traveler");
+    const displayName = profile?.full_name || profile?.company_name;
+    if (displayName) {
+      setFirstName(displayName.split(" ")[0] || "Authorized");
+      setLastName(displayName.split(" ")[1] || "Traveler");
     }
   };
 
@@ -286,7 +287,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
       destination: selectedOffer.destination,
       departureDate,
       passengerName: `${passengerTitle} ${firstName} ${lastName}`.trim(),
-      passportNumber: passportNum || undefined,
+      ...(passportNum ? { passportNumber: passportNum } : {}),
       amountNgn: selectedOffer.priceNgn,
       status: "CONFIRMED",
       bookedAt: "Just now",

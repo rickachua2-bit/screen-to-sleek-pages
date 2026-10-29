@@ -129,7 +129,7 @@ export function ApprovalsManager() {
       makerName: "Operations Officer",
       makerRole: "Maker",
       makerEmail: "finance@slikmerchant.ng",
-      amount: newAmount ? Number(newAmount) : undefined,
+      ...(newAmount ? { amount: Number(newAmount) } : {}),
       recipient: newRecipient || "External Bank / Rail",
       createdAt: "Just now",
       thresholdTrigger: "Dual Control Policy Threshold Breached",
