@@ -58,7 +58,7 @@ export { STABLECOINS };
 
 /* ---------- money guard shared by swap / withdraw ---------- */
 type Ctx = { db: Db; user: User; mode: Mode; review: string };
-export async function guardMoney(ctx: Ctx, currency: string, amount: number, pin: string | undefined, operation: string, reference: string) {
+export async function authorizeMoney(ctx: Ctx, pin: string | undefined) {
   if (ctx.mode === "live") {
     if (ctx.review !== "approved") throw new Error("Complete verification before moving money.");
     if (!pin) throw new Error("Enter your 4-digit transaction PIN.");
@@ -66,6 +66,9 @@ export async function guardMoney(ctx: Ctx, currency: string, amount: number, pin
     const { pinDigest } = await import("./merchant-verification.server");
     if (!sec.data || sec.data.pin_digest !== await pinDigest(pin, sec.data.pin_salt)) throw new Error("Incorrect transaction PIN.");
   }
+}
+export async function guardMoney(ctx: Ctx, currency: string, amount: number, pin: string | undefined, operation: string, reference: string) {
+  await authorizeMoney(ctx, pin);
   const r = await ctx.db.rpc("begin_wallet_payment", { p_user: ctx.user.id, p_mode: ctx.mode, p_currency: currency, p_amount: amount, p_operation: operation, p_reference: reference });
   if (r.error) throw new Error("Payment could not be prepared. Check your ledger; the payment reliability setup may be required.");
   if (r.data !== true) throw new Error("Insufficient balance including fees.");

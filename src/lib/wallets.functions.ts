@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { CURRENCIES, NOT_ACTIVE, type WalletStatus } from "./wallets";
-import { confirmedSwap, requireVerifiedSwapContract, UNCERTAIN_PAYMENT } from "./wallet-safety";
+import { UNCERTAIN_PAYMENT } from "./wallet-safety";
 import { payoutStatus, slikpayTransferFee } from "./transfer-validation";
 
 export interface WalletView { code: string; status: WalletStatus; balance: number; accountNumber: string | null; accountName: string | null; bankName: string | null; routing: string | null; network: string | null; note: string | null }
@@ -69,26 +69,10 @@ export const getWalletExtras = createServerFn({ method: "POST" }).handler(async 
 export const swapCurrency = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => money.extend({ from: z.enum(CODES), to: z.enum(CODES), idempotencyKey: z.string().uuid() }).refine((x) => x.from !== x.to, "Pick two different currencies.").parse(d))
   .handler(async ({ data }) => {
-    const { bankingUser, callPaddle } = await import("./paddle.server");
-    const { guardMoney, settleMoney, readRecord, writeRecord } = await import("./wallets.server");
-    const { learnRate } = await import("./wallet-actions");
+    const { bankingUser } = await import("./paddle.server");
+    const { executeVerifiedSwap } = await import("./swap-execution.server");
     const ctx = await bankingUser();
-    const op = `SWAP ${data.from}->${data.to}`;
-    requireVerifiedSwapContract();
-    await guardMoney(ctx, data.from, data.amount, data.pin, op, data.idempotencyKey);
-    try {
-      const r = await callPaddle(ctx.mode, "POST", "/v1/crypto/swap", { fromCurrency: data.from, toCurrency: data.to, amount: data.amount }, data.idempotencyKey);
-      const d = (r.data ?? {}) as Record<string, unknown>;
-      const confirmed = confirmedSwap(d);
-      if (!confirmed) throw new Error(UNCERTAIN_PAYMENT);
-      const toAmount = confirmed.amount; const rate = confirmed.rate; const fee = Number(d["platformFee"]);
-      const credited = Math.floor(toAmount * 1e8) / 1e8;
-      const reference = typeof d["reference"] === "string" ? d["reference"] : null;
-      await settleMoney(ctx, data.idempotencyKey, "succeeded", reference, { to: data.to, toAmount, rate, ...(Number.isFinite(fee) && fee >= 0 ? { fee } : {}) }, { currency: data.to, amount: credited });
-      const key = `fx_rates_${ctx.mode}`;
-      await writeRecord(ctx.db, ctx.user.id, key, learnRate(await readRecord(ctx.db, ctx.user.id, key, {}), data.from, data.to, rate));
-      return { reference, fromAmount: data.amount, toAmount, credited, rate, fee: Number.isFinite(fee) && fee >= 0 ? fee : null, feeCurrency: data.to };
-    } catch { throw new Error(UNCERTAIN_PAYMENT); }
+    return executeVerifiedSwap(ctx, data);
   });
 
 export const savePayoutAccount = createServerFn({ method: "POST" })

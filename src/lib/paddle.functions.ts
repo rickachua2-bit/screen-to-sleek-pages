@@ -50,8 +50,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { db, user, role, mode, review } = await bankingUser();
     if (endpoint.path === "/v1/crypto/swap") {
-      const { requireVerifiedSwapContract } = await import("./wallet-safety");
-      requireVerifiedSwapContract();
+      throw new Error("Use the wallet conversion screen for protected conversion and recovery.");
     }
     const access = accessFor(endpoint, role, mode);
     if (!access.allowed) throw new Error(access.reason);
