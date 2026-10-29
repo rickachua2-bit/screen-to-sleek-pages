@@ -48,7 +48,7 @@ describe("Escrow page", () => {
   });
 
   it("opens a deal with balanced milestones", async () => {
-    mocks.create.mockResolvedValue({ ...DEALS[1], id: "ESC-1003", title: "New deal" });
+    mocks.create.mockResolvedValue({ ...DEALS[1]!, id: "ESC-1003", title: "New deal" });
     render(<Escrow />);
     await waitFor(() => expect(screen.getByText("Supply of 200 bags of rice")).toBeTruthy());
     const form = screen.getByRole("form", { name: "Open an escrow deal" });
@@ -92,7 +92,7 @@ describe("Escrow page", () => {
   });
 
   it("releases a pending milestone on a funded deal", async () => {
-    mocks.release.mockResolvedValue({ ...DEALS[0], milestones: DEALS[0].milestones.map((m) => ({ ...m, status: "released" as const })), status: "released" });
+    mocks.release.mockResolvedValue({ ...DEALS[0]!, milestones: DEALS[0]!.milestones.map((m) => ({ ...m, status: "released" as const })), status: "released" });
     render(<Escrow />);
     await waitFor(() => expect(screen.getByText("Supply of 200 bags of rice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /^Release$/i }));
