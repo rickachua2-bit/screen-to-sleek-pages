@@ -5,6 +5,7 @@ create table if not exists public.business_invitations (
   owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 120),
   email text not null check (char_length(email) <= 254),
+  requested_role text not null default 'viewer' check (requested_role in ('administrator','finance_manager','accountant','payment_operator','developer','support','viewer')),
   status text not null default 'pending' check (status in ('pending','revoked','delivery_failed')),
   delivery_id text,
   created_at timestamptz not null default now(),
@@ -16,6 +17,10 @@ grant all on public.business_invitations to service_role;
 alter table public.business_invitations enable row level security;
 drop policy if exists "Owner reads invitation roster" on public.business_invitations;
 create policy "Owner reads invitation roster" on public.business_invitations for select to authenticated using (owner_id = auth.uid());
+
+-- Safe to rerun on existing installations. Requested roles are not access grants.
+alter table public.business_invitations add column if not exists requested_role text not null default 'viewer'
+  check (requested_role in ('administrator','finance_manager','accountant','payment_operator','developer','support','viewer'));
 
 create table if not exists public.account_security_events (
   id uuid primary key default gen_random_uuid(),

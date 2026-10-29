@@ -34,3 +34,21 @@ it("does not change password when current-password verification fails", async ()
   await waitFor(() => expect(mocks.signin).toHaveBeenCalled());
   expect(mocks.update).not.toHaveBeenCalled();
 });
+it("sends the validated requested role with the owner PIN, not access permissions", async () => {
+  mocks.invite.mockResolvedValue({ ok: true });
+  render(<TeamSecurity />); await waitFor(() => expect(screen.getByText("Ada")).toBeTruthy());
+  fireEvent.click(screen.getByRole("button", { name: "Invite a colleague" }));
+  for (const [label, value] of [["Full name", "Grace"], ["Work email", "grace@example.com"], ["Transaction PIN", "1234"]] as const) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+  await waitFor(() => expect(mocks.invite).toHaveBeenCalledWith({ data: { name: "Grace", email: "grace@example.com", role: "viewer", pin: "1234" } }));
+});
+it("saves profile edits and reloads the persisted profile", async () => {
+  mocks.save.mockResolvedValue({ ok: true });
+  render(<TeamSecurity />); await waitFor(() => expect(screen.getByText("Ada")).toBeTruthy());
+  tab("Profile");
+  fireEvent.change(await screen.findByLabelText("Display name"), { target: { value: "Ada Grace" } });
+  mocks.get.mockResolvedValue({ ...data, owner: { ...data.owner, name: "Ada Grace" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+  await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ data: { name: "Ada Grace" } }));
+  await waitFor(() => expect((screen.getByLabelText("Display name") as HTMLInputElement).value).toBe("Ada Grace"));
+});

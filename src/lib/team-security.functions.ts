@@ -5,7 +5,7 @@ export const getTeamSecurity = createServerFn({ method: "POST" }).handler(async 
   const { securityOwner } = await import("./team-security.server");
   const ctx = await securityOwner();
   const [invites, events, factors, pin] = await Promise.all([
-    ctx.db.from("business_invitations").select("id,name,email,status,expires_at,created_at").eq("owner_id", ctx.user.id).order("created_at", { ascending: false }),
+    ctx.db.from("business_invitations").select("id,name,email,requested_role,status,expires_at,created_at").eq("owner_id", ctx.user.id).order("created_at", { ascending: false }),
     ctx.db.from("account_security_events").select("id,action,created_at").eq("user_id", ctx.user.id).order("created_at", { ascending: false }).limit(30),
     ctx.db.auth.admin.mfa.listFactors({ userId: ctx.user.id }),
     ctx.db.from("merchant_security").select("user_id").eq("user_id", ctx.user.id).maybeSingle(),
@@ -14,7 +14,7 @@ export const getTeamSecurity = createServerFn({ method: "POST" }).handler(async 
     owner: { name: String(ctx.profile.full_name ?? ""), email: ctx.user.email ?? "", company: String(ctx.profile.company_name ?? ""), registration: String(ctx.profile.cac_rc_number ?? "") },
     teamConnected: !invites.error, auditConnected: !events.error, pinConfigured: pin.error ? null : Boolean(pin.data),
     authenticator: factors.error ? null : (factors.data?.factors ?? []).some((f) => f.factor_type === "totp" && f.status === "verified"),
-    invites: (invites.data ?? []).map((r) => ({ id: String(r.id), name: String(r.name), email: String(r.email), status: invitationState(String(r.status), String(r.expires_at)), createdAt: String(r.created_at) })),
+    invites: (invites.data ?? []).map((r) => ({ id: String(r.id), name: String(r.name), email: String(r.email), role: String(r.requested_role), status: invitationState(String(r.status), String(r.expires_at)), createdAt: String(r.created_at), expiresAt: String(r.expires_at) })),
     events: (events.data ?? []).map((r) => ({ id: String(r.id), action: String(r.action), at: String(r.created_at) })),
   };
 });
@@ -47,9 +47,15 @@ export const sendTeamInvitation = createServerFn({ method: "POST" }).inputValida
   const key = process.env["RESEND_API_KEY"];
   if (!key) throw new Error("Invitation email delivery is not connected.");
   const id = crypto.randomUUID();
-  const saved = await ctx.db.from("business_invitations").upsert({ id, owner_id: ctx.user.id, name: data.name, email: data.email, status: "pending", expires_at: new Date(Date.now()+7*86400000).toISOString(), created_at: new Date().toISOString(), delivery_id: null }, { onConflict: "owner_id,email" });
+  const saved = await ctx.db.from("business_invitations").upsert({ id, owner_id: ctx.user.id, name: data.name, email: data.email, requested_role: data.role, status: "pending", expires_at: new Date(Date.now()+7*86400000).toISOString(), created_at: new Date().toISOString(), delivery_id: null }, { onConflict: "owner_id,email" });
   if (saved.error) throw new Error("Could not save the invitation. Team setup may be required.");
-  const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "Idempotency-Key": id }, body: JSON.stringify({ from: "Slikpay <info@globalline.io>", to: [data.email], subject: "Slikpay team invitation notice", text: `${data.name}, ${ctx.profile.company_name || "a Slikpay business"} has added you to its pending team invitation roster. This invitation does not grant dashboard, wallet, payment or administrative access. Shared-business access is not yet available. Contact the business owner for next steps.` }), signal: AbortSignal.timeout(20000) });
+  let response: Response;
+  try {
+    response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "Idempotency-Key": id }, body: JSON.stringify({ from: "Slikpay <info@globalline.io>", to: [data.email], subject: "Slikpay team invitation notice", text: `${data.name}, ${ctx.profile.company_name || "a Slikpay business"} has requested the ${data.role.replace(/_/g, " ")} role for you in its pending team invitation roster. This notice expires in 7 days and does not grant dashboard, wallet, payment or administrative access. Shared-business access is not yet available. Contact the business owner for next steps.` }), signal: AbortSignal.timeout(20000) });
+  } catch {
+    await ctx.db.from("business_invitations").update({ status: "delivery_failed" }).eq("id", id).eq("owner_id", ctx.user.id);
+    throw new Error("Invitation delivery could not be confirmed. Check the roster before sending again. No account access was granted.");
+  }
   const delivery = await response.json().catch(() => null) as { id?: string } | null;
   if (!response.ok || !delivery?.id) {
     await ctx.db.from("business_invitations").update({ status: "delivery_failed" }).eq("id", id).eq("owner_id", ctx.user.id);
@@ -57,7 +63,7 @@ export const sendTeamInvitation = createServerFn({ method: "POST" }).inputValida
   }
   const completed = await ctx.db.from("business_invitations").update({ delivery_id: delivery.id }).eq("id", id).eq("owner_id", ctx.user.id);
   if (completed.error) throw new Error("The notice was sent but the delivery record could not update. Refresh before retrying.");
-  await recordSecurityEvent(ctx, "Team invitation notice sent");
+  await recordSecurityEvent(ctx, `Team invitation notice sent · ${data.role.replace(/_/g, " ")}`);
   return { ok: true };
 });
 

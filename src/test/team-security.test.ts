@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { changePinSchema, invitationSchema, invitationState } from "@/lib/team-security";
+import { changePinSchema, invitationSchema, invitationState, invitationRoles } from "@/lib/team-security";
 const mocks = vi.hoisted(() => ({ user: vi.fn(), digest: vi.fn(), rpc: vi.fn(), select: vi.fn(), event: vi.fn() }));
 vi.mock("@/lib/paddle.server", () => ({ bankingUser: mocks.user }));
 vi.mock("@/lib/merchant-verification.server", () => ({ pinDigest: mocks.digest }));
@@ -11,8 +11,13 @@ it("rejects malformed PINs and requires a different replacement PIN", () => {
   expect(changePinSchema.safeParse({ currentPin: "123", newPin: "5678" }).success).toBe(false);
 });
 it("normalizes invitation emails and never accepts permission fields", () => {
-  expect(invitationSchema.parse({ name: "Ada", email: "ADA@example.com", pin: "1234", role: "admin" })).toEqual({ name: "Ada", email: "ada@example.com", pin: "1234" });
+  expect(invitationSchema.parse({ name: "Ada", email: "ADA@example.com", pin: "1234", permissions: ["pay"] })).toEqual({ name: "Ada", email: "ada@example.com", pin: "1234", role: "viewer" });
   expect(invitationSchema.safeParse({ name: "Ada", email: "bad", pin: "1234" }).success).toBe(false);
+});
+it("offers at least seven validated invitation roles without allowing owner escalation", () => {
+  expect(invitationRoles.length).toBeGreaterThanOrEqual(7);
+  for (const role of invitationRoles) expect(invitationSchema.parse({ name: "Ada", email: "ada@example.com", pin: "1234", role: role.value }).role).toBe(role.value);
+  expect(invitationSchema.safeParse({ name: "Ada", email: "ada@example.com", pin: "1234", role: "owner" }).success).toBe(false);
 });
 it("expires pending invitations without changing revoked ones", () => {
   expect(invitationState("pending", "2026-10-01T00:00:00Z", Date.parse("2026-10-29T00:00:00Z"))).toBe("expired");

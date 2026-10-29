@@ -12,7 +12,7 @@
 - `src/lib/api.ts` holds only shared types and display helpers — no demo data or offline success fallbacks (guarded by the banking-safety test). Verification and banking use TanStack server functions without mock success so outages never imply verified identity or completed transfers.
 - Auth state lives in `src/lib/auth.tsx` (React context backed by localStorage/sessionStorage); the backend is external, not Lovable Cloud.
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
-- Unconnected operations stay labelled drafts. TeamSecurity uses owner-scoped profiles, PIN actions and invitation notices only; no team access is granted until workspace authorization exists.
+- Unconnected operations stay labelled drafts. TeamSecurity stores validated requested roles on owner-scoped invitations, never profiles; these are notice-only intentions, not access grants, until workspace authorization covers every protected operation.
 - Slikpay overlays use shared global surface tokens and BrandSelect wraps the existing Radix Select; portal content carries its own theme so it remains branded outside page containers.
 - External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
