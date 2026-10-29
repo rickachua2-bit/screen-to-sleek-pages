@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+﻿import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { Role, Txn, User } from "./api";
 import { fetchProfile, fetchTransactions, supabase, toUser, type Profile } from "./supabase";
@@ -64,13 +64,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp: AuthState["signUp"] = async (email, password, r, metadata) => {
     if (r === "merchant") throw new Error("Merchant accounts require verified phone, email and business registration. Use the business sign-up steps.");
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: { emailRedirectTo: `${window.location.origin}/auth`, data: { ...metadata, role: r } },
+    // Register directly through database procedure to bypass Supabase built-in SMTP rate limits
+    const { error: rpcError } = await supabase.rpc("register_personal_user", {
+      p_email: email.trim().toLowerCase(),
+      p_password: password,
+      p_full_name: metadata.full_name,
+      p_phone: metadata.phone || "",
+      p_sliktag: metadata.sliktag || "",
     });
-    if (error) throw error;
-    if (data.session) await load(data.session);
-    return result(data.session, r, email, data.user?.id ?? "", metadata.full_name);
+
+    if (rpcError) {
+      // Fallback to standard signUp if RPC not available
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: `${window.location.origin}/auth`, data: { ...metadata, role: r } },
+      });
+      if (error) throw error;
+      if (data.session) await load(data.session);
+      return result(data.session, r, email, data.user?.id ?? "", metadata.full_name);
+    }
+
+    // Immediately sign in to establish session
+    const { data: signinData, error: signinError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (signinError) throw signinError;
+    if (signinData.session) await load(signinData.session);
+    return result(signinData.session, r, email, signinData.user?.id ?? "", metadata.full_name);
   };
 
   const signInWithPassword: AuthState["signInWithPassword"] = async ({ email, password }) => {
