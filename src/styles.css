@@ -1069,4 +1069,3 @@ html { scroll-behavior: smooth; }
 /* Icons and placeholders on navy keep the same bright treatment. */
 .merchant-sidebar .sidebar-item svg, .merchant-sidebar .sidebar-icon-btn { color: oklch(0.98 0.008 255); }
 .topbar-midnight .topbar-search input::placeholder, .bg-navy-rail input::placeholder, .transfer-story input::placeholder, .qr-stand input::placeholder { color: oklch(0.88 0.012 250); }
-.bg-navy-rail .text-white\/60, .bg-navy-rail .text-white\/55, .bg-navy-rail .text-white\/50 { color: oklch(1 0 0 / 90%); }
