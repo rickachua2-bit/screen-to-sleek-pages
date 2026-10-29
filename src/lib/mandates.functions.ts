@@ -69,6 +69,48 @@ function parseDebit(raw: string): DirectDebitView | null {
   } catch { return null; }
 }
 
+type DebitInput = z.infer<typeof createSchema>;
+type Db = Awaited<ReturnType<typeof import("./paddle.server").bankingUser>>["db"];
+
+/** Shared direct-debit charge: idempotent by reference, stores the record durably. */
+async function chargeDebit(db: Db, userId: string, mode: "sandbox" | "live", data: DebitInput): Promise<DirectDebitView> {
+  const { callPaddle } = await import("./paddle.server");
+  const op = `${DEBIT_OP} ${data.reference}`;
+  const prior = await db.from("paddle_resources").select("resource_id").eq("user_id", userId).eq("mode", mode).eq("operation", op).maybeSingle();
+  if (prior.error) throw new Error("Could not check existing debits. Try again.");
+  if (prior.data) {
+    const existing = parseDebit(prior.data.resource_id);
+    if (existing) return existing;
+  }
+  const body: Record<string, unknown> = {
+    amount: data.amount,
+    currency: data.currency,
+    customerEmail: data.customerEmail,
+    customerName: data.customerName,
+  };
+  if (data.currency === "USD") { body["routingNumber"] = data.routingNumber; body["accountNumber"] = data.accountNumber; }
+  if (data.currency === "EUR") body["iban"] = data.iban;
+  if (data.currency === "GBP") { body["sortCode"] = data.sortCode; body["accountNumber"] = data.accountNumber; }
+  await callPaddle(mode, "POST", "/v1/gateway/bank-debit/charge", body, data.reference);
+  const view: DirectDebitView = {
+    reference: data.reference,
+    customerName: data.customerName,
+    customerEmail: data.customerEmail,
+    amount: data.amount,
+    currency: data.currency,
+    description: data.description ?? "",
+    accountHint: accountHint(data),
+    createdAt: new Date().toISOString(),
+    status: "awaiting",
+  };
+  const row = await db.from("paddle_resources").upsert([
+    { user_id: userId, mode, resource_id: data.reference, operation: "POST /v1/gateway/bank-debit/charge" },
+    { user_id: userId, mode, resource_id: JSON.stringify(view), operation: op },
+  ], { onConflict: "mode,resource_id", ignoreDuplicates: true });
+  if (row.error) throw new Error("The debit was sent but could not be saved. Check your records before charging again.");
+  return view;
+}
+
 /**
  * Charges a customer's bank account by direct debit (US ACH, EU SEPA, UK Bacs).
  * Replaying the same reference returns the original record without charging twice.
@@ -76,43 +118,10 @@ function parseDebit(raw: string): DirectDebitView | null {
 export const createDirectDebit = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => createSchema.parse(d))
   .handler(async ({ data }): Promise<DirectDebitView> => {
-    const { bankingUser, callPaddle } = await import("./paddle.server");
+    const { bankingUser } = await import("./paddle.server");
     const { db, user, mode, review } = await bankingUser();
     if (mode === "live" && review !== "approved") throw new Error("Complete verification before collecting live direct debits.");
-    const op = `${DEBIT_OP} ${data.reference}`;
-    const prior = await db.from("paddle_resources").select("resource_id").eq("user_id", user.id).eq("mode", mode).eq("operation", op).maybeSingle();
-    if (prior.error) throw new Error("Could not check existing debits. Try again.");
-    if (prior.data) {
-      const existing = parseDebit(prior.data.resource_id);
-      if (existing) return existing;
-    }
-    const body: Record<string, unknown> = {
-      amount: data.amount,
-      currency: data.currency,
-      customerEmail: data.customerEmail,
-      customerName: data.customerName,
-    };
-    if (data.currency === "USD") { body["routingNumber"] = data.routingNumber; body["accountNumber"] = data.accountNumber; }
-    if (data.currency === "EUR") body["iban"] = data.iban;
-    if (data.currency === "GBP") { body["sortCode"] = data.sortCode; body["accountNumber"] = data.accountNumber; }
-    await callPaddle(mode, "POST", "/v1/gateway/bank-debit/charge", body, data.reference);
-    const view: DirectDebitView = {
-      reference: data.reference,
-      customerName: data.customerName,
-      customerEmail: data.customerEmail,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description ?? "",
-      accountHint: accountHint(data),
-      createdAt: new Date().toISOString(),
-      status: "awaiting",
-    };
-    const row = await db.from("paddle_resources").upsert([
-      { user_id: user.id, mode, resource_id: data.reference, operation: "POST /v1/gateway/bank-debit/charge" },
-      { user_id: user.id, mode, resource_id: JSON.stringify(view), operation: op },
-    ], { onConflict: "mode,resource_id", ignoreDuplicates: true });
-    if (row.error) throw new Error("The debit was sent but could not be saved. Check your records before charging again.");
-    return view;
+    return chargeDebit(db, user.id, mode, data);
   });
 
 export const listDirectDebits = createServerFn({ method: "POST" }).handler(async (): Promise<{ mode: string; debits: DirectDebitView[] }> => {
