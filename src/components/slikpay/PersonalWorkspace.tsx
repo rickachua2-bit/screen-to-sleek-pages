@@ -11,6 +11,7 @@ import { NubanCard, Panel, QuickAction } from "./Widgets";
 import { DonutChart } from "./Charts";
 import { ModalReceipt, StatusBadge } from "./TransactionTable";
 import { CardGraphic } from "./CardGraphic";
+import { Cards } from "./Cards";
 import { BrandSelect } from "./BrandSelect";
 import type { ActionKind } from "./ActionModal";
 
@@ -153,19 +154,7 @@ function BillsModule() {
 }
 
 function CardsModule() {
-  const { profile } = useBankingProfile();
-  return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <Panel title="Virtual card">
-        <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground"><CreditCard className="h-6 w-6" /></span>
-          <p className="text-sm font-extrabold text-foreground">{profile?.cardIssued ? "Your card is issued" : "No card yet"}</p>
-          <p className="max-w-xs text-xs font-semibold text-muted-foreground">{profile?.cardIssued ? "Card details and controls appear here once your card service is connected." : "Cards are issued after your identity is verified in Go Live."}</p>
-        </div>
-      </Panel>
-      <NubanCard title="Your account number" nuban={profile?.virtualAccount ?? ""} accountName={profile?.accountDetails?.accountName} bankName={profile?.accountDetails?.bankName} status={profile?.accountDetails?.status} />
-    </div>
-  );
+  return <Cards />;
 }
 
 function SavingsModule() {
