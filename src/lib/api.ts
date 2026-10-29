@@ -1,5 +1,4 @@
-// Shared types and display helpers only. No demo accounts, no fabricated
-// transactions, no offline fallbacks: every balance, payment and funding
+// Shared types and display helpers only. Every balance, payment and funding
 // figure in the app comes from the live provider or the real ledger.
 export type Role = "merchant" | "personal";
 export interface User {
