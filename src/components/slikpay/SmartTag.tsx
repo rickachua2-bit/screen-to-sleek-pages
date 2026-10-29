@@ -419,7 +419,7 @@ export function SmartTag({ preview }: { preview?: { tags: SmartTagView[]; charge
         </div>
 
         {tab === "stands" && <QrStands tags={tags ?? []} />}
-        {tab === "soundboxes" && <Soundboxes />}
+        {tab === "soundboxes" && <Soundboxes tags={tags ?? []} charges={charges ?? []} />}
 
         {tab === "tags" && <>
           <CreateTagCard onCreated={(t) => setTags((prev) => (prev ? [t, ...prev] : prev))} />
