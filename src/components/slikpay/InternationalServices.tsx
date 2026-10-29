@@ -324,7 +324,7 @@ export function InternationalServices({ initial }: { initial?: "cross-border" | 
   const { profile, error: profileError, refresh } = useBankingProfile();
   const [tab, setTab] = useState<Tab>(initial === "crypto" || initial === "swap" ? "swap" : initial === "treasury" ? "treasury" : initial === "receive" ? "receive" : initial === "hold" ? "hold" : initial === "track" ? "track" : initial === "cross-border" || initial === "remittance" || initial === "send" ? "send" : "overview");
   const [kind, setKind] = useState<"cross-border" | "remittance" | "tuition">(initial === "remittance" ? "remittance" : "cross-border");
-  const unavailable = <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{profileError || "Your account could not be confirmed. Refresh to try again."}</p>;
+  const unavailable = <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">Your account could not be confirmed. Refresh to try again.</p>;
   return <section className="international-bento space-y-5" aria-label="International services">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><p className="text-xs font-semibold text-muted-foreground">Your global money workspace</p><h2 className="mt-1 text-2xl font-extrabold">International & Swap</h2></div>
