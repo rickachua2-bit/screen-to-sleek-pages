@@ -87,7 +87,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   const secondsLeft = quote ? quoteSecondsLeft(quotedAt, now) : 0;
   // Expired quotes are re-priced automatically; the user confirms whatever total is current.
   useEffect(() => { if (quote && secondsLeft === 0 && !sending) void runQuote(quoteKey); }, [quote, secondsLeft, sending, runQuote, quoteKey]);
-  const useSaved = (key: string) => {
+  const applySaved = (key: string) => {
     const r = saved.find((x) => x.key === key); if (!r) return;
     setCountry(r.country); setAccountName(r.accountName); setFields(r.fields); setQuote(null);
   };
@@ -182,7 +182,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
           <p className="mt-0.5 text-xs text-muted-foreground">Funds are reserved at the exact total before any payment is dispatched.</p>
           {saved.length > 0 && <div className="mt-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Repeat className="h-3.5 w-3.5 text-magenta" />Send again</p>
-            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <button key={r.key} type="button" onClick={() => useSaved(r.key)}
+            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <button key={r.key} type="button" onClick={() => applySaved(r.key)}
               className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-cobalt hover:text-cobalt">{r.accountName} · {r.country}</button>)}</div>
           </div>}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
