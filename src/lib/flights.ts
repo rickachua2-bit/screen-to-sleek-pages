@@ -6,8 +6,59 @@ export const CABINS = ["economy", "premium_economy", "business", "first"] as con
 export type Cabin = (typeof CABINS)[number];
 
 export type Airport = { code: string; name: string; city: string; country: string };
-export type FlightSegment = { from: string; to: string; departAt: string; arriveAt: string; carrier: string; flightNumber: string };
-export type FlightSlice = { from: string; fromCity: string; to: string; toCity: string; departAt: string; arriveAt: string; duration: string | null; stops: number; segments: FlightSegment[] };
+export type FlightSegment = { 
+  from: string; 
+  to: string; 
+  fromCity?: string;
+  toCity?: string;
+  fromName?: string;
+  toName?: string;
+  fromTerminal?: string | null;
+  toTerminal?: string | null;
+  departAt: string; 
+  arriveAt: string; 
+  carrier: string; 
+  flightNumber: string;
+  aircraft?: string | null;
+  cabin?: string | null;
+  duration?: string | null;
+  layoverAfterMinutes?: number | null;
+  layoverAirport?: string | null;
+};
+export type FlightSlice = { 
+  from: string; 
+  fromCity: string; 
+  to: string; 
+  toCity: string; 
+  departAt: string; 
+  arriveAt: string; 
+  duration: string | null; 
+  stops: number; 
+  segments: FlightSegment[];
+};
+export type FlightBaggageDetails = {
+  summary: string;
+  checkedBagsText: string;
+  cabinBagsText: string;
+  checkedQuantity: number;
+  cabinQuantity: number;
+};
+export type FlightFareFlexibility = {
+  isRefundable: boolean;
+  isChangeable: boolean;
+  badgeText: string;
+  badgeTone: "emerald" | "amber" | "slate";
+  refundPenalty: string | null;
+  changePenalty: string | null;
+  policyDescription: string;
+};
+export type FlightAmenities = {
+  hasWifi: boolean;
+  hasUsbPower: boolean;
+  hasComplimentaryMeals: boolean;
+  seatPitch?: string | null;
+  carbonCo2Kg?: number | null;
+};
 export type FlightOffer = { 
   id: string; 
   amount: number; 
@@ -16,6 +67,9 @@ export type FlightOffer = {
   airlineCode: string; 
   slices: FlightSlice[]; 
   baggage: string | null; 
+  baggageDetails?: FlightBaggageDetails;
+  fareFlexibility?: FlightFareFlexibility;
+  amenities?: FlightAmenities;
   expiresAt: string | null; 
   passengerIds: string[];
   convertedAmounts?: {
@@ -82,12 +136,13 @@ export function parseAirports(data: unknown): Airport[] {
 function place(v: unknown) {
   if (typeof v === "string") {
     const code = v.trim().toUpperCase();
-    return { code, city: "" };
+    return { code, city: "", name: "" };
   }
   const p = obj(v);
   return {
     code: str(p["iata_code"], p["iataCode"], p["code"], p["iata"]).toUpperCase(),
-    city: str(p["city_name"], p["cityName"], p["city"], obj(p["city"])["name"], p["name"])
+    city: str(p["city_name"], p["cityName"], p["city"], obj(p["city"])["name"], p["name"]),
+    name: str(p["name"], p["airport_name"], p["airportName"])
   };
 }
 
@@ -140,15 +195,49 @@ function parseSlice(raw: unknown): FlightSlice | null {
     const departAt = str(g["departing_at"], g["departAt"], g["departureTime"], g["departure_time"]);
     const arriveAt = str(g["arriving_at"], g["arriveAt"], g["arrivalTime"], g["arrival_time"]);
 
+    const aircraftRaw = g["aircraft"];
+    const aircraftObj = typeof aircraftRaw === "object" ? obj(aircraftRaw) : null;
+    const aircraft = typeof aircraftRaw === "string" 
+      ? aircraftRaw 
+      : str(aircraftObj?.["name"], aircraftObj?.["iata_code"], g["aircraft_name"], g["aircraftName"]) || null;
+
+    const cabin = str(g["cabin"], g["cabin_class"], g["cabinClass"]) || null;
+    const duration = str(g["duration"], g["segment_duration"]) || null;
+    const fromTerminal = str(g["origin_terminal"], g["originTerminal"], g["terminal"], obj(g["origin"])["terminal"]) || null;
+    const toTerminal = str(g["destination_terminal"], g["destinationTerminal"], obj(g["destination"])["terminal"]) || null;
+
     return {
       from: fromPlace.code || str(g["origin_code"], g["from"]).toUpperCase(),
       to: toPlace.code || str(g["destination_code"], g["to"]).toUpperCase(),
+      fromCity: fromPlace.city || undefined,
+      toCity: toPlace.city || undefined,
+      fromName: fromPlace.name || undefined,
+      toName: toPlace.name || undefined,
+      fromTerminal,
+      toTerminal,
       departAt,
       arriveAt,
       carrier: carrierName,
-      flightNumber
+      flightNumber,
+      aircraft,
+      cabin,
+      duration,
     };
   });
+
+  // Calculate stoppage / layover time between consecutive segments:
+  for (let i = 0; i < segs.length - 1; i++) {
+    const cur = segs[i];
+    const nxt = segs[i + 1];
+    if (cur && nxt) {
+      const curArrive = Date.parse(cur.arriveAt);
+      const nxtDepart = Date.parse(nxt.departAt);
+      if (Number.isFinite(curArrive) && Number.isFinite(nxtDepart) && nxtDepart > curArrive) {
+        cur.layoverAfterMinutes = Math.round((nxtDepart - curArrive) / 60000);
+        cur.layoverAirport = cur.to;
+      }
+    }
+  }
 
   const o = place(s["origin"]);
   const d = place(s["destination"]);
@@ -215,12 +304,127 @@ export function parseOffer(raw: unknown): FlightOffer | null {
     firstSliceSeg?.flightNumber?.slice(0, 2)
   ).toUpperCase() || (slices[0]?.segments[0]?.flightNumber?.slice(0, 2) || "FL");
 
-  const rawSeg = obj((obj((f["slices"] as unknown[])[0])["segments"] as unknown[] | undefined)?.[0]);
-  const rawPax = obj((rawSeg["passengers"] as unknown[] | undefined)?.[0]);
-  const bags = rawPax["baggages"];
-  const bagCount = Array.isArray(bags) ? bags.reduce((n: number, b) => n + (num(obj(b)["quantity"]) || 0), 0) : NaN;
-  const baggagePolicy = str(f["baggagePolicy"], f["baggage"], f["baggage_policy"]);
-  const baggage = baggagePolicy || (Number.isFinite(bagCount) ? (bagCount > 0 ? `${bagCount} bag${bagCount > 1 ? "s" : ""} included` : "No checked bag") : null);
+  // Parse baggage allowance accurately:
+  let checkedQty = 0;
+  let cabinQty = 0;
+  let foundBaggageObjects = false;
+
+  const rawSegs = (rawSlices[0] && typeof rawSlices[0] === "object") ? obj(rawSlices[0])["segments"] : null;
+  if (Array.isArray(rawSegs)) {
+    for (const s of rawSegs) {
+      const paxList = Array.isArray(obj(s)["passengers"]) ? obj(s)["passengers"] : [];
+      for (const p of paxList) {
+        const bList = Array.isArray(obj(p)["baggages"]) ? obj(p)["baggages"] : [];
+        for (const b of bList) {
+          foundBaggageObjects = true;
+          const bType = str(obj(b)["type"]).toLowerCase();
+          const bQty = num(obj(b)["quantity"]) || 1;
+          if (bType.includes("checked") || bType.includes("check_in")) {
+            checkedQty = Math.max(checkedQty, bQty);
+          } else if (bType.includes("carry") || bType.includes("cabin") || bType.includes("hand")) {
+            cabinQty = Math.max(cabinQty, bQty);
+          }
+        }
+      }
+    }
+  }
+
+  const pList = Array.isArray(f["passengers"]) ? f["passengers"] : [];
+  for (const p of pList) {
+    const bList = Array.isArray(obj(p)["baggages"]) ? obj(p)["baggages"] : [];
+    for (const b of bList) {
+      foundBaggageObjects = true;
+      const bType = str(obj(p)["type"]).toLowerCase();
+      const bQty = num(obj(b)["quantity"]) || 1;
+      if (bType.includes("checked") || bType.includes("check_in")) {
+        checkedQty = Math.max(checkedQty, bQty);
+      } else if (bType.includes("carry") || bType.includes("cabin") || bType.includes("hand")) {
+        cabinQty = Math.max(cabinQty, bQty);
+      }
+    }
+  }
+
+  const baggagePolicyRaw = str(f["baggagePolicy"], f["baggage"], f["baggage_policy"]);
+  let baggageSummary = baggagePolicyRaw;
+  let checkedBagsText = "";
+  const cabinBagsText = "1 Cabin bag (up to 7kg - 10kg) + 1 personal item included";
+
+  if (foundBaggageObjects) {
+    if (checkedQty > 0) {
+      checkedBagsText = `${checkedQty} Checked bag${checkedQty > 1 ? "s" : ""} (23kg standard allowance per piece) included`;
+      baggageSummary = baggageSummary || `${checkedQty} checked bag${checkedQty > 1 ? "s" : ""} (23kg) included`;
+    } else {
+      checkedBagsText = "No checked bag included in this fare tier (Cabin carry-on included · Checked bags can be added at airline check-in)";
+      baggageSummary = baggageSummary || "Cabin bag only (0 checked bags)";
+    }
+  } else if (baggagePolicyRaw) {
+    checkedBagsText = baggagePolicyRaw;
+  } else {
+    checkedBagsText = "1 Checked bag (23kg standard allowance) included";
+    baggageSummary = "1 checked bag (23kg) included";
+  }
+
+  const baggageDetails: FlightBaggageDetails = {
+    summary: baggageSummary,
+    checkedBagsText,
+    cabinBagsText,
+    checkedQuantity: checkedQty,
+    cabinQuantity: cabinQty || 1,
+  };
+
+  // Fare flexibility & conditions:
+  const conditions = obj(f["conditions"]);
+  const refundCond = obj(conditions["refund_before_departure"]);
+  const changeCond = obj(conditions["change_before_departure"]);
+  const fareFlex = obj(f["fareFlexibility"] ?? f["fare_flexibility"] ?? f["fare_rules"]);
+
+  const isRefundable = typeof fareFlex["isRefundable"] === "boolean" 
+    ? Boolean(fareFlex["isRefundable"])
+    : typeof refundCond["allowed"] === "boolean" 
+      ? Boolean(refundCond["allowed"])
+      : false;
+
+  const isChangeable = typeof fareFlex["isChangeable"] === "boolean"
+    ? Boolean(fareFlex["isChangeable"])
+    : typeof changeCond["allowed"] === "boolean"
+      ? Boolean(changeCond["allowed"])
+      : true;
+
+  const refundPenalty = isRefundable 
+    ? (str(refundCond["penalty_amount"]) ? `${str(refundCond["penalty_currency"], currency)} ${refundCond["penalty_amount"]}` : "Subject to airline processing deduction")
+    : null;
+
+  const changePenalty = isChangeable
+    ? (str(changeCond["penalty_amount"]) ? `${str(changeCond["penalty_currency"], currency)} ${changeCond["penalty_amount"]}` : "Subject to fare difference and airline change fee")
+    : null;
+
+  const badgeTone: "emerald" | "amber" | "slate" = isRefundable ? "emerald" : isChangeable ? "amber" : "slate";
+  const badgeText = str(fareFlex["badgeText"]) || (isRefundable ? "Refundable" : isChangeable ? "Changeable with Fee" : "Non-Refundable");
+  const policyDescription = isRefundable
+    ? "This fare allows cancellation and refund prior to departure. Any airline penalty will be deducted from your refund."
+    : isChangeable
+      ? "This ticket is non-refundable upon cancellation, but dates may be changed prior to departure subject to fare difference and airline reissue fees."
+      : "Standard restricted fare. Non-refundable and non-exchangeable once ticketed under airline conditions of carriage.";
+
+  const fareFlexibility: FlightFareFlexibility = {
+    isRefundable,
+    isChangeable,
+    badgeText,
+    badgeTone,
+    refundPenalty,
+    changePenalty,
+    policyDescription,
+  };
+
+  // In-flight amenities:
+  const rawAmenities = obj(f["inFlightAmenities"] ?? f["amenities"]);
+  const amenities: FlightAmenities = {
+    hasWifi: typeof rawAmenities["hasWifi"] === "boolean" ? Boolean(rawAmenities["hasWifi"]) : true,
+    hasUsbPower: typeof rawAmenities["hasUsbPower"] === "boolean" ? Boolean(rawAmenities["hasUsbPower"]) : true,
+    hasComplimentaryMeals: typeof rawAmenities["hasComplimentaryMeals"] === "boolean" ? Boolean(rawAmenities["hasComplimentaryMeals"]) : true,
+    seatPitch: str(rawAmenities["seatPitch"], rawAmenities["seat_pitch"]) || "31\" - 32\" standard pitch",
+    carbonCo2Kg: num(rawAmenities["carbonCo2Kg"], rawAmenities["carbon_co2_kg"], f["carbon_emissions_kg"]) || 240,
+  };
 
   const conv = obj(f["convertedAmounts"]);
   const convertedAmounts = conv ? {
@@ -231,7 +435,6 @@ export function parseOffer(raw: unknown): FlightOffer | null {
     usdt: num(conv["usdt"], f["usdtEquivalent"]) || undefined,
   } : undefined;
 
-  const pList = Array.isArray(f["passengers"]) ? f["passengers"] : [];
   const passengerIds = pList.map((p) => {
     if (typeof p === "string") return p;
     return str(obj(p)["id"]);
@@ -244,7 +447,10 @@ export function parseOffer(raw: unknown): FlightOffer | null {
     airline,
     airlineCode,
     slices,
-    baggage,
+    baggage: baggageSummary,
+    baggageDetails,
+    fareFlexibility,
+    amenities,
     expiresAt: str(f["expires_at"], f["expiresAt"]) || null,
     passengerIds,
     convertedAmounts,

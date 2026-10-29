@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { 
-  AlertCircle, ArrowLeftRight, Check, CheckCircle2, Clock, 
+  AlertCircle, ArrowLeftRight, Briefcase, Check, CheckCircle2, ChevronRight, Clock, 
   Coins, Copy, DollarSign, Download, Filter, Globe, Info, Loader2, 
   Luggage, Plane, PlaneLanding, PlaneTakeoff, Printer, QrCode, 
   RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Ticket, Users, 
@@ -270,14 +270,25 @@ function AirlineLogo({
   );
 }
 
+const formatLayoverDuration = (minutes: number | null | undefined): string => {
+  if (!minutes || minutes <= 0) return "";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+};
+
 function OfferCard({ 
   o, 
   onSelect, 
+  onDetails,
   currency, 
   fx 
 }: { 
   o: FlightOffer; 
   onSelect: () => void; 
+  onDetails: () => void;
   currency: SupportedCurrency; 
   fx: FxRates | null;
 }) {
@@ -286,6 +297,7 @@ function OfferCard({
   const displayPrice = formatPriceWithSymbol(converted.amount, currency);
   const originalPrice = `${o.currency} ${o.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const isConverted = currency.toUpperCase() !== o.currency.toUpperCase();
+  const flex = o.fareFlexibility;
 
   return (
     <article className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-sm transition hover:border-cobalt hover:shadow-xl">
@@ -305,12 +317,22 @@ function OfferCard({
               <span className="text-muted-foreground font-normal">·</span>
               <span className="text-muted-foreground">{o.slices[0]!.segments.map((s) => s.flightNumber).filter(Boolean).join(" · ") || "Direct NDC"}</span>
             </p>
-            <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {flex?.isRefundable ? (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <Check className="h-2.5 w-2.5" /> Refundable
+                </span>
+              ) : flex?.isChangeable ? (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                  Changeable
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-500/10 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                  Non-refundable
+                </span>
+              )}
               <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 <Wifi className="h-2.5 w-2.5 text-cyan" /> Wi-Fi
-              </span>
-              <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                <Utensils className="h-2.5 w-2.5 text-amber-500" /> Meal
               </span>
             </div>
           </div>
@@ -332,6 +354,14 @@ function OfferCard({
                 <p className={`text-[11px] font-black ${s.stops ? "text-magenta" : "text-emerald-500"}`}>
                   {s.stops ? `${s.stops} stop${s.stops > 1 ? "s" : ""} · ${s.segments.slice(0, -1).map((g) => g.to).join(", ")}` : "Non-stop direct"}
                 </p>
+                <button
+                  type="button"
+                  onClick={onDetails}
+                  className="mt-1 inline-flex items-center gap-0.5 text-[10px] font-bold text-cobalt hover:underline cursor-pointer"
+                >
+                  <span>View stops & baggage</span>
+                  <ChevronRight className="h-2.5 w-2.5" />
+                </button>
               </div>
               <div className="text-right">
                 <p className="text-lg sm:text-2xl font-black text-foreground">{time(s.arriveAt)}</p>
@@ -342,7 +372,7 @@ function OfferCard({
         </div>
 
         {/* Dynamic Multi-Currency Price & Book Action */}
-        <div className="flex items-center justify-between gap-3 border-t border-border pt-4 lg:w-56 lg:flex-col lg:items-end lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-4 lg:w-64 lg:flex-col lg:items-end lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
           <div className="lg:text-right">
             <p className="text-xl sm:text-2xl font-black text-cobalt tracking-tight">{displayPrice}</p>
             {isConverted && (
@@ -360,12 +390,396 @@ function OfferCard({
               </span>
             )}
           </div>
-          <Button onClick={onSelect} className="shadow-md hover:shadow-lg transition-all font-black px-5 py-2.5 rounded-xl">
-            Select Flight
-          </Button>
+          <div className="flex w-full sm:w-auto items-center gap-2">
+            <Button 
+              type="button"
+              variant="outline" 
+              size="sm" 
+              onClick={onDetails} 
+              className="h-10 px-3.5 rounded-xl font-bold border-border hover:border-cobalt/60 hover:bg-cobalt/5 transition-all text-xs"
+            >
+              <Info className="h-3.5 w-3.5 mr-1 text-cobalt" />
+              Flight Details
+            </Button>
+            <Button 
+              type="button"
+              onClick={onSelect} 
+              className="h-10 px-4 rounded-xl font-black shadow-md hover:shadow-lg transition-all text-xs"
+            >
+              Select Flight
+            </Button>
+          </div>
         </div>
       </div>
     </article>
+  );
+}
+
+function FlightDetailsModal({
+  offer,
+  onClose,
+  onBook,
+  currency,
+  fx,
+  cabinClass,
+}: {
+  offer: FlightOffer;
+  onClose: () => void;
+  onBook: () => void;
+  currency: SupportedCurrency;
+  fx: FxRates | null;
+  cabinClass: Cabin;
+}) {
+  const converted = convertCurrency(offer.amount, offer.currency, currency, fx);
+  const displayPrice = formatPriceWithSymbol(converted.amount, currency);
+  const originalPrice = `${offer.currency} ${offer.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const isConverted = currency.toUpperCase() !== offer.currency.toUpperCase();
+  const flex = offer.fareFlexibility;
+  const bag = offer.baggageDetails;
+  const amen = offer.amenities;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      <div 
+        className="relative w-full max-w-3xl rounded-3xl border border-border bg-card shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="flight-details-title"
+      >
+        {/* Header Bar */}
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card/95 px-5 sm:px-6 py-4 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <AirlineLogo 
+              code={offer.airlineCode} 
+              name={offer.airline} 
+              logoUrl={offer.logoUrl} 
+              className="h-11 w-11"
+            />
+            <div>
+              <h2 id="flight-details-title" className="text-base sm:text-lg font-black text-foreground flex items-center gap-2">
+                <span>{offer.airline}</span>
+                <span className="rounded-md bg-cobalt/10 px-2 py-0.5 text-xs font-mono font-bold text-cobalt">
+                  {offer.airlineCode}
+                </span>
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {offer.slices[0]?.from} → {offer.slices[0]?.to} · {CABIN_LABEL[cabinClass] || "Economy"} · Verified BaaS Fare
+              </p>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
+          {/* Top Price & Flexibility Banner */}
+          <div className="rounded-2xl border border-cobalt/20 bg-gradient-to-br from-cobalt/5 via-navy-light/10 to-transparent p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                {flex?.isRefundable ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Refundable Ticket
+                  </span>
+                ) : flex?.isChangeable ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Changeable with Airline Fee
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/15 border border-slate-500/30 px-2.5 py-0.5 text-xs font-extrabold text-slate-600 dark:text-slate-300">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Non-Refundable Restricted Fare
+                  </span>
+                )}
+                <span className="rounded-full bg-cyan/15 border border-cyan/30 px-2.5 py-0.5 text-xs font-bold text-cyan">
+                  {offer.slices.every(s => s.stops === 0) ? "Non-stop Direct" : `${offer.slices[0]?.stops || 1} Stop Transfer`}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                All taxes, airport passenger service charges & ticketing fees included.
+              </p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-2xl sm:text-3xl font-black text-cobalt tracking-tight">
+                {displayPrice}
+              </p>
+              {isConverted && (
+                <p className="text-xs font-medium text-muted-foreground">
+                  Original base fare: {originalPrice}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Detailed Flight Segments & Stoppage Times */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
+                <Plane className="h-4 w-4 text-cobalt" />
+                Complete Flight Route & Layovers
+              </h3>
+              <span className="text-xs font-medium text-muted-foreground">
+                Total duration: {prettyDuration(offer.slices[0]?.duration) || "Direct"}
+              </span>
+            </div>
+
+            {offer.slices.map((slice, sliceIdx) => (
+              <div key={sliceIdx} className="rounded-2xl border border-border bg-muted/20 p-4 sm:p-5 space-y-4">
+                {offer.slices.length > 1 && (
+                  <div className="border-b border-border pb-2.5 flex items-center justify-between">
+                    <span className="text-xs font-black uppercase text-cobalt">
+                      {sliceIdx === 0 ? "Outbound Flight" : "Return Flight"}
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {date(slice.departAt)}
+                    </span>
+                  </div>
+                )}
+
+                {slice.segments.map((seg, segIdx) => (
+                  <div key={segIdx} className="space-y-3">
+                    {/* Segment Leg Box */}
+                    <div className="relative pl-6 sm:pl-8 border-l-2 border-cobalt/30 space-y-4 py-1">
+                      {/* Departure Point */}
+                      <div className="relative">
+                        <span className="absolute -left-[31px] sm:-left-[39px] top-1 grid h-5 w-5 place-items-center rounded-full bg-cobalt text-white shadow-sm ring-4 ring-card">
+                          <PlaneTakeoff className="h-3 w-3" />
+                        </span>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg font-black text-foreground">{time(seg.departAt)}</span>
+                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-black text-foreground">{seg.from}</span>
+                            <span className="text-sm font-semibold text-foreground">
+                              {seg.fromName || (seg.fromCity ? `${seg.fromCity} Airport` : seg.from)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {date(seg.departAt)}
+                            {seg.fromTerminal ? ` · Terminal ${seg.fromTerminal}` : ""}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* In-Flight Details */}
+                      <div className="rounded-xl bg-card border border-border/70 p-3 sm:p-3.5 space-y-1.5 shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2 font-bold text-foreground">
+                            <span className="text-cobalt font-mono">{seg.flightNumber}</span>
+                            <span>·</span>
+                            <span>{seg.carrier}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground font-medium">
+                            {seg.aircraft && <span>Aircraft: {seg.aircraft}</span>}
+                            {seg.aircraft && seg.duration && <span>·</span>}
+                            {seg.duration && <span>Flight time: {prettyDuration(seg.duration)}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                          <span className="capitalize">{seg.cabin || CABIN_LABEL[cabinClass] || "Economy Class"}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                            <Check className="h-3 w-3" /> Electronic Ticket (Instant PNR)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Arrival Point */}
+                      <div className="relative">
+                        <span className="absolute -left-[31px] sm:-left-[39px] top-1 grid h-5 w-5 place-items-center rounded-full bg-cyan text-slate-950 shadow-sm ring-4 ring-card">
+                          <PlaneLanding className="h-3 w-3" />
+                        </span>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg font-black text-foreground">{time(seg.arriveAt)}</span>
+                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-black text-foreground">{seg.to}</span>
+                            <span className="text-sm font-semibold text-foreground">
+                              {seg.toName || (seg.toCity ? `${seg.toCity} Airport` : seg.to)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {date(seg.arriveAt)}
+                            {seg.toTerminal ? ` · Terminal ${seg.toTerminal}` : ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* STOPPAGE / LAYOVER BANNER IF APPLICABLE */}
+                    {seg.layoverAfterMinutes != null && seg.layoverAfterMinutes > 0 && (
+                      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-500/5 p-3.5 sm:p-4 my-2 flex items-start sm:items-center gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                          <Clock className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-extrabold text-foreground text-xs sm:text-sm">
+                            {formatLayoverDuration(seg.layoverAfterMinutes)} Stoppage / Layover in {seg.layoverAirport || seg.to}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Connecting flight · Checked baggage transferred directly to your final destination · Plane change required
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Baggage Allowance Grid */}
+          <div className="space-y-3">
+            <h3 className="font-extrabold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
+              <Luggage className="h-4 w-4 text-cyan" />
+              Baggage Allowance Included
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Checked baggage */}
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
+                  <Luggage className="h-4 w-4 text-cobalt" />
+                  <h4>Checked Baggage</h4>
+                </div>
+                <p className="text-xs text-foreground font-semibold">
+                  {bag?.checkedBagsText || offer.baggage || "1 Checked bag (23kg standard allowance) included"}
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Standard weight limit: 23 kg (50 lbs) per bag. Max dimension sum: 158 cm (62 inches). Additional bags can be added during airline web check-in.
+                </p>
+              </div>
+
+              {/* Cabin carry-on */}
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
+                  <Briefcase className="h-4 w-4 text-cyan" />
+                  <h4>Cabin Carry-On</h4>
+                </div>
+                <p className="text-xs text-foreground font-semibold">
+                  {bag?.cabinBagsText || "1 Cabin bag (up to 7kg - 10kg) + 1 Personal item"}
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Fits in overhead cabin storage. Personal item (laptop backpack or handbag) must fit under the seat in front of you.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Fare Flexibility, Refund Policy & Rules */}
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3 shadow-sm">
+            <h3 className="font-extrabold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              Ticket Refundability & Fare Conditions
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <p className="font-extrabold text-foreground flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${flex?.isRefundable ? "bg-emerald-500" : "bg-slate-400"}`} />
+                  Cancellation & Refunds
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  {flex?.isRefundable 
+                    ? `Eligible for cancellation refund before scheduled departure. ${flex.refundPenalty || "Subject to airline cancellation fee"}.`
+                    : "Non-refundable ticket. Once issued, base fare cannot be refunded in the event of passenger cancellation."}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-extrabold text-foreground flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${flex?.isChangeable ? "bg-amber-500" : "bg-slate-400"}`} />
+                  Date Changes & Reissues
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  {flex?.isChangeable
+                    ? `Date changes permitted prior to departure. ${flex.changePenalty || "Fare difference and airline reissue fees apply"}.`
+                    : "Flight changes are restricted on this promotional fare."}
+                </p>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Info className="h-3.5 w-3.5 shrink-0 text-cobalt" />
+              <span>International travel requires valid passport (min. 6 months validity) and appropriate destination/transit visas.</span>
+            </div>
+          </div>
+
+          {/* In-Flight Amenities & Comfort */}
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-2.5 shadow-sm">
+            <h3 className="font-extrabold text-foreground text-xs uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              In-Flight Amenities & Specifications
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="flex items-center gap-2 rounded-xl bg-muted/30 p-2.5">
+                <Wifi className="h-4 w-4 text-cyan shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">{amen?.hasWifi ? "Wi-Fi Enabled" : "Wi-Fi on Board"}</p>
+                  <p className="text-[10px] text-muted-foreground">Messaging & stream</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl bg-muted/30 p-2.5">
+                <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">Power Outlets</p>
+                  <p className="text-[10px] text-muted-foreground">USB & In-seat AC</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl bg-muted/30 p-2.5">
+                <Utensils className="h-4 w-4 text-emerald-500 shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">Complimentary Meals</p>
+                  <p className="text-[10px] text-muted-foreground">Dietary choices</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl bg-muted/30 p-2.5">
+                <Globe className="h-4 w-4 text-cobalt shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">CO₂ Impact</p>
+                  <p className="text-[10px] text-muted-foreground">~{amen?.carbonCo2Kg || 240} kg / pax</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border bg-card/95 px-5 sm:px-6 py-4 backdrop-blur-md">
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground">Final price for {CABIN_LABEL[cabinClass] || "Flight"}</p>
+            <p className="text-xl sm:text-2xl font-black text-cobalt tracking-tight">{displayPrice}</p>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={onClose}
+              className="flex-1 sm:flex-initial rounded-xl font-bold px-4"
+            >
+              Back to results
+            </Button>
+            <Button 
+              type="button"
+              onClick={onBook}
+              className="flex-1 sm:flex-initial rounded-xl font-black px-6 shadow-md hover:shadow-lg transition-all"
+            >
+              Proceed to Book Flight
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -399,6 +813,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
   const [selectedAirline, setSelectedAirline] = useState<string>("all");
   const [departureWindow, setDepartureWindow] = useState<"all" | "morning" | "afternoon" | "evening">("all");
   const [maxPriceCap, setMaxPriceCap] = useState<number | null>(null);
+  const [detailOffer, setDetailOffer] = useState<FlightOffer | null>(null);
   const [picked, setPicked] = useState<FlightOffer | null>(null);
   const [pax, setPax] = useState<Passenger[]>([blankPax()]);
   const [pin, setPin] = useState("");
@@ -1099,6 +1514,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                     key={o.id} 
                     o={o} 
                     onSelect={() => choose(o)} 
+                    onDetails={() => setDetailOffer(o)}
                     currency={selectedCurrency}
                     fx={liveRates}
                   />
@@ -1255,6 +1671,22 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
             🛡️ <strong>Slikpay IATA Guarantee:</strong> Under 24-hour IATA rules, changes or cancellations can be processed by contacting support at <code className="font-semibold text-cobalt">support@slikpay.online</code> quoting your 6-letter PNR.
           </p>
         </section>
+      )}
+
+      {/* Comprehensive Flight Details, Baggage, Stoppage & Refund Rules Modal */}
+      {detailOffer && (
+        <FlightDetailsModal 
+          offer={detailOffer}
+          cabinClass={cabin}
+          currency={selectedCurrency}
+          fx={liveRates}
+          onClose={() => setDetailOffer(null)}
+          onBook={() => {
+            const selected = detailOffer;
+            setDetailOffer(null);
+            choose(selected);
+          }}
+        />
       )}
 
       {/* Booking Checkout Modal with Multi-Wallet Payment Selection */}

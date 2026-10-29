@@ -118,7 +118,11 @@ describe("flight parsing", () => {
     expect(first.slices[0]!.stops).toBe(1);
     expect(first.slices[0]!.segments.length).toBe(2);
     expect(first.slices[0]!.segments[0]!.flightNumber).toBe("AT0556");
+    expect(first.slices[0]!.segments[0]!.layoverAfterMinutes).toBe(950);
+    expect(first.slices[0]!.segments[0]!.layoverAirport).toBe("CMN");
     expect(first.slices[0]!.segments[1]!.flightNumber).toBe("AT0502");
+    expect(first.baggageDetails).toBeDefined();
+    expect(first.fareFlexibility).toBeDefined();
 
     const direct = r.offers[1]!;
     expect(direct.id).toBe("off_direct_ba_123");
