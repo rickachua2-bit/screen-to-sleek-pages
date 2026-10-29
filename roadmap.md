@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Apply selected Integration Studio design to API keys, explorer, webhooks and payment attempts, preserving honest unconnected key/subscription states.
 - [x] API console upgrade: paginated searchable explorer with method filters, owner-and-mode-scoped inbound webhook monitoring/reconciliation, server-redacted responses, atomic console payment preparation/settlement, bounded signed bodies and confirmed completion writes; 332 tests passed and unsigned webhook rejected (401).
 - [x] API console safety: explicit payment statuses, one reference per mounted attempt, lock payment resubmission, remove partner hints, retry unfinished webhooks, reject malformed JSON and propagate partial credit failures; focused tests passed.
 - [ ] API console live validation: external signed-in session unavailable; cross-session recovery, full operation-specific fee contracts and real owner-scoped webhook queries/reconciliation need authenticated verification.
