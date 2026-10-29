@@ -26,7 +26,6 @@ import { DisputesManager } from "./DisputesManager";
 import { StatementsManager } from "./StatementsManager";
 import { CashierShiftsManager } from "./CashierShiftsManager";
 import { ApprovalsManager } from "./ApprovalsManager";
-import { TreasuryAutomation } from "./TreasuryAutomation";
 import { FlightBooking } from "./FlightBooking";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
