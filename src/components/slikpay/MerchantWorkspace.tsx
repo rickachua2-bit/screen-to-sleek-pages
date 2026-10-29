@@ -26,7 +26,6 @@ import { DisputesManager } from "./DisputesManager";
 import { StatementsManager } from "./StatementsManager";
 import { CashierShiftsManager } from "./CashierShiftsManager";
 import { ApprovalsManager } from "./ApprovalsManager";
-import { TreasuryAutomation } from "./TreasuryAutomation";
 import { FlightBooking } from "./FlightBooking";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
@@ -63,7 +62,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "banking") return <TransferCenter key="single" />;
   if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
   if (module === "cards") return <Cards />;
-  if (module === "treasury") return <TreasuryAutomation />;
+  if (module === "treasury") return <InternationalServices />;
   if (module === "links") return <PaymentLinks />;
   if (module === "smarttag") return <SmartTag />;
   if (module === "mandates") return <DirectDebits />;
