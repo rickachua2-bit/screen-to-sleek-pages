@@ -239,11 +239,8 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   </div>;
 }
 
-export function InternationalServices({ initial = "cross-border", previewProfile }: { initial?: "cross-border" | "remittance" | "crypto"; previewProfile?: ProfileLike }) {
-  const live = useBankingProfile();
-  const profile = previewProfile ?? live.profile;
-  const profileError = previewProfile ? "" : live.error;
-  const refresh = live.refresh;
+export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" | "crypto" }) {
+  const { profile, error: profileError, refresh } = useBankingProfile();
   const [tab, setTab] = useState<"cross-border" | "remittance" | "crypto">(initial);
   const history = profile?.receipts.filter((r) => isInternationalReceipt(r.operation)) ?? [];
   return <section className="space-y-5" aria-label="International services">
