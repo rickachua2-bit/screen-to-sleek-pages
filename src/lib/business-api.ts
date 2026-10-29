@@ -12,6 +12,11 @@ export const API_PATHS = [
 // so every "Documentation" surface in the app points at the same address.
 export const DOCS_URL = "https://docs.slikpay.online";
 
+// Gateway base URL published in the official documentation (sandbox and live share it;
+// the key prefix selects the environment).
+export const API_BASE_URL = "https://api.slikpay.online/v1";
+
+
 // Anchors verified against the live documentation site.
 export const DOCS_SECTIONS = [
   { id: "section-quickstart", name: "Quickstart & architecture" },
