@@ -29,7 +29,7 @@ it("does not change password when current-password verification fails", async ()
   mocks.signin.mockResolvedValue({ error: new Error("wrong") });
   render(<TeamSecurity />); await waitFor(() => expect(screen.getByText("Ada")).toBeTruthy());
   tab("Security"); fireEvent.click(await screen.findByRole("button", { name: "Change password" }));
-  for (const [label, value] of [["Current password", "wrong"], ["New password", "NewSecret12"], ["Confirm new password", "NewSecret12"], ["Authenticator code", "123456"]]) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  for (const [label, value] of [["Current password", "wrong"], ["New password", "NewSecret12"], ["Confirm new password", "NewSecret12"], ["Authenticator code", "123456"]] as const) fireEvent.change(screen.getByLabelText(label), { target: { value } });
   fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   await waitFor(() => expect(mocks.signin).toHaveBeenCalled());
   expect(mocks.update).not.toHaveBeenCalled();
