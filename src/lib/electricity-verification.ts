@@ -9,11 +9,11 @@ const text = (...values: unknown[]) => values.find((v): v is string => typeof v 
 
 export function meterCustomer(payload: unknown): Details | null {
   const outer = record(payload);
-  const data = "data" in outer ? record(outer.data) : outer;
-  const customer = record(data.customer);
-  if (outer.success === false || outer.valid === false || data.valid === false || data.success === false) return null;
-  const customerName = text(data.customerName, data.customer_name, customer.name, customer.customerName);
-  const address = text(data.address, data.customerAddress, data.customer_address, customer.address);
+  const data = "data" in outer ? record(outer["data"]) : outer;
+  const customer = record(data["customer"]);
+  if (outer["success"] === false || outer["valid"] === false || data["valid"] === false || data["success"] === false) return null;
+  const customerName = text(data["customerName"], data["customer_name"], customer["name"], customer["customerName"]);
+  const address = text(data["address"], data["customerAddress"], data["customer_address"], customer["address"]);
   return customerName && address ? { ...data, customerName, address } : null;
 }
 
