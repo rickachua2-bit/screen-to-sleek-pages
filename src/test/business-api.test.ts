@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, expect, it, vi } from "vitest";
-import { keyAction, liveKeyEligible } from "@/lib/business-api";
+import { DOCS_URL, docsLink, keyAction, liveKeyEligible } from "@/lib/business-api";
 const mocks = vi.hoisted(() => ({ db: vi.fn(), digest: vi.fn(), provider: vi.fn() }));
 vi.mock("@/lib/merchant-verification.server", () => ({ accountAdmin: mocks.db, digest: mocks.digest }));
 vi.mock("@/lib/paddle.server", () => ({ callPaddle: mocks.provider, providerBalances: mocks.provider }));
