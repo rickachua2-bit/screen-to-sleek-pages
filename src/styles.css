@@ -946,6 +946,8 @@ html { scroll-behavior: smooth; }
 
 .collections-composer .transfer-composer-layout { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: stretch; }
 .collections-hero { width: 100%; max-width: 400px; margin: 22px auto 26px; border-radius: 12px; display: block; box-shadow: 0 18px 50px -18px color-mix(in oklab, var(--cyan) 35%, transparent); }
+.qr-stand { background: linear-gradient(165deg, var(--obsidian), var(--navy) 55%, color-mix(in oklab, var(--cobalt) 45%, var(--navy))); border: 1px solid color-mix(in oklab, var(--cyan) 35%, transparent); }
+@media print { body * { visibility: hidden; } .qr-stand, .qr-stand * { visibility: visible; } .qr-stand { position: fixed; inset: 0; margin: auto; } }
 .collections-composer .crypto-stages { margin-top: 4px; }
 @media (max-width: 760px) { .collections-composer .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .collections-hero { max-width: 260px; margin: 14px auto 18px; } }
 
