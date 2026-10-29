@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X, Code2, Webhook, Receipt, RefreshCw, Copy, ArrowRight } from "lucide-react";
+import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X, Code2, Webhook, Receipt, RefreshCw, Copy, ArrowRight, KeyRound, BookOpen, ArrowUpRight, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandSelect } from "./BrandSelect";
@@ -180,7 +180,7 @@ export function PaddleConsole({ role }: { role: Role }) {
   const [cat, setCat] = useState<string>("all");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<PaddleEndpoint | null>(null);
-  const [tab, setTab] = useState<"explorer" | "webhooks" | "receipts">("explorer");
+  const [tab, setTab] = useState<"keys" | "explorer" | "webhooks" | "receipts" | "docs">("keys");
   const [method, setMethod] = useState("all");
   const [page, setPage] = useState(1);
   const mode = profile?.mode ?? "sandbox";
@@ -192,12 +192,27 @@ export function PaddleConsole({ role }: { role: Role }) {
   const visible = shown.slice((currentPage - 1) * 18, currentPage * 18);
   const available = list.filter((x) => x.access.allowed).length;
 
-  return <div className="space-y-5 min-w-0">
-    <header className="developer-console-banner flex flex-wrap items-center justify-between gap-5 p-5 sm:p-7"><div className="flex items-center gap-4"><span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-cyan/30 bg-cyan/10 text-cyan"><Code2 className="size-6" /></span><div><p className="text-xs text-muted-foreground">Slikpay / Developer workspace</p><h2 className="mt-1 text-2xl font-bold">API & Webhooks</h2><p className="mt-2 text-xs text-muted-foreground">{profile ? `${mode === "live" ? "Live environment" : "Sandbox environment"} · ${available} accessible operations` : "Checking your environment…"}</p></div></div><Button variant="outline" onClick={() => void refresh()}><RefreshCw />Refresh account</Button></header>
-    <nav className="flex gap-1 overflow-x-auto border-b border-border" aria-label="Developer workspace">{[{ id: "explorer" as const, name: "API explorer", icon: Code2 }, { id: "webhooks" as const, name: "Webhooks", icon: Webhook }, { id: "receipts" as const, name: "Payment attempts", icon: Receipt }].map(({ id, name, icon: Icon }) => <Button key={id} variant="ghost" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} className={`h-12 shrink-0 rounded-none border-b-2 px-4 ${tab === id ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}><Icon />{name}</Button>)}</nav>
+  return <div className="developer-studio">
+    <aside className="developer-studio-rail">
+      <p className="text-lg font-bold">Slikpay</p><Code2 className="mt-5 size-9 text-cyan" /><h2 className="mt-3 text-2xl font-bold">Developers</h2>
+      <p className="mt-2 text-xs text-muted-foreground">API & Webhooks</p>
+      <div className="my-6 flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-xs font-semibold">{mode === "live" ? <Radio className="size-4 text-cyan" /> : <FlaskConical className="size-4 text-magenta" />}{profile ? `${mode === "live" ? "Live" : "Sandbox"} environment` : "Checking environment…"}</div>
+      <nav className="developer-studio-navigation" aria-label="Developer workspace">{[{ id: "keys" as const, name: "API keys", icon: KeyRound }, { id: "explorer" as const, name: "Request explorer", icon: Code2 }, { id: "webhooks" as const, name: "Webhooks", icon: Webhook }, { id: "receipts" as const, name: "Payment attempts", icon: Receipt }, { id: "docs" as const, name: "Documentation", icon: BookOpen }].map(({ id, name, icon: Icon }) => <Button key={id} variant="ghost" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} className="developer-studio-nav"><Icon />{name}</Button>)}</nav>
+      <div className="developer-studio-readiness mt-8 border-t border-border pt-5"><p className="text-xs font-semibold text-muted-foreground">Integration readiness</p><ul className="mt-4 space-y-4 text-xs">{[{ label: "Account environment", ready: Boolean(profile) }, { label: "Business API keys", ready: false }, { label: "Outbound subscriptions", ready: false }].map((step) => <li key={step.label} className="flex items-start gap-2.5">{step.ready ? <CheckCircle2 className="size-4 shrink-0 text-cyan" /> : <Clock className="size-4 shrink-0 text-muted-foreground" />}<span>{step.label}<span className="mt-1 block text-[11px] text-muted-foreground">{step.ready ? "Connected" : "Not connected"}</span></span></li>)}</ul></div>
+      <Button variant="outline" className="mt-6 w-full" onClick={() => void refresh()}><RefreshCw />Refresh account</Button>
+    </aside>
+    <div className="developer-studio-workspace space-y-6">
+    {tab === "keys" && <section className="space-y-6"><header className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-bold">API keys and access</h2><p className="mt-2 text-sm text-muted-foreground">Business credentials · separate sandbox and live access</p></div><Button disabled title="Business key issuance is not connected"><KeyRound />Create key</Button></header>
+      <div className="divide-y divide-border">{[ { name: "Sandbox secret key", detail: "Testing and development", icon: FlaskConical, tone: "text-primary bg-primary/10" }, { name: "Live secret key", detail: "Production access", icon: Radio, tone: "text-magenta bg-magenta/10" }].map(({ name, detail, icon: Icon, tone }) => <article key={name} className="flex flex-wrap items-center gap-4 py-6"><span className={`rounded-md p-3 ${tone}`}><Icon className="size-5" /></span><div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{name}</h3><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div><div className="text-right"><p className="text-sm font-semibold">Not issued</p><p className="mt-1 text-xs text-muted-foreground">Key management not connected</p></div><Lock className="size-4 text-muted-foreground" /></article>)}</div>
+      <div className="grid gap-6 border-y border-border py-6 sm:grid-cols-3">{[{ icon: ShieldCheck, title: "Key permissions", value: "Not configured" }, { icon: RefreshCw, title: "Rotation & expiry", value: "Not configured" }, { icon: Lock, title: "IP restrictions", value: "Not configured" }].map(({ icon: Icon, title, value }) => <div key={title}><Icon className="mb-3 size-5 text-primary" /><p className="text-sm font-semibold">{title}</p><p className="mt-2 text-xs text-muted-foreground">{value}</p></div>)}</div>
+      <section className="flex flex-wrap items-start justify-between gap-4 py-2"><div className="flex gap-3"><Webhook className="mt-1 size-6 text-primary" /><div><h3 className="font-bold">Webhook delivery history</h3><p className="mt-2 text-xs text-muted-foreground">Incoming signed events and reconciliation for your receiving accounts.</p></div></div><Button variant="outline" onClick={() => setTab("webhooks")}>View deliveries<ArrowUpRight /></Button></section>
+      <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0 text-primary" />Platform banking credentials stay private and are never shared as business API keys.</p>
+    </section>}
+    {tab === "docs" && <section className="space-y-6"><BookOpen className="size-8 text-primary" /><h2 className="text-2xl font-bold">Developer documentation</h2><p className="text-sm text-muted-foreground">Public Slikpay API documentation is not published yet. Business API endpoints and credentials are not available.</p><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => setTab("explorer")}><Code2 />Browse connected operations</Button><Button variant="outline" onClick={() => setTab("webhooks")}><Webhook />Check incoming events</Button></div></section>}
     {error && <p role="alert" className="text-sm text-destructive">Account information is unavailable. Refresh before making a request.</p>}
     {tab === "webhooks" && <WebhookMonitor />}
     {tab === "explorer" && <>
+    <header><h2 className="text-2xl font-bold">Request explorer</h2><p className="mt-2 text-xs text-muted-foreground">{available} accessible operations · {mode} environment</p></header>
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{shown.length}</span> operations</p>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto"><label className="relative min-w-0 flex-1 sm:w-72"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search services" className="field h-11 w-full pl-9" placeholder="Search name or endpoint…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label><div className="w-28"><BrandSelect label="Request method" value={method} onChange={(v) => { setMethod(v); setPage(1); }} options={["all", "GET", "POST", "DELETE"].map((v) => ({ value: v, label: v === "all" ? "All methods" : v }))} /></div></div>
@@ -205,7 +220,7 @@ export function PaddleConsole({ role }: { role: Role }) {
     <div className="flex gap-2 overflow-x-auto pb-1">
       {[{ id: "all", label: "All" }, ...cats].map((c) => <Button key={c.id} variant="outline" size="sm" aria-pressed={cat === c.id} onClick={() => { setCat(c.id); setPage(1); }} className={`shrink-0 ${cat === c.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{c.label}</Button>)}
     </div>
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
       {visible.map(({ e, access }) => <Button variant="outline" key={e.id} disabled={!profile || !access.allowed} onClick={() => setOpen(e)} className="group flex h-auto min-h-28 items-start gap-3 whitespace-normal rounded-lg border border-border bg-card p-4 text-left hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-65">
         <span className={`mt-0.5 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold ${e.method === "GET" ? "bg-cyan/15 text-cyan" : e.method === "DELETE" ? "bg-destructive/15 text-destructive" : "bg-magenta/15 text-magenta"}`}>{e.method}</span>
         <span className="min-w-0 flex-1">
@@ -224,6 +239,7 @@ export function PaddleConsole({ role }: { role: Role }) {
       {!profile ? <p className="text-sm text-muted-foreground">Payment history is unavailable.</p> : !profile.receipts.length ? <p className="py-10 text-center text-sm text-muted-foreground">No recorded payment attempts.</p> :
       <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs"><thead className="text-muted-foreground"><tr><th className="p-2">When</th><th className="p-2">Service</th><th className="p-2">Amount</th><th className="p-2">Reference</th><th className="p-2">NIP session</th><th className="p-2">Status</th></tr></thead><tbody>{profile.receipts.map((r) => <tr key={r.id} className="border-t border-border"><td className="p-2">{new Date(r.created_at).toLocaleString()}</td><td className="p-2 font-mono">{r.operation.replace("/v1/", "")}</td><td className="p-2 font-mono">{r.currency} {Number(r.amount ?? 0).toLocaleString()}</td><td className="p-2 font-mono">{r.provider_reference ?? "—"}</td><td className="p-2 font-mono">{r.session_id ?? "—"}</td><td className={`p-2 font-bold ${r.status === "succeeded" ? "text-cyan" : r.status === "failed" ? "text-destructive" : "text-magenta"}`}>{r.status}{r.mode === "sandbox" && " · test"}</td></tr>)}</tbody></table></div>
     }</section>}
+    </div>
     {open && <Runner endpoint={open} mode={mode} onClose={() => setOpen(null)} onDone={() => void refresh()} />}
   </div>;
 }
