@@ -113,7 +113,7 @@ function CrossBorderPayout({ purpose, profile, refresh }: { purpose: "cross-bord
   return <div className="space-y-5">
     <div className="overflow-hidden rounded-2xl border border-border bg-card lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
       {/* Navy destination explorer rail */}
-      <aside className="p-4 text-white" style={{ background: "linear-gradient(160deg, hsl(var(--obsidian)) 0%, hsl(222 62% 16%) 100%)" }}>
+      <aside className="bg-navy-rail p-4 text-white">
         <h3 className="text-sm font-bold tracking-wide">{heading}</h3>
         <p className="mt-0.5 text-xs text-white/60">{profile.mode === "live" ? "Live account" : "Sandbox account"}</p>
         <div className="relative mt-3">
