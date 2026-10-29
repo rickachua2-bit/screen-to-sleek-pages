@@ -8,7 +8,8 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] Federal tax and Remita: dedicated pages, automatic verification, assessed amount/fee binding, atomic payments, honest statuses, saved receipts and tests.
+- [x] Federal tax and Remita: dedicated pages, automatic verification, assessed amount/fee binding, atomic payments, honest statuses and downloadable saved records; 11 focused tests and 297 regression tests passed.
+- [ ] Tax/Remita live confirmation: needs a real authenticated service response with assessed amount/fee; official receipt retrieval and pending recovery need provider-confirmed contracts. No guessed pricing rail or status endpoint added.
 - [x] Betting wallet: automatic customer/user ID verification, server-side revalidation, stale-result protection, atomic funding and pending safety; tests passed. Real authenticated service response remains unverified without a session.
 - [x] Cable TV: confirmed smartcard verification, four providers, customer banner and verification-gated plans; lookup/stale-response tests passed. Authenticated provider lookup remains unverified.
 - [ ] Logo for Slikpay: 4 concepts generated (Flow S, Pulse Tile, Secure S, Orbit Coin) in /mnt/documents/slikpay/; user to pick, then refine + favicon + app header

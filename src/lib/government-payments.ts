@@ -16,8 +16,9 @@ export function governmentAssessment(service: GovernmentService, identifier: str
   const echoed = d[service === "firs" ? "tin" : "rrr"];
   if (!name || echoed != null && String(echoed).trim() !== identifier) return null;
   const amount = money(d["amount"]); const fee = money(d["fee"] ?? d["platformFee"] ?? d["transactionFee"]);
-  const currency = text(d["currency"], d["feeCurrency"]);
-  const ready = amount !== null && amount > 0 && fee !== null && (!currency || currency === "NGN");
+  const currency = text(d["currency"]);
+  const feeCurrency = text(d["feeCurrency"]);
+  const ready = amount !== null && amount > 0 && fee !== null && (!currency || currency === "NGN") && (!feeCurrency || feeCurrency === "NGN");
   return { identifier, name, organisation: text(d["mdaName"], d["taxType"]), amount, fee, total: ready ? Math.round((amount + fee) * 100) / 100 : null, ready, dueDate: text(d["dueDate"]), assessmentReference: text(d["assessmentReference"], d["reference"]) };
 }
 export type GovernmentAssessment = NonNullable<ReturnType<typeof governmentAssessment>>;

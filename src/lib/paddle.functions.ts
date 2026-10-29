@@ -61,6 +61,12 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
       const { executeGovernment } = await import("./government-payments.server");
       return executeGovernment(endpoint.id === "post-bills-firs-pay" ? "firs" : "remita", data.body, data.idempotencyKey, data.pin);
     }
+    if (["post-bills-firs-validate", "post-bills-remita-validate"].includes(endpoint.id)) {
+      const service = endpoint.id === "post-bills-firs-validate" ? "firs" : "remita";
+      const { lookupGovernment } = await import("./government-payments.server");
+      const { assessment } = await lookupGovernment(service, String(data.body[service === "firs" ? "tin" : "rrr"] ?? ""));
+      return { mode, message: null, resultJson: JSON.stringify(assessment), receipt: null };
+    }
     if (isUnverifiedInternationalPayout(endpoint.path)) throw new Error(INTERNATIONAL_NOT_ACTIVE);
     if (endpoint.path === "/v1/crypto/swap") {
       throw new Error("Use the wallet conversion screen for protected conversion and recovery.");
