@@ -331,7 +331,8 @@ function OfferCard({
 export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "personal" }) {
   const { profile } = useBankingProfile();
   const live = profile?.mode === "live";
-  const { rates: liveRates } = useLivePricing();
+  const livePricing = useLivePricing();
+  const liveRates = livePricing?.rates ?? null;
 
   const health = useServerFn(getFlightHealth);
   const search = useServerFn(searchFlights);
