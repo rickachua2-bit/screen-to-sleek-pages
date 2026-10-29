@@ -82,12 +82,12 @@ function CreateTagCard({ onCreated }: { onCreated: (t: SmartTagView) => void }) 
       </div>
       <div className="space-y-1.5"><Label id="st-currency-label">Currency</Label>
         <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="st-currency-label">
-          {LINK_CURRENCIES.slice(0, 4).map((c) => <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
+          {TAG_CURRENCIES.slice(0, 4).map((c) => <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
             className={`h-11 rounded-lg border px-3 text-xs font-bold transition-colors ${currency === c ? "border-cobalt bg-cobalt text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-cobalt/50"}`}>{c}</button>)}
-          <select aria-label="More currencies" value={(LINK_CURRENCIES as readonly string[]).slice(0, 4).includes(currency) ? "" : currency} onChange={(e) => e.target.value && setCurrency(e.target.value)}
-            className={`h-11 rounded-lg border px-2 text-xs font-bold ${(LINK_CURRENCIES as readonly string[]).slice(0, 4).includes(currency) ? "border-border bg-background text-muted-foreground" : "border-cobalt bg-cobalt text-primary-foreground"}`}>
+          <select aria-label="More currencies" value={(TAG_CURRENCIES as readonly string[]).slice(0, 4).includes(currency) ? "" : currency} onChange={(e) => e.target.value && setCurrency(e.target.value)}
+            className={`h-11 rounded-lg border px-2 text-xs font-bold ${(TAG_CURRENCIES as readonly string[]).slice(0, 4).includes(currency) ? "border-border bg-background text-muted-foreground" : "border-cobalt bg-cobalt text-primary-foreground"}`}>
             <option value="">More</option>
-            {LINK_CURRENCIES.slice(4).map((c) => <option key={c} value={c}>{c}</option>)}
+            {TAG_CURRENCIES.slice(4).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>
