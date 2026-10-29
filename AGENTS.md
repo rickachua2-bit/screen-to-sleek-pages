@@ -14,7 +14,7 @@
 - Merchant module navigation uses the validated `/dashboard?module=` search parameter and a shared module registry so navigation, refresh and browser history stay synchronized.
 - Unconnected merchant operations prepare explicitly labelled in-memory drafts only; never imply policies, verification, payments, device pairing or API secrets are live without a service response.
 - Slikpay overlays use shared global surface tokens and BrandSelect wraps the existing Radix Select; portal content carries its own theme so it remains branded outside page containers.
-- Accounts, profiles and ledger data come from the dedicated external Supabase project via `src/lib/supabase.ts`; schema lives in `supabase/slikpay_schema.sql` (run manually in its SQL editor) — the project is not Lovable Cloud, so migrations can't be applied from here.
+- External Supabase accounts/profiles/ledger use `src/lib/supabase.ts`; apply `supabase/slikpay_schema.sql` manually, not through Lovable Cloud.
 - Money-moving writes (transactions, balance) must go through a trusted server with the service key; browser clients only read them under RLS.
 - Merchant onboarding uses durable server-only verification challenges and an Auth insertion trigger from `supabase/slikpay_verification.sql`; run it manually in the external project so direct client sign-up cannot bypass OTP and registry proof.
 - Paddle services run through `runPaddleOperation` using the generated catalog (`src/lib/paddle-catalog.ts`, regenerate from Paddle's OpenAPI) and `paddle-policy.ts` scopes: platform-wide reads stay hidden, item calls need a `paddle_resources` ownership row, and live money movement needs approval, PIN and an atomic `hold_funds` ledger reservation, because one Paddle account holds every customer's funds.
@@ -25,7 +25,7 @@
 - Non-NGN wallets (fiat via accounts/global, USDT/USDC via crypto/address) are tracked as `paddle_resources` rows tagged `POST /v1/... <CODE>` with wallet details JSON in resource_id; USDT/USDC auto-issue for live users holding a NUBAN, and refused issuance is recorded so the UI shows "Account not active yet".
 - Dashboard live updates subscribe to the external project realtime (transactions, ledger_entries) via `src/lib/live-updates.ts` with a 60s visible-tab poll fallback; realtime needs `supabase/slikpay_precision.sql` run manually.
 - Incoming transfers are captured idempotently (reference col:<provider ref>) by both the webhook and a 30s/refresh pull sync in src/lib/collections.server.ts; unrecorded 10-digit receiving accounts are auto-linked only when their name matches the user's verified business name, since the provider key can see every customer's collections.
-- The Services hub is driven by src/lib/services-registry.ts (product tiles → catalog op ids, per-service guided flow configs); money still flows only through runPaddleOperation so PIN, holds and receipts stay in one place.
+- Services use `services-registry.ts`; payment execution retains shared PIN, holds and receipt safeguards.
 - ServicesCatalog owns the shared visual banking/business catalog; ServicesHub retains account context, navigation and guided operations so design changes never duplicate payment logic.
 - TransferComposerLayout owns the split transfer presentation; SendNip retains bank lookup, review and payment execution and publishes display-only preview state so the page and modal share one payment flow.
 - NIP transfer execution re-resolves the recipient, derives NGN and reserves principal plus the provider fee server-side; ambiguous dispatch outcomes retain held funds and pending receipts rather than claiming failure or making funds spendable again.
@@ -36,3 +36,4 @@
 - CryptoBankFunding uses swapCurrency then protected runPaddleOperation NIP transfers to any resolved NGN recipient with separate approval; pending conversions resume original receipt keys, pairs and amounts. Bank payouts never auto-retry and retain uncertain holds.
 - Payment errors use paymentFeedback; never echo raw errors or equate uncertain dispatch with decline.
 - BulkImport maps/corrects files before server preparation; saved row keys and protected payment execution remain unchanged to prevent duplicates.
+- InternationalServices owns cross-border/remittance discovery/history; global/tuition and foreign-wallet payouts stay server-blocked until corridor, fee-inclusive debit, beneficiary and recovery contracts are confirmed; endpoint existence never authorizes payment.

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ user: vi.fn(), call: vi.fn(), guard: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => ({ inputValidator: () => ({ handler: (fn: unknown) => fn }), handler: (fn: unknown) => fn }) }));
 vi.mock("@/lib/paddle.server", () => ({ bankingUser: mocks.user, callPaddle: mocks.call }));
-vi.mock("@/lib/wallets.server", () => ({ guardMoney: mocks.guard }));
+vi.mock("@/lib/wallets.server", () => ({ guardMoney: mocks.guard, settleMoney: vi.fn(), readRecord: vi.fn(), holderName: vi.fn() }));
 import { runPaddleOperation } from "@/lib/paddle.functions";
 import { withdrawFunds } from "@/lib/wallets.functions";
 import { SERVICES, serviceStatus } from "@/lib/services-registry";
