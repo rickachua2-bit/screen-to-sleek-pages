@@ -80,7 +80,7 @@ export function TeamSecurity() {
         if ((form["newPassword"] ?? "").length < 8 || (form["newPassword"] ?? "").length > 128) throw new Error("Use a password with 8–128 characters.");
         if (form["newPassword"] !== form["confirmPassword"]) throw new Error("The new passwords do not match.");
         await reauthenticate();
-        const r = await supabase.auth.updateUser({ password: form["newPassword"] });
+        const r = await supabase.auth.updateUser({ password: form["newPassword"] ?? "" });
         if (r.error) throw new Error("Password could not be changed. Check the account password requirements.");
         toast.success("Password changed");
       } else if (action === "sessions") {
