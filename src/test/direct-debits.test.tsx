@@ -71,10 +71,56 @@ describe("Direct debits page", () => {
     expect(screen.getByText(/could not be loaded/i)).toBeTruthy();
   });
 
-  it("marks recurring billing schedules as not connected", async () => {
+  it("creates a monthly billing schedule", async () => {
+    mocks.createSchedule.mockResolvedValue({ id: "SLKSCH-1", customerName: "Retainer Client", customerEmail: "r@example.com", amount: 500, currency: "USD", description: "Monthly retainer", accountHint: "Acct ···9283", frequency: "monthly", nextRun: "2026-11-01T00:00:00.000Z", active: true, runs: 0, createdAt: "2026-10-29T00:00:00Z" });
     render(<DirectDebits />);
     await waitFor(() => expect(screen.getByText("Johnathan Edwards")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: /Billing schedules/i }));
-    await waitFor(() => expect(screen.getByText("Recurring schedules are not connected yet")).toBeTruthy());
+    const form = await screen.findByRole("form", { name: "Create billing schedule" });
+    fireEvent.change(within(form).getByLabelText("Customer name"), { target: { value: "Retainer Client" } });
+    fireEvent.change(within(form).getByLabelText("Customer email"), { target: { value: "r@example.com" } });
+    fireEvent.change(within(form).getByLabelText("Amount per run"), { target: { value: "500" } });
+    fireEvent.change(within(form).getByLabelText("Routing number"), { target: { value: "021000021" } });
+    fireEvent.change(within(form).getByLabelText("Account number"), { target: { value: "0284719283" } });
+    fireEvent.change(within(form).getByLabelText("First run"), { target: { value: "2026-11-01" } });
+    fireEvent.click(within(form).getByRole("button", { name: /^Create schedule$/i }));
+    await waitFor(() => expect(mocks.createSchedule).toHaveBeenCalledWith({ data: expect.objectContaining({ customerName: "Retainer Client", amount: 500, currency: "USD", frequency: "monthly", startDate: "2026-11-01" }) }));
+    await waitFor(() => expect(screen.getByText("Retainer Client")).toBeTruthy());
+  });
+
+  it("runs a due schedule as a real debit and shows it in the debits list", async () => {
+    const schedule = { id: "SLKSCH-1", customerName: "Retainer Client", customerEmail: "r@example.com", amount: 500, currency: "USD", description: "", accountHint: "Acct ···9283", frequency: "monthly" as const, nextRun: "2026-10-01T00:00:00.000Z", active: true, runs: 0, createdAt: "2026-10-01T00:00:00Z" };
+    mocks.listSchedules.mockResolvedValue({ schedules: [schedule] });
+    mocks.runSchedule.mockResolvedValue({
+      schedule: { ...schedule, runs: 1, nextRun: "2026-11-29T00:00:00.000Z" },
+      debit: { reference: "SLKDD-run1", customerName: "Retainer Client", customerEmail: "r@example.com", amount: 500, currency: "USD", description: "", accountHint: "Acct ···9283", createdAt: "2026-10-29T00:00:00Z", status: "awaiting" },
+    });
+    render(<DirectDebits />);
+    await waitFor(() => expect(screen.getByText("Johnathan Edwards")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Billing schedules/i }));
+    await waitFor(() => expect(screen.getByText("Retainer Client")).toBeTruthy());
+    expect(screen.getByText(/due now/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Run due debit" }));
+    await waitFor(() => expect(mocks.runSchedule).toHaveBeenCalledWith({ data: { id: "SLKSCH-1" } }));
+    await waitFor(() => expect(screen.getByText(/1 run so far/)).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /^Direct debits$/i }));
+    await waitFor(() => expect(screen.getByText("SLKDD-run1")).toBeTruthy());
+  });
+
+  it("pauses and deletes a schedule", async () => {
+    const schedule = { id: "SLKSCH-1", customerName: "Retainer Client", customerEmail: "r@example.com", amount: 500, currency: "USD", description: "", accountHint: "Acct ···9283", frequency: "weekly" as const, nextRun: "2026-11-05T00:00:00.000Z", active: true, runs: 2, createdAt: "2026-10-01T00:00:00Z" };
+    mocks.listSchedules.mockResolvedValue({ schedules: [schedule] });
+    mocks.toggleSchedule.mockResolvedValue({ ...schedule, active: false });
+    mocks.deleteSchedule.mockResolvedValue({ id: "SLKSCH-1" });
+    render(<DirectDebits />);
+    await waitFor(() => expect(screen.getByText("Johnathan Edwards")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Billing schedules/i }));
+    await waitFor(() => expect(screen.getByText("Retainer Client")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    await waitFor(() => expect(mocks.toggleSchedule).toHaveBeenCalledWith({ data: { id: "SLKSCH-1", active: false } }));
+    await waitFor(() => expect(screen.getByText("Paused")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Delete schedule for Retainer Client" }));
+    await waitFor(() => expect(mocks.deleteSchedule).toHaveBeenCalledWith({ data: { id: "SLKSCH-1" } }));
+    await waitFor(() => expect(screen.queryByText("Retainer Client")).toBeNull());
   });
 });
