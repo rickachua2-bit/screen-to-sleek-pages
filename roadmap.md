@@ -1,5 +1,6 @@
 # Roadmap — global-standard dashboard
-- [ ] Add provider-backed cross-border and remittance services; confirm supported corridors, recipient fields, fee quotes and payout recovery before enabling money movement.
+- [x] Add cross-border/remittance tiles and shared workspace, authenticated provider-documentation discovery, owned payment history and existing crypto-to-NGN flow access. Global/tuition and alternate foreign-wallet payouts fail closed before reservations; 46 selected tests pass, build OK. Signed-out browser sees catalog then redirects to sign-in; authenticated services/payment execution remains unverified.
+- [ ] Activate cross-border/remittance money movement — blocked: provider OpenAPI lists global/tuition endpoints but omits corridors, global beneficiary schema, source debit currency, binding fee quote and authoritative payout recovery; tuition docs alone do not resolve these. Requires confirmed provider contracts and authenticated end-to-end test access.
 - [x] Remove placeholder content (sidebar business, tier badge, notifications)
 - [x] Swap review shows last-rate estimate with clear label
 - [x] Full-precision crypto amounts (needs `supabase/slikpay_precision.sql` run manually)
