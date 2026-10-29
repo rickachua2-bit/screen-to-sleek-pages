@@ -1,12 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-
-const eventSchema = z.object({
-  event: z.string().max(80).optional(),
-  type: z.string().max(80).optional(),
-  id: z.string().max(120).optional(),
-  data: z.record(z.string(), z.unknown()).default({}),
-});
 
 export const Route = createFileRoute("/api/public/paddle-webhook")({
   server: {
@@ -18,31 +10,12 @@ export const Route = createFileRoute("/api/public/paddle-webhook")({
         if (raw.length > 100000) return new Response("Too large", { status: 413 });
         const { verifySignature } = await import("@/lib/paddle.server");
         if (!(await verifySignature(raw, request.headers.get("x-paddle-signature"), secret))) return new Response("Invalid signature", { status: 401 });
-        const parsed = eventSchema.safeParse(JSON.parse(raw));
+        const { parseWebhook, processWebhook } = await import("@/lib/webhook-processing.server");
+        const parsed = parseWebhook(raw);
         if (!parsed.success) return new Response("Bad payload", { status: 400 });
-        const ev = parsed.data;
-        const type = ev.event ?? ev.type ?? "unknown";
-        const d = ev.data;
-        const reference = String(d["reference"] ?? d["sessionId"] ?? ev.id ?? "");
-        if (!reference) return new Response("Missing reference", { status: 400 });
-        const eventId = ev.id ?? `${type}:${reference}`;
         const { accountAdmin } = await import("@/lib/merchant-verification.server");
         const db = accountAdmin();
-        const fresh = await db.from("webhook_events").insert({ id: eventId, event_type: type, payload: ev });
-        if (fresh.error) return new Response("ok"); // duplicate delivery
-        // Credit the owner of the virtual account that received money (same idempotent path as the pull sync).
-        const meta = (d["metadata"] ?? {}) as Record<string, unknown>;
-        const account = String(meta["recipientAccountNumber"] ?? d["accountNumber"] ?? d["virtualAccountNumber"] ?? "");
-        if (account && /credit|inbound|payment|collection|transfer|transaction/i.test(type)) {
-          const owner = await db.from("paddle_resources").select("user_id, mode").eq("resource_id", account).maybeSingle();
-          if (owner.data) {
-            const { inboundCredit, postCredit } = await import("@/lib/collections.server");
-            const c = inboundCredit({ status: "successful", ...d } as never, new Set([account]));
-            if (c) await postCredit(db, owner.data.user_id, owner.data.mode, c);
-          }
-        }
-        await db.from("webhook_events").update({ processed: true }).eq("id", eventId);
-        return new Response("ok");
+        return processWebhook(db, parsed.data);
       },
     },
   },

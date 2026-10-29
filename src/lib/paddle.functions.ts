@@ -5,6 +5,7 @@ import { ENDPOINTS, accessFor, amountOf, fillPath, movesMoney, resourceIds, scop
 import { INTERNATIONAL_NOT_ACTIVE, isUnverifiedInternationalPayout } from "./international";
 import { cableValidationBody } from "./cable-tv";
 import { bettingCustomerBody, bettingFundingBody, bettingCustomer } from "./betting";
+import { consolePaymentStatus, whiteLabelConsoleText } from "./console-safety";
 
 export const getBankingProfile = createServerFn({ method: "POST" }).handler(async () => {
   const { bankingUser } = await import("./paddle.server");
@@ -150,7 +151,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         const session = [d["sessionId"], d["nipSessionId"], d["session_id"]].find((v) => typeof v === "string") as string | undefined;
         const { providerFee } = await import("./ledger-history");
         const fee = isTransfer ? transferFee : providerFee(d);
-        const status = isTransfer || isBetting ? payoutStatus(result.data) : "succeeded";
+        const status = consolePaymentStatus(result.data);
         const body = (data.body ?? {}) as Record<string, unknown>;
         const recipient = [body["destinationAccountName"], body["accountName"], body["beneficiaryName"]].find((v) => typeof v === "string") as string | undefined;
         if (isTransfer || isBetting) {
@@ -166,7 +167,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         }
         receipt = { status, reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
       }
-      return { mode, message: result.message ?? null, resultJson: JSON.stringify(result.data ?? null).slice(0, 200000), receipt };
+      return { mode, message: result.message ? whiteLabelConsoleText(result.message) : null, resultJson: JSON.stringify(result.data ?? null).slice(0, 200000), receipt };
     } catch (e) {
       // An exception after dispatch is not proof that the bank rejected the payment.
       // Keep the receipt pending and the debit held until a definitive result is reconciled.
