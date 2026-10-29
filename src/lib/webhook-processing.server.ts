@@ -10,6 +10,11 @@ export function parseWebhook(raw: string) {
   try { return eventSchema.safeParse(JSON.parse(raw)); }
   catch { return { success: false as const }; }
 }
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+  return JSON.stringify(value) ?? "null";
+}
 
 /** Verified inbound deliveries only. Idempotent credit writes repair partial attempts. */
 export async function processWebhook(db: SupabaseClient, ev: z.infer<typeof eventSchema>) {
@@ -24,7 +29,8 @@ export async function processWebhook(db: SupabaseClient, ev: z.infer<typeof even
     const prior = await db.from("webhook_events").select("processed,payload").eq("id", eventId).maybeSingle();
     if (prior.error || !prior.data) return new Response("Storage unavailable", { status: 503 });
     const stored = eventSchema.safeParse(prior.data.payload);
-    if (!stored.success || JSON.stringify(stored.data) !== JSON.stringify(ev)) return new Response("Event identity conflict", { status: 409 });
+    const current = eventSchema.safeParse(ev);
+    if (!stored.success || !current.success || canonical(stored.data) !== canonical(current.data)) return new Response("Event identity conflict", { status: 409 });
     if (prior.data.processed === true) return new Response("ok");
   }
   try {
@@ -37,7 +43,8 @@ export async function processWebhook(db: SupabaseClient, ev: z.infer<typeof even
       const mode = owner.data.mode;
       if (mode !== "live" && mode !== "sandbox") return new Response("Receiving account needs reconciliation", { status: 503 });
       const c = inboundCredit(d, new Set([account]));
-      if (c) await postCredit(db, owner.data.user_id, mode, c);
+      if (!c) return new Response("Collection outcome needs reconciliation", { status: 503 });
+      await postCredit(db, owner.data.user_id, mode, c);
     }
     const done = await db.from("webhook_events").update({ processed: true }).eq("id", eventId);
     if (done.error) return new Response("Processing incomplete", { status: 503 });
