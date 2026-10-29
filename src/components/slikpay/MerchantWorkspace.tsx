@@ -20,6 +20,7 @@ import { Airtime } from "./Airtime";
 import { MobileData } from "./MobileData";
 import { BillsService } from "./BillsService";
 import { GovernmentPayments } from "./GovernmentPayments";
+import { TeamSecurity } from "./TeamSecurity";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
 
@@ -32,7 +33,6 @@ const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[];
   compliance: { tabs: ["Business verification", "Director KYC", "Account tiers"], action: "Prepare submission", fields: ["Registered business name", "CAC number", "Director name"], columns: ["Business", "CAC number", "Director"] },
   statements: { tabs: ["Bank statements", "Tax exports", "Monthly ledgers"], action: "Draft statement request", fields: ["Account number", "Period from", "Period to"], columns: ["Account", "From", "To"] },
   developer: { tabs: ["API keys", "Webhooks", "Delivery logs"], action: "Draft webhook", fields: ["Endpoint name", "HTTPS callback URL", "Events"], columns: ["Name", "Endpoint", "Events"] },
-  settings: { tabs: ["Business profile", "Team members", "Security"], action: "Draft team invitation", fields: ["Full name", "Work email", "Team role"], columns: ["Name", "Email", "Role"] },
 };
 
 export function MerchantWorkspace({ module, account, onAction, search = "" }: { module: string; account: Account; onAction: (kind: ActionKind) => void; search?: string }) {
@@ -43,6 +43,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   const [drafts, setDrafts] = useState<{ values: string[]; tab: number }[]>([]);
   if (!item) return null;
   if (module === "services") return <ServicesHub role="merchant" />;
+  if (module === "settings") return <TeamSecurity />;
   if (module === "svc-escrow") return <Escrow />;
   if (module === "svc-airtime") return <Airtime />;
   if (module === "svc-data") return <MobileData />;
