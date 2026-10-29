@@ -38,7 +38,7 @@ it("sends the validated requested role with the owner PIN, not access permission
   mocks.invite.mockResolvedValue({ ok: true });
   render(<TeamSecurity />); await waitFor(() => expect(screen.getByText("Ada")).toBeTruthy());
   fireEvent.click(screen.getByRole("button", { name: "Invite a colleague" }));
-  for (const [label, value] of [["Full name", "Grace"], ["Work email", "grace@example.com"], ["Transaction PIN", "1234"]]) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  for (const [label, value] of [["Full name", "Grace"], ["Work email", "grace@example.com"], ["Transaction PIN", "1234"]] as const) fireEvent.change(screen.getByLabelText(label), { target: { value } });
   fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   await waitFor(() => expect(mocks.invite).toHaveBeenCalledWith({ data: { name: "Grace", email: "grace@example.com", role: "viewer", pin: "1234" } }));
 });
