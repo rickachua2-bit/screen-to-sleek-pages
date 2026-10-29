@@ -13,7 +13,7 @@ it("requires trusted approved KYB and an approval timestamp for live eligibility
   expect(liveKeyEligible("approved", null)).toBe(false);
 });
 it("requires a four digit PIN for every secret action", () => {
-  expect(keyAction.safeParse({ id: "74e9b000-72de-4a87-811e-62b6222836b1", action: "claim", pin: "123" }).success).toBe(false);
+  expect(keyAction.safeParse({ id: "74e9b000-72de-4a87-811e-62b6222836b1", action: "claim", challengeId: "74e9b000-72de-4a87-811e-62b6222836b1", code: "123" }).success).toBe(false);
 });
 it("rejects unsigned API requests before accessing account data", async () => {
   expect((await businessApi(new Request("https://slikpay.test"), "receipts")).status).toBe(401);
