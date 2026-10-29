@@ -301,12 +301,6 @@ export function money(amount: number, currency: string) {
   if (curr === "USDT" || curr === "USDC") {
     return `${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${curr}`;
   }
-  if (curr === "BTC") {
-    return `₿${amount.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 })}`;
-  }
-  if (curr === "ETH") {
-    return `Ξ${amount.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 5 })}`;
-  }
   try { 
     return new Intl.NumberFormat("en-NG", { style: "currency", currency: curr, maximumFractionDigits: 2 }).format(amount); 
   } catch { 

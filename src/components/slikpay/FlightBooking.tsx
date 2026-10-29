@@ -55,8 +55,6 @@ export const SUPPORTED_CURRENCIES = [
   { code: "CAD", name: "Canadian Dollar", symbol: "C$", category: "Fiat", flag: "🇨🇦" },
   { code: "USDT", name: "Tether USD", symbol: "₮", category: "Crypto", flag: "🪙" },
   { code: "USDC", name: "USD Coin", symbol: "USDC", category: "Crypto", flag: "🪙" },
-  { code: "BTC", name: "Bitcoin", symbol: "₿", category: "Crypto", flag: "🪙" },
-  { code: "ETH", name: "Ethereum", symbol: "Ξ", category: "Crypto", flag: "🪙" },
 ] as const;
 
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number]["code"];
@@ -69,8 +67,6 @@ const FALLBACK_RATES: Record<string, number> = {
   EUR: 1720,
   GBP: 2020,
   CAD: 1150,
-  BTC: 105000000,
-  ETH: 5200000,
 };
 
 function convertCurrency(amount: number, fromCurr: string, toCurr: string, fx: FxRates | null): { amount: number; rate: number } {
@@ -111,12 +107,6 @@ function formatPriceWithSymbol(amount: number, currency: string) {
   }
   if (curr === "CAD") {
     return `C$${amount.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (curr === "BTC") {
-    return `₿${amount.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 })}`;
-  }
-  if (curr === "ETH") {
-    return `Ξ${amount.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 5 })}`;
   }
   return `${curr} ${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
@@ -234,6 +224,52 @@ function AirportField({ label, value, onChange, icon: Icon }: { label: string; v
   );
 }
 
+function AirlineLogo({ 
+  code, 
+  name, 
+  logoUrl, 
+  className = "h-12 w-12" 
+}: { 
+  code: string; 
+  name: string; 
+  logoUrl?: string | null; 
+  className?: string 
+}) {
+  const [srcIndex, setSrcIndex] = useState(0);
+  const cleanCode = (code || "").trim().toUpperCase();
+
+  const sources = useMemo(() => {
+    const list: string[] = [];
+    if (logoUrl) list.push(logoUrl);
+    if (cleanCode && cleanCode.length === 2) {
+      list.push(`https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/${cleanCode}.svg`);
+      list.push(`https://pics.avs.io/100/100/${cleanCode}.png`);
+      list.push(`https://images.kiwi.com/airlines/64/${cleanCode}.png`);
+    }
+    return list;
+  }, [logoUrl, cleanCode]);
+
+  if (srcIndex < sources.length && sources[srcIndex]) {
+    return (
+      <div className={`relative flex items-center justify-center rounded-2xl bg-white p-2 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0 ${className}`}>
+        <img
+          src={sources[srcIndex]}
+          alt={name || cleanCode || "Airline"}
+          className="max-h-full max-w-full object-contain"
+          loading="lazy"
+          onError={() => setSrcIndex((prev) => prev + 1)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <span className={`grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cobalt via-navy-light to-cyan font-mono text-xs font-black text-white shadow-md ${className}`}>
+      {cleanCode || <Plane className="h-5 w-5" />}
+    </span>
+  );
+}
+
 function OfferCard({ 
   o, 
   onSelect, 
@@ -254,17 +290,22 @@ function OfferCard({
   return (
     <article className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-sm transition hover:border-cobalt hover:shadow-xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-        {/* Carrier Info */}
-        <div className="flex items-center gap-3 lg:w-48">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cobalt via-navy-light to-cyan font-mono text-xs font-black text-white shadow-md">
-            {o.airlineCode || <Plane className="h-5 w-5" />}
-          </span>
+        {/* Carrier Info with Real Airline Image/Logo */}
+        <div className="flex items-center gap-3.5 lg:w-56">
+          <AirlineLogo 
+            code={o.airlineCode} 
+            name={o.airline} 
+            logoUrl={o.logoUrl} 
+            className="h-14 w-14"
+          />
           <div className="min-w-0">
-            <p className="truncate font-extrabold text-foreground text-sm sm:text-base">{o.airline || "Airline Partner"}</p>
-            <p className="truncate text-xs font-mono text-muted-foreground">
-              {o.slices[0]!.segments.map((s) => s.flightNumber).filter(Boolean).join(" · ") || "NDC Wholesale"}
+            <p className="truncate font-black text-foreground text-sm sm:text-base">{o.airline || "Airline Partner"}</p>
+            <p className="truncate text-xs font-mono font-bold text-cobalt flex items-center gap-1">
+              <span className="rounded bg-cobalt/10 px-1 py-0.2">{o.airlineCode}</span>
+              <span className="text-muted-foreground font-normal">·</span>
+              <span className="text-muted-foreground">{o.slices[0]!.segments.map((s) => s.flightNumber).filter(Boolean).join(" · ") || "Direct NDC"}</span>
             </p>
-            <div className="flex items-center gap-1.5 mt-1">
+            <div className="flex items-center gap-1.5 mt-1.5">
               <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 <Wifi className="h-2.5 w-2.5 text-cyan" /> Wi-Fi
               </span>
@@ -1137,9 +1178,11 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                   key={t.key} 
                   className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-5 shadow-xs transition hover:border-cobalt/40 sm:flex-row sm:items-center"
                 >
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cobalt/10 text-cobalt shrink-0">
-                    <Ticket className="h-6 w-6" />
-                  </span>
+                  <AirlineLogo 
+                    code={t.airline.slice(0, 2)} 
+                    name={t.airline} 
+                    className="h-12 w-12"
+                  />
 
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1219,16 +1262,24 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true">
           <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-card p-5 shadow-2xl sm:rounded-3xl sm:p-6 border border-border">
             <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-wider text-cobalt flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Multi-Rail Wallet Checkout
-                </p>
-                <h3 className="text-xl sm:text-2xl font-black text-foreground">
-                  {picked.slices.map((s) => `${s.from} → ${s.to}`).join(" · ")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {picked.airline} · {date(picked.slices[0]!.departAt)} · {CABIN_LABEL[cabin]} · {adults} Passenger{adults > 1 ? "s" : ""}
-                </p>
+              <div className="flex items-center gap-3.5">
+                <AirlineLogo 
+                  code={picked.airlineCode} 
+                  name={picked.airline} 
+                  logoUrl={picked.logoUrl} 
+                  className="h-14 w-14"
+                />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-cobalt flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Multi-Rail Wallet Checkout
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-black text-foreground">
+                    {picked.slices.map((s) => `${s.from} → ${s.to}`).join(" · ")}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {picked.airline} · {date(picked.slices[0]!.departAt)} · {CABIN_LABEL[cabin]} · {adults} Passenger{adults > 1 ? "s" : ""}
+                  </p>
+                </div>
               </div>
               <button 
                 aria-label="Close" 
