@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn() }));
@@ -20,8 +20,8 @@ describe("payment links page", () => {
     await waitFor(() => expect(screen.getByText("25,000.00 NGN")).toBeTruthy());
     expect(screen.getByText("120.00 USD")).toBeTruthy();
     expect(screen.getByText(/Ada Obi/)).toBeTruthy();
-    expect(screen.getByText("Paid")).toBeTruthy();
-    expect(screen.getByText("Awaiting payment")).toBeTruthy();
+    expect(screen.getAllByText("Paid").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Awaiting payment").length).toBeGreaterThan(0);
     expect(screen.queryByText(/paddle|sterling/i)).toBeNull();
   });
 
@@ -32,7 +32,7 @@ describe("payment links page", () => {
     fireEvent.click(screen.getByRole("button", { name: /Create link/i }));
     fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "5000" } });
     fireEvent.change(screen.getByLabelText("Customer email"), { target: { value: "buyer@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: /^Create link$/i }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /^Create link$/i }));
     await waitFor(() => expect(mocks.create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: 5000, currency: "NGN", email: "buyer@example.com", reference: expect.stringMatching(/^SLKLINK-/) }) }));
     await waitFor(() => expect(screen.getByText("Your payment link is ready")).toBeTruthy());
     expect(screen.getByText("https://pay.example.com/new")).toBeTruthy();
