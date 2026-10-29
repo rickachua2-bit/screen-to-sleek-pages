@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [ ] Automatic merchant API keys: sandbox at signup, live after trusted KYB approval, secure owner key management, authenticated external read endpoints and tests; external schema activation required.
 - [x] Applied selected Integration Studio: navy developer rail, white API key/access workspace, explorer, webhooks, payment attempts and documentation state; desktop initial rendering checked and 20 focused tests passed. Business key issuance and outbound subscriptions remain unconnected, not simulated.
 - [x] API console upgrade: paginated searchable explorer with method filters, owner-and-mode-scoped inbound webhook monitoring/reconciliation, server-redacted responses, atomic console payment preparation/settlement, bounded signed bodies and confirmed completion writes; 332 tests passed and unsigned webhook rejected (401).
 - [x] API console safety: explicit payment statuses, one reference per mounted attempt, lock payment resubmission, remove partner hints, retry unfinished webhooks, reject malformed JSON and propagate partial credit failures; focused tests passed.
