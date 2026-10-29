@@ -1,5 +1,5 @@
 # Roadmap
 
 ## Open
-- [ ] Logo for Slikpay: present fintech-style concepts for the user to pick (initial two generated; "fintech designs" ask = more fintech-leaning options)
-- [ ] Apply chosen logo: refine, set favicon from it, place in app header/sign-in
+- [ ] SmartTag page (/dashboard?module=smarttag): make fully functional, production-ready, restyle
+- [ ] Logo for Slikpay: 4 concepts generated (Flow S, Pulse Tile, Secure S, Orbit Coin); user to pick, then refine + favicon + app header
