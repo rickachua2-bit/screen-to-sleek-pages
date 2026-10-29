@@ -11,11 +11,11 @@ import { ServicesHub } from "./ServicesHub";
 import { KybFlow } from "./KybFlow";
 import { TransferCenter } from "./TransferCenter";
 import { InternationalServices } from "./InternationalServices";
+import { PaymentLinks } from "./PaymentLinks";
 
 const CONFIG: Record<string, { tabs: string[]; action: string; fields: string[]; columns: string[] }> = {
   softpos: { tabs: ["Terminals", "Cashiers"], action: "Add terminal", fields: ["Terminal name", "Cashier name", "Location"], columns: ["Terminal", "Cashier", "Location"] },
   smarttag: { tabs: ["QR stands", "Soundboxes", "Merchant tag"], action: "Pair hardware", fields: ["Device name", "Serial number", "Location"], columns: ["Device", "Serial number", "Location"] },
-  links: { tabs: ["Payment links", "Invoices", "Product catalog"], action: "Create draft", fields: ["Title", "Customer email", "Amount (NGN)"], columns: ["Title", "Customer", "Amount"] },
   mandates: { tabs: ["Mandates", "Billing schedules"], action: "Draft mandate", fields: ["Customer name", "Amount (NGN)", "Billing frequency"], columns: ["Customer", "Amount", "Frequency"] },
   payroll: { tabs: ["Batch payouts", "Beneficiary book"], action: "Add beneficiary draft", fields: ["Beneficiary name", "Bank", "Account number"], columns: ["Beneficiary", "Bank", "Account number"] },
   shifts: { tabs: ["Shifts", "Cashiers", "Reconciliation"], action: "Draft shift", fields: ["Shift name", "Cashier", "Opening till (NGN)"], columns: ["Shift", "Cashier", "Opening till"] },
@@ -42,6 +42,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "payroll") return <TransferCenter key="bulk" initial="bulk" />;
   if (module === "cards") return <><UsdCardPanel onFund={() => onAction("fund")} label="CORPORATE" /><section className="border-t border-border py-6"><h2 className="font-bold">Card controls</h2><p className="mt-2 text-sm text-muted-foreground">NGN issuance, card freeze and spending controls are not connected yet.</p></section></>;
   if (module === "treasury") return <InternationalServices />;
+  if (module === "links") return <PaymentLinks />;
   if (!config) return null;
   const rows = drafts.filter((d) => d.tab === tab && d.values.join(" ").toLowerCase().includes(search.toLowerCase()));
   return <>
