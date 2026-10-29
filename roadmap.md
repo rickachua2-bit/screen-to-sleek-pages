@@ -43,7 +43,8 @@
 - [x] Build the picked design into CurrencyWallet action circles + dashboard quick-action pills
 
 ## Bulk payments and fiat/crypto transfers
-- [ ] Resolve remaining signed-in payment and crypto cash-out blockers requested on 29 Oct 2026 — investigate authenticated access and authoritative provider contracts; never bypass verification or uncertain-payment holds.
+- [ ] Resolve remaining signed-in payment and crypto cash-out blockers requested on 29 Oct 2026 — bank-transfer atomic settlement, sandbox bulk balance gating, truthful banking-read errors and conversion execution gate corrected; 33 selected tests pass. Blocked: external sign-in session is unavailable to the agent (browser redirected to /auth); provider quote/USDC-pair/status recovery contracts remain unspecified.
+- [ ] Harden session-bound second-factor authorization and account-specific banking cache before payment certification — email OTP currently has no server session-bound proof; requires external schema setup and authenticated verification. Do not use an authentication bypass to test payments.
 - [x] Review bulk-upload gaps against global payment standards and report confirmed limitations
 - [x] Add Fiat/Crypto choices and gated USDT/USDC-to-NGN bank funding preview; no execution enabled without verified rails
 - [x] CSV quoted-cell parsing, duplicates, numeric checks, fee-inclusive totals, template and results downloads; saved batch restore uses original receipts
@@ -51,4 +52,4 @@
 - [ ] Enable crypto conversion plus bank payout with a durable cash-out record — blocked: provider documentation omits supported pairs, firm quote/fees, swap status and reconciliation contracts
 - [ ] Reconcile pending outbound payments and allow confirmed-failure retries — blocked: authoritative provider reference/status contract
 - [ ] Verify quote, fee, balance reservation, conversion and payout status end-to-end — blocked: external authenticated test access and confirmed conversion/payout contract
-- [x] Swap/withdrawal now fail closed, retain uncertain holds and require transactional reservation/settlement; RPC boundary tests pass and deployed RPC availability is confirmed; live settlement remains unverified
+- [x] Swap/withdrawal and NIP payouts use atomic reservation/settlement; all conversion execution entry points are gated, sandbox bulk tests do not require live balances, missing banking reads fail explicitly, principal/fee/session receipts remain accurate. 33 selected tests pass; live settlement remains unverified.

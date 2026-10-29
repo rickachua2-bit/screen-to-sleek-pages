@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { bulkTotals, parseBulkCsv } from "@/lib/transfer-rules";
-import { confirmedSwap } from "@/lib/wallet-safety";
+import { bulkTotals, insufficientBulkBalance, parseBulkCsv } from "@/lib/transfer-rules";
+import { confirmedSwap, requireVerifiedSwapContract } from "@/lib/wallet-safety";
 describe("payment reliability", () => {
+  it("blocks conversion without a verified quote and recovery contract", () => {
+    expect(() => requireVerifiedSwapContract()).toThrow("not active yet");
+  });
+  it("does not require a live ledger balance for sandbox batch tests", () => {
+    expect(insufficientBulkBalance(false, 101, undefined)).toBe(false);
+    expect(insufficientBulkBalance(false, 101, 0)).toBe(false);
+  });
+  it("requires the fee-inclusive available balance for live batches", () => {
+    expect(insufficientBulkBalance(true, 101, undefined)).toBe(true);
+    expect(insufficientBulkBalance(true, 101, 100)).toBe(true);
+    expect(insufficientBulkBalance(true, 101, 101)).toBe(false);
+  });
   it("uses one-percent fees individually capped at 80 NGN in batch totals", () => {
     expect(bulkTotals([{ amount: 100 }, { amount: 5000 }, { amount: 10000 }])).toEqual({ principal: 15100, fees: 131, total: 15231 });
   });

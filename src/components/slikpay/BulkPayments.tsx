@@ -5,7 +5,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { naira } from "@/lib/api";
-import { bulkTotals } from "@/lib/transfer-rules";
+import { bulkTotals, insufficientBulkBalance } from "@/lib/transfer-rules";
 import { slikpayTransferFee } from "@/lib/transfer-validation";
 import { listPaymentBatches, preparePaymentBatch, readPaymentBatch, type BatchRow } from "@/lib/bulk-payments.functions";
 import { runPaddleOperation } from "@/lib/paddle.functions";
@@ -39,7 +39,7 @@ export function BulkPayments({ live, balance }: { live: boolean; balance?: numbe
   const ready = rows.filter((r) => r.state === "ready"); const totals = bulkTotals(ready);
   const pending = rows.filter((r) => r.state === "pending").length;
   const invalid = rows.filter((r) => r.error).length;
-  const short = balance === undefined || totals.total > balance;
+  const short = insufficientBulkBalance(live, totals.total, balance);
   const send = () => withBusy(async () => {
     if (!id || short || invalid || !ready.length || (live && !/^\d{4}$/.test(pin))) return;
     for (const row of ready) {

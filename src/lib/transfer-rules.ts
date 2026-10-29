@@ -37,3 +37,6 @@ export function bulkTotals(rows: Pick<BulkRow, "amount">[]) {
   const fees = Math.round(rows.reduce((n, r) => n + slikpayTransferFee(r.amount), 0) * 100) / 100;
   return { principal, fees, total: Math.round((principal + fees) * 100) / 100 };
 }
+export function insufficientBulkBalance(live: boolean, total: number, balance: number | undefined) {
+  return live && (balance === undefined || !Number.isFinite(balance) || total > balance);
+}
