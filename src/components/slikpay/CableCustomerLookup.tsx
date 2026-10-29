@@ -10,11 +10,13 @@ export function useCableCustomer(provider: string, number: string, request: Requ
   const [result, setResult] = useState<{ key: string; customer: CableCustomer | null; status: "loading" | "verified" | "invalid" | "failed" } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const immediate = useRef(false);
+  const started = useRef("");
   useEffect(() => {
     if (!key) return;
     let cancelled = false;
     setResult({ key, customer: null, status: "loading" });
     const timer = setTimeout(async () => {
+      started.current = key;
       try {
         const customer = cableCustomer(await request({ provider: provider.toUpperCase(), smartcardNumber: number }));
         if (!cancelled) setResult({ key, customer, status: customer ? "verified" : "invalid" });
@@ -23,12 +25,12 @@ export function useCableCustomer(provider: string, number: string, request: Requ
       }
     }, immediate.current ? 0 : 400);
     immediate.current = false;
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { cancelled = true; clearTimeout(timer); started.current = ""; };
   }, [key, provider, number, request, attempt]);
   const current = key && result?.key === key ? result : null;
   const status = current?.status ?? (key ? "loading" : "idle");
   const retry = () => { immediate.current = true; setAttempt((n) => n + 1); };
-  return { customer: current?.customer ?? null, status, retry, onBlur: () => { if (key && !current) retry(); } };
+  return { customer: current?.customer ?? null, status, retry, onBlur: () => { if (key && status === "loading" && started.current !== key) retry(); } };
 }
 
 export function CableProviderPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {

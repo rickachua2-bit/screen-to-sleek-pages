@@ -76,7 +76,7 @@ describe("Cable customer verification", () => {
     const { result, rerender } = renderHook(({ number }) => useCableCustomer("dstv", number, request), { initialProps: { number: "702819283" } });
     rerender({ number: "7028192831" });
     act(() => result.current.onBlur());
-    await act(() => vi.advanceTimersByTimeAsync(400));
+    await act(() => vi.advanceTimersByTimeAsync(0));
     expect(request).toHaveBeenCalledTimes(1);
   });
 });
