@@ -33,7 +33,7 @@ describe("Cards page", () => {
   it("lists cards with balances, statuses and controls summary", async () => {
     render(<Cards />);
     await waitFor(() => expect(screen.getAllByText("Tunde Adeleke")[0]).toBeTruthy());
-    expect(screen.getByText("Greta Müller")).toBeTruthy();
+    expect(screen.getAllByText("Greta Müller")[0]).toBeTruthy();
     expect(screen.getByText("250.00 USD")).toBeTruthy();
     expect(screen.getAllByText("Active").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Frozen").length).toBeGreaterThan(0);
@@ -52,7 +52,7 @@ describe("Cards page", () => {
     fireEvent.change(within(form).getByLabelText(/Initial funding/), { target: { value: "50" } });
     fireEvent.click(within(form).getByRole("button", { name: /^Issue card$/i }));
     await waitFor(() => expect(mocks.issue).toHaveBeenCalledWith({ data: expect.objectContaining({ holderName: "New Holder", brand: "VISA", currency: "NGN", amount: 50, reference: expect.stringMatching(/^SLKCARD-/) }) }));
-    await waitFor(() => expect(screen.getByText("New Holder")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("New Holder")[0]).toBeTruthy());
   });
 
   it("funds a card through the amount dialog", async () => {
