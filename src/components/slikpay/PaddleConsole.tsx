@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X, Code2, Webhook, Receipt, RefreshCw, Copy, ArrowRight, KeyRound, BookOpen, ArrowUpRight, Clock } from "lucide-react";
+import { Activity, BadgeCheck, CheckCircle2, ChevronRight, FlaskConical, Loader2, Lock, Radio, Search, ShieldCheck, Sparkles, X, Code2, Webhook, Receipt, RefreshCw, Copy, ArrowRight, KeyRound, BookOpen, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandSelect } from "./BrandSelect";
@@ -11,6 +11,8 @@ import { consoleReceiptMessage, whiteLabelConsoleText } from "@/lib/console-safe
 import { paymentFeedback } from "@/lib/payment-feedback";
 import { WebhookMonitor } from "./WebhookMonitor";
 import { BusinessApiKeys, BusinessApiDocs } from "./BusinessApiKeys";
+import { ConsoleMissionControl } from "./ConsoleMissionControl";
+import { DOCS_URL } from "@/lib/business-api";
 
 type Profile = Awaited<ReturnType<typeof getBankingProfile>>;
 
@@ -181,7 +183,7 @@ export function PaddleConsole({ role }: { role: Role }) {
   const [cat, setCat] = useState<string>("all");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<PaddleEndpoint | null>(null);
-  const [tab, setTab] = useState<"keys" | "explorer" | "webhooks" | "receipts" | "docs">("keys");
+  const [tab, setTab] = useState<"overview" | "keys" | "explorer" | "webhooks" | "receipts" | "docs">("overview");
   const [method, setMethod] = useState("all");
   const [page, setPage] = useState(1);
   const mode = profile?.mode ?? "sandbox";
@@ -193,16 +195,11 @@ export function PaddleConsole({ role }: { role: Role }) {
   const visible = shown.slice((currentPage - 1) * 18, currentPage * 18);
   const available = list.filter((x) => x.access.allowed).length;
 
-  return <div className="developer-studio">
-    <aside className="developer-studio-rail">
-      <p className="text-lg font-bold">Slikpay</p><Code2 className="mt-5 size-9 text-cyan" /><h2 className="mt-3 text-2xl font-bold">Developers</h2>
-      <p className="mt-2 text-xs text-muted-foreground">API & Webhooks</p>
-      <div className="my-6 flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-xs font-semibold">{mode === "live" ? <Radio className="size-4 text-cyan" /> : <FlaskConical className="size-4 text-magenta" />}{profile ? `${mode === "live" ? "Live" : "Sandbox"} environment` : "Checking environment…"}</div>
-      <nav className="developer-studio-navigation" aria-label="Developer workspace">{[{ id: "keys" as const, name: "API keys", icon: KeyRound }, { id: "explorer" as const, name: "Request explorer", icon: Code2 }, { id: "webhooks" as const, name: "Webhooks", icon: Webhook }, { id: "receipts" as const, name: "Payment attempts", icon: Receipt }, { id: "docs" as const, name: "Documentation", icon: BookOpen }].map(({ id, name, icon: Icon }) => <Button key={id} variant="ghost" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} className="developer-studio-nav"><Icon />{name}</Button>)}</nav>
-      <div className="developer-studio-readiness mt-8 border-t border-border pt-5"><p className="text-xs font-semibold text-muted-foreground">Integration readiness</p><ul className="mt-4 space-y-4 text-xs">{[{ label: "Account environment", ready: Boolean(profile) }, { label: "Business API keys", ready: false }, { label: "Outbound subscriptions", ready: false }].map((step) => <li key={step.label} className="flex items-start gap-2.5">{step.ready ? <CheckCircle2 className="size-4 shrink-0 text-cyan" /> : <Clock className="size-4 shrink-0 text-muted-foreground" />}<span>{step.label}<span className="mt-1 block text-[11px] text-muted-foreground">{step.ready ? "Connected" : "Not connected"}</span></span></li>)}</ul></div>
-      <Button variant="outline" className="mt-6 w-full" onClick={() => void refresh()}><RefreshCw />Refresh account</Button>
-    </aside>
-    <div className="developer-studio-workspace space-y-6">
+  return <div className="mission-control">
+    <div className="mission-toolbar"><span className="flex items-center gap-2 text-xs font-bold"><Code2 className="size-4 text-primary" />Slikpay Developers</span><div className="flex flex-wrap items-center gap-3"><span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">{mode === "live" ? <Radio className="size-3.5 text-success" /> : <FlaskConical className="size-3.5 text-magenta" />}{profile ? `${mode === "live" ? "Live" : "Sandbox"} environment` : "Checking environment…"}</span><Button asChild variant="link" size="sm" className="px-0"><a href={DOCS_URL} target="_blank" rel="noreferrer noopener">Docs<ArrowUpRight /></a></Button><Button variant="ghost" size="icon" title="Refresh account" aria-label="Refresh developer account" onClick={() => void refresh()}><RefreshCw /></Button></div></div>
+    <nav className="mission-navigation" aria-label="Developer workspace">{[{ id: "overview" as const, name: "Mission Control", icon: Activity }, { id: "keys" as const, name: "API keys", icon: KeyRound }, { id: "explorer" as const, name: "Request explorer", icon: Code2 }, { id: "webhooks" as const, name: "Webhooks", icon: Webhook }, { id: "receipts" as const, name: "Payment attempts", icon: Receipt }, { id: "docs" as const, name: "Documentation", icon: BookOpen }].map(({ id, name, icon: Icon }) => <Button key={id} variant="ghost" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} className="mission-nav"><Icon />{name}</Button>)}</nav>
+    <div className="mission-workspace space-y-6">
+    {tab === "overview" && <ConsoleMissionControl profile={profile} onWebhooks={() => setTab("webhooks")} />}
     {tab === "keys" && <BusinessApiKeys />}
     {tab === "docs" && <BusinessApiDocs />}
     {error && <p role="alert" className="text-sm text-destructive">Account information is unavailable. Refresh before making a request.</p>}
