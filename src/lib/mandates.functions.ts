@@ -158,10 +158,10 @@ export interface BillingScheduleView {
 
 /** Stored record includes the bank details needed to execute; the public view never exposes them. */
 interface StoredSchedule extends BillingScheduleView {
-  routingNumber?: string;
-  accountNumber?: string;
-  iban?: string;
-  sortCode?: string;
+  routingNumber?: string | undefined;
+  accountNumber?: string | undefined;
+  iban?: string | undefined;
+  sortCode?: string | undefined;
 }
 
 const scheduleSchema = createSchema.innerType().omit({ reference: true }).extend({
