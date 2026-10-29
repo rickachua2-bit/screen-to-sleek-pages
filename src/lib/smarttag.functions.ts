@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { LINK_CURRENCIES, type LinkStatus } from "./checkout-links.server";
+import type { LinkStatus } from "./checkout-links.server";
 
+export const TAG_CURRENCIES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"] as const;
 export const TAG_OP = "SMARTTAG";
 export const TAG_CHARGE_OP = "SMARTTAG-CHARGE";
 
