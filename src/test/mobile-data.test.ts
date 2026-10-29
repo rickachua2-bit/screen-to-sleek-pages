@@ -31,6 +31,23 @@ describe("toDataPlans", () => {
     expect(plans[0]?.code).toBe("OK");
   });
 
+  it("keeps only the requested network when plans are tagged", () => {
+    const plans = toDataPlans({ plans: [
+      { code: "A1", name: "Airtel 1GB", amount: 350, network: "Airtel" },
+      { code: "M1", name: "MTN 1GB", amount: 350, network: "MTN" },
+      { code: "G1", name: "Glo 1GB", amount: 300, operator: "Glo" },
+    ] }, "Airtel");
+    expect(plans.map((p) => p.code)).toEqual(["A1"]);
+  });
+
+  it("keeps untagged plans when filtering by network", () => {
+    const plans = toDataPlans([
+      { code: "A1", name: "1GB", amount: 350, network: "Airtel" },
+      { code: "U1", name: "1GB universal", amount: 400 },
+    ], "airtel");
+    expect(plans.map((p) => p.code)).toEqual(["A1", "U1"]);
+  });
+
   it("returns an empty list for unrecognised payloads", () => {
     expect(toDataPlans(null)).toEqual([]);
     expect(toDataPlans({ unexpected: true })).toEqual([]);
