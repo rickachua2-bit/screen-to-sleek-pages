@@ -147,7 +147,7 @@ export function TreasuryAutomation() {
       name: newPocketName,
       purpose: newPocketPurpose || "Dedicated sub-pocket allocation",
       balance: 0,
-      target: newPocketTarget ? Number(newPocketTarget) : undefined,
+      ...(newPocketTarget ? { target: Number(newPocketTarget) } : {}),
       color: "from-cyan-600 to-blue-600",
     };
     setPockets((prev) => [...prev, newPkt]);
