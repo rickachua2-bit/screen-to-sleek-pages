@@ -84,7 +84,9 @@ export function parseOffer(raw: unknown): FlightOffer | null {
   const slices = (Array.isArray(f["slices"]) ? f["slices"] : []).map(parseSlice);
   if (!slices.length || slices.some((s) => !s)) return null;
   const owner = obj(f["owner"]);
-  const bags = (obj(obj((obj(slices[0] && (f["slices"] as unknown[])[0])["segments"] as unknown[] | undefined)?.[0] ?? {})["passengers"] as unknown[] | undefined)?.[0]) ?? {})["baggages"];
+  const rawSeg = obj((obj((f["slices"] as unknown[])[0])["segments"] as unknown[] | undefined)?.[0]);
+  const rawPax = obj((rawSeg["passengers"] as unknown[] | undefined)?.[0]);
+  const bags = rawPax["baggages"];
   const bagCount = Array.isArray(bags) ? bags.reduce((n: number, b) => n + (num(obj(b)["quantity"]) || 0), 0) : NaN;
   return {
     id, amount, currency,
