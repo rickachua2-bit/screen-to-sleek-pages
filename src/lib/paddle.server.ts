@@ -32,6 +32,19 @@ export async function callPaddle(mode: Mode, method: string, path: string, body?
   return { data: p && "data" in p ? p.data : payload, message: typeof p?.message === "string" ? p.message.slice(0, 200) : undefined };
 }
 
+/** Authoritative wallet balances from the connected provider API. Returns
+ *  null when the service is unreachable or the payload is unrecognised, so
+ *  callers fall back to the recorded ledger rather than show a guess. */
+export async function providerBalances(mode: Mode): Promise<Record<string, number> | null> {
+  try {
+    const { parseWalletBalances } = await import("./wallet-balance");
+    const r = await callPaddle(mode, "GET", "/v1/wallet/balance");
+    return parseWalletBalances(r.data);
+  } catch {
+    return null;
+  }
+}
+
 export async function bankingUser() {
   const authorization = getRequestHeader("authorization");
   if (!authorization?.startsWith("Bearer ")) throw new Error("Sign in to use banking services.");

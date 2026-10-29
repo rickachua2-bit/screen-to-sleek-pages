@@ -31,7 +31,12 @@ export const getBankingProfile = createServerFn({ method: "POST" }).handler(asyn
   const cardIssued = owned.some((r) => r.operation.startsWith("POST /v1/cards"));
   const balances: Record<string, number> = {};
   for (const e of ledger.data ?? []) balances[e.currency] = (balances[e.currency] ?? 0) + Number(e.amount);
-  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: (receipts.data ?? []).map((r) => ({ ...r, amount: typeof r.summary?.principal === "number" ? r.summary.principal : r.amount })), virtualAccount, accountDetails, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
+  // The connected provider's wallet endpoint is the source of truth for
+  // spendable balances; the recorded ledger fills any currency it omits.
+  const { providerBalances } = await import("./paddle.server");
+  const remote = await providerBalances(mode);
+  if (remote) for (const [code, amount] of Object.entries(remote)) balances[code] = amount;
+  return { role, mode, review, kyc: kyc.data ?? [], balances, balanceSource: remote ? ("provider" as const) : ("ledger" as const), receipts: (receipts.data ?? []).map((r) => ({ ...r, amount: typeof r.summary?.principal === "number" ? r.summary.principal : r.amount })), virtualAccount, accountDetails, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
 });
 
 const runSchema = z.object({
