@@ -1138,7 +1138,10 @@ html { scroll-behavior: smooth; }
 
 html, body {
   max-width: 100vw !important;
+  /* clip (not hidden) avoids turning html/body into scroll containers,
+     so the sticky sidebar stays fixed to the viewport while the page scrolls */
   overflow-x: hidden !important;
+  overflow-x: clip !important;
   position: relative;
   -webkit-text-size-adjust: 100%;
 }
