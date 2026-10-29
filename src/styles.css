@@ -942,3 +942,22 @@ html { scroll-behavior: smooth; }
 .crypto-payment-status { padding: 12px 0; border-top: 1px solid var(--transfer-line); font-size: 12px; color: var(--primary); }
 .crypto-submit { width: 100%; min-height: 46px; background: var(--cobalt); color: var(--transfer-on-night); }
 @media (max-width: 760px) { .crypto-composer .transfer-composer-layout { grid-template-columns: minmax(0, 1fr); } .crypto-story h2 { font-size: 24px; } .crypto-coins { width: 240px; max-width: 100%; margin-top: 16px; } .crypto-coin-labels, .crypto-stages, .crypto-story-security { display: none; } }
+
+/* Guided Studio: white bulk-payment workbench and independently themed navy overview. */
+.bulk-studio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .44fr); background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; align-items: stretch; }
+.bulk-studio-workspace { min-width: 0; padding: 24px; }
+.bulk-studio-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bulk-studio-steps li { display: flex; align-items: center; gap: 9px; padding-bottom: 16px; border-bottom: 2px solid var(--border); color: var(--muted-foreground); font-size: 12px; }
+.bulk-studio-steps li > span { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--muted); font-size: 12px; }
+.bulk-studio-steps li[aria-current="step"] { color: var(--primary); border-color: var(--primary); }
+.bulk-studio-steps li[aria-current="step"] > span { color: var(--primary-foreground); background: var(--primary); }
+.bulk-studio-steps li[data-complete="true"] { color: var(--success); border-color: var(--success); }
+.bulk-studio-drop { min-height: 240px; background: color-mix(in oklab, var(--primary) 2%, var(--card)); }
+.bulk-studio-art { width: 180px; height: 120px; object-fit: contain; }
+.bulk-studio-overview { --background: var(--transfer-night, var(--navy)); --foreground: var(--transfer-on-night, var(--primary-foreground)); --muted-foreground: var(--transfer-night-muted, oklch(.8 .02 255)); --border: color-mix(in oklab, var(--cyan) 16%, var(--background)); --accent: color-mix(in oklab, var(--cyan) 10%, var(--background)); --accent-foreground: var(--foreground); --primary-foreground: var(--transfer-on-night, oklch(.99 .003 255)); padding: 28px 24px; border-left: 3px solid var(--cyan); background: var(--background); color: var(--foreground); }
+.bulk-studio-summary { display: grid; gap: 22px; margin-block: 32px 14px; font-size: 12px; }
+.bulk-studio-summary > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.bulk-studio-summary dt { color: var(--muted-foreground); }
+.bulk-studio-summary dd { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+.bulk-studio-summary > div:last-child { border-top: 1px solid var(--border); padding-top: 22px; margin-top: 8px; font-size: 15px; }
+@media (max-width: 760px) { .bulk-studio { grid-template-columns: minmax(0, 1fr); } .bulk-studio-workspace { padding: 18px; } .bulk-studio-overview { border-left: 0; border-top: 3px solid var(--cyan); padding: 22px; } .bulk-studio-drop { min-height: 220px; } .bulk-studio-summary { margin-top: 24px; gap: 16px; } }
