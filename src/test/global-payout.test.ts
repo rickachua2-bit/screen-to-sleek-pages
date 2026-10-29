@@ -93,6 +93,20 @@ describe("global payout execution contract", () => {
     await expect(buildGlobalQuote(ctx as never, { ...base, amount: 100 })).rejects.toThrow(/unavailable/i);
     expect(mocks.guard).not.toHaveBeenCalled();
   });
+  it("reserves USD 105 for a USD 100 payout funded by USD, without debiting NGN", async () => {
+    const { executeGlobalPayout } = await load();
+    mocks.call.mockResolvedValueOnce(rates);
+    mocks.call.mockResolvedValueOnce({ data: { status: "SUCCESSFUL", reference: "USD-1", debitAmount: 105, fee: 5, feeCurrency: "USD" } });
+    await executeGlobalPayout({ ...ctx, db: chainDb({ data: null, error: null }) } as never, { ...base, sourceCurrency: "USD", amount: 100, confirmedTotal: 105, idempotencyKey: "usd-key", pin: "1234" });
+    expect(mocks.guard).toHaveBeenCalledWith(expect.anything(), "USD", 105, "1234", "POST /v1/payouts/global", "usd-key");
+    expect(mocks.call).toHaveBeenLastCalledWith("live", "POST", "/v1/payouts/global", expect.objectContaining({ currency: "USD", destinationCurrency: "USD", amount: 100 }), "usd-key");
+  });
+  it.each(["EUR", "USDT", "USDC"])("blocks unconfirmed %s to USD funding before reservation", async (sourceCurrency) => {
+    const { buildGlobalQuote } = await load();
+    await expect(buildGlobalQuote(ctx as never, { ...base, sourceCurrency, amount: 100 })).rejects.toThrow(/not active yet/i);
+    expect(mocks.guard).not.toHaveBeenCalled();
+    expect(mocks.call).not.toHaveBeenCalled();
+  });
   it("reserves the exact fee-inclusive total once before dispatch", async () => {
     const { executeGlobalPayout } = await load();
     mocks.call.mockResolvedValueOnce(rates);

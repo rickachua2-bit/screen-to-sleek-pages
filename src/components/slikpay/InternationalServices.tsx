@@ -4,7 +4,7 @@ import { ArrowRight, BadgeCheck, Clock3, Download, Globe2, GraduationCap, Histor
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CORRIDORS, GLOBAL_SOURCES, PAYMENT_PURPOSES, QUOTE_CHANGED, corridorMethod, isInternationalReceipt, quoteSecondsLeft, savedRecipientsFrom, trackSteps, type Corridor, type PaymentPurpose } from "@/lib/international";
+import { CORRIDORS, GLOBAL_SOURCES, PAYMENT_PURPOSES, QUOTE_CHANGED, corridorMethod, globalFundingSupported, isInternationalReceipt, quoteSecondsLeft, savedRecipientsFrom, trackSteps, type Corridor, type PaymentPurpose } from "@/lib/international";
 import {
   quoteGlobalPayout, sendGlobalPayout, reconcileGlobalPayoutsFn,
   type GlobalQuote, type GlobalPayoutResult,
@@ -27,8 +27,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
   const reconcileFn = useServerFn(reconcileGlobalPayoutsFn);
 
   const sources = useMemo(() => GLOBAL_SOURCES
-    .map((code) => ({ code, balance: profile.balances[code] ?? 0 }))
-    .filter((s) => s.code === "NGN" || s.balance > 0), [profile.balances]);
+    .map((code) => ({ code, balance: profile.balances[code] })), [profile.balances]);
   const [source, setSource] = useState("NGN");
   const [country, setCountry] = useState("US");
   const [accountName, setAccountName] = useState("");
@@ -52,8 +51,8 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
   const saved = useMemo(() => savedRecipientsFrom(profile.receipts.filter((r) => !r.mode || r.mode === profile.mode)), [profile.receipts, profile.mode]);
 
   const corridor: Corridor | null = useMemo(() => CORRIDORS.find((c) => c.id === country) ?? null, [country]);
-  const corridors = useMemo(() => source === "NGN" ? CORRIDORS : CORRIDORS.filter((c) => c.target === source), [source]);
-  useEffect(() => { if (corridor && !corridors.some((c) => c.id === corridor.id)) { const next = corridors[0]; if (next) { setCountry(next.id); setFields({}); } } }, [corridor, corridors]);
+  const corridors = CORRIDORS;
+  const fundingSupported = Boolean(corridor && globalFundingSupported(source, corridor.target));
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return q ? corridors.filter((c) => `${c.label} ${c.target}`.toLowerCase().includes(q)) : corridors;
@@ -72,7 +71,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
   const dispatching = useRef(false);
   const runQuote = useCallback(async (key: string) => {
     const sequence = ++quoteSequence.current;
-    if (!amountValid || !fieldsFilled) { quoteInFlight.current = false; setQuoting(false); setQuote(null); setQuoteError(""); return; }
+    if (!fundingSupported || !amountValid || !fieldsFilled) { quoteInFlight.current = false; setQuoting(false); setQuote(null); setQuoteError(""); return; }
     quoteInFlight.current = true;
     setQuoting(true); setQuoteError("");
     try {
@@ -84,7 +83,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
     } catch (e) {
       if (key === currentQuoteKey.current && sequence === quoteSequence.current) { setQuote(null); setQuoteError("Could not price this payment. Check recipient details and try again."); }
     } finally { if (sequence === quoteSequence.current) { quoteInFlight.current = false; setQuoting(false); } }
-  }, [quoteFn, source, country, accountName, fields, amount, amountValid, fieldsFilled, quoteKey]);
+  }, [quoteFn, source, country, accountName, fields, amount, amountValid, fieldsFilled, fundingSupported, quoteKey]);
   useEffect(() => {
     setQuote(null); setPricedKey("");
     const key = quoteKey;
@@ -95,7 +94,7 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
   const secondsLeft = quote ? quoteSecondsLeft(quotedAt, now) : 0;
   // Expired quotes are re-priced automatically; the user confirms whatever total is current.
   useEffect(() => { if (quote && secondsLeft === 0 && !sending && !quoteInFlight.current) void runQuote(quoteKey); }, [quote, secondsLeft, sending, runQuote, quoteKey]);
-  const canSend = Boolean(quote && pricedKey === quoteKey && !quoting && secondsLeft > 0 && sourceBalance >= quote.totalDebit && result?.status !== "pending");
+  const canSend = Boolean(fundingSupported && quote && pricedKey === quoteKey && !quoting && secondsLeft > 0 && sourceBalance >= quote.totalDebit && result?.status !== "pending");
   const applySaved = (key: string) => {
     const r = saved.find((x) => x.key === key); if (!r) return;
     setCountry(r.country); setAccountName(r.accountName); setFields(r.fields); setQuote(null);
@@ -192,14 +191,14 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
           <p className="mt-0.5 text-xs text-muted-foreground">Funds are reserved at the exact total before any payment is dispatched.</p>
           {saved.length > 0 && <div className="mt-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Repeat className="h-3.5 w-3.5 text-magenta" />Send again</p>
-            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <Button variant="outline" size="sm" key={r.key} type="button" onClick={() => applySaved(r.key)}
+            <div className="mt-2 flex flex-wrap gap-2">{saved.map((r) => <Button disabled={sending || result?.status === "pending"} variant="outline" size="sm" key={r.key} type="button" onClick={() => applySaved(r.key)}
               className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-cobalt hover:text-cobalt">{r.accountName} · {r.country}</Button>)}</div>
           </div>}
           <fieldset disabled={sending || result?.status === "pending"} className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5"><Label htmlFor="xp-source">Pay from</Label>
               <select id="xp-source" value={source} onChange={(e) => { setSource(e.target.value); setQuote(null); }}
                 className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
-                {sources.map((s) => <option key={s.code} value={s.code}>{s.code === "NGN" ? "Naira wallet (auto-convert)" : `${s.code} wallet`} — {money(s.balance, s.code)}</option>)}
+                {sources.map((s) => <option key={s.code} value={s.code}>{s.code === "NGN" ? "Naira wallet (auto-convert)" : `${s.code} wallet`} — {s.balance === undefined ? "Balance unavailable" : money(s.balance, s.code)}</option>)}
               </select>
             </div>
             <div className="space-y-1.5"><Label htmlFor="xp-amount">Amount ({corridor?.target ?? ""})</Label>
@@ -222,6 +221,8 @@ function CrossBorderPayout({ purpose, profile, refresh, compact = false }: { pur
               <Input id="xp-pin" type="password" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} placeholder="4 digits" autoComplete="off" />
             </div>}
           </fieldset>
+          {!fundingSupported && <p role="status" className="mt-3 text-sm text-muted-foreground">{source} → {corridor?.target} conversion is not active yet. Pay from {corridor?.target} or NGN instead.</p>}
+          {source !== "NGN" && fundingSupported && <p className="mt-3 text-xs text-muted-foreground">Paid directly from your {source} wallet. No currency conversion.</p>}
           {sources.length === 0 && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><Info className="h-4 w-4" />Fund a wallet first — payouts need an available balance.</p>}
           {quoteError && !quoting && <p className="mt-3 text-xs text-destructive">{quoteError}</p>}
 
@@ -339,7 +340,7 @@ export function InternationalServices({ initial }: { initial?: "cross-border" | 
   const [refreshing, setRefreshing] = useState(false);
   const refresh = useCallback(() => { setRefreshVersion((v) => v + 1); setRefreshing(true); void refreshProfile().finally(() => setRefreshing(false)); }, [refreshProfile]);
   const [tab, setTab] = useState<Tab>(initial === "crypto" || initial === "swap" ? "swap" : initial === "treasury" ? "treasury" : initial === "receive" ? "receive" : initial === "hold" ? "hold" : initial === "track" ? "track" : initial === "cross-border" || initial === "remittance" || initial === "send" ? "send" : "overview");
-  const [kind, setKind] = useState<"cross-border" | "remittance" | "tuition">(initial === "remittance" ? "remittance" : "cross-border");
+  const [kind, setKind] = useState<"cross-border" | "remittance" | "tuition" | "coins">(initial === "remittance" ? "remittance" : "cross-border");
   const unavailable = !profileError && !profile ? <p role="status" className="flex items-center gap-2 py-4 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your account…</p> : <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">Your account could not be confirmed. Refresh to try again.</p>;
   return <section className="international-bento space-y-5" aria-label="International services">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -374,9 +375,10 @@ export function InternationalServices({ initial }: { initial?: "cross-border" | 
           <div className="flex flex-wrap gap-2" role="group" aria-label="Payment type">
             <Button size="sm" variant={kind === "cross-border" ? "default" : "outline"} aria-pressed={kind === "cross-border"} onClick={() => setKind("cross-border")}><Globe2 />Business payout</Button>
             <Button size="sm" variant={kind === "remittance" ? "default" : "outline"} aria-pressed={kind === "remittance"} onClick={() => setKind("remittance")}><ArrowRight />Remittance</Button>
+            <Button size="sm" variant={kind === "coins" ? "default" : "outline"} aria-pressed={kind === "coins"} onClick={() => setKind("coins")}><Wallet />Coins to bank</Button>
             <Button size="sm" variant={kind === "tuition" ? "default" : "outline"} aria-pressed={kind === "tuition"} onClick={() => setKind("tuition")}><GraduationCap />Tuition</Button>
           </div>
-          {kind === "tuition"
+          {kind === "coins" ? <div className="space-y-3"><p className="text-sm text-muted-foreground">USDT / USDC → Nigerian bank account. Direct coin-address sends and coin-funded international payouts are not active yet.</p><CryptoBankFunding balances={profile.balances} /></div> : kind === "tuition"
             ? <p className="rounded-2xl border border-magenta/40 bg-magenta/5 p-5 text-sm"><strong className="block text-magenta">Coming soon</strong>School fee payments abroad are not active yet. Until then, pay the school's bank account using Business payout with the purpose "Education / tuition".</p>
             : <CrossBorderPayout key={kind} purpose={kind} profile={profile} refresh={refresh} />}
         </div>}
