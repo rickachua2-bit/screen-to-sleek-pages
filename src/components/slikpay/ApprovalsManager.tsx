@@ -193,7 +193,7 @@ export function ApprovalsManager() {
             <span className="text-xs font-bold uppercase tracking-wider">Pending Volume</span>
             <Users className="h-4 w-4 text-cyan" />
           </div>
-          <p className="mt-2 text-2xl font-black text-cyan">
+          <p className="mt-2 text-lg sm:text-xl lg:text-2xl font-black text-cyan truncate">
             {naira(pendingList.reduce((acc, r) => acc + (r.amount || 0), 0))}
           </p>
           <p className="mt-1 text-[11px] text-muted-foreground">Awaiting disbursement gate</p>
@@ -204,7 +204,7 @@ export function ApprovalsManager() {
             <span className="text-xs font-bold uppercase tracking-wider">Approval Threshold</span>
             <Lock className="h-4 w-4 text-cobalt" />
           </div>
-          <p className="mt-2 text-2xl font-black text-cobalt">{naira(Number(policyThreshold))}</p>
+          <p className="mt-2 text-lg sm:text-xl lg:text-2xl font-black text-cobalt truncate">{naira(Number(policyThreshold))}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">Trigger limit for 4-Eyes</p>
         </div>
 

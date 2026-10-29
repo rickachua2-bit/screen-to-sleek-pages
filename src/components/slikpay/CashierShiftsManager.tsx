@@ -218,7 +218,7 @@ export function CashierShiftsManager() {
             <span className="text-xs font-bold uppercase tracking-wider">Cash in Tills</span>
             <DollarSign className="h-4 w-4 text-amber-500" />
           </div>
-          <p className="mt-2 text-2xl font-black text-amber-500">{naira(totalCashInDrawers)}</p>
+          <p className="mt-2 text-lg sm:text-xl lg:text-2xl font-black text-amber-500 truncate">{naira(totalCashInDrawers)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">Physical drawer exposure</p>
         </div>
 
@@ -227,7 +227,7 @@ export function CashierShiftsManager() {
             <span className="text-xs font-bold uppercase tracking-wider">Tap & SmartTag</span>
             <Smartphone className="h-4 w-4 text-cobalt" />
           </div>
-          <p className="mt-2 text-2xl font-black text-cobalt">{naira(totalDigitalVolume)}</p>
+          <p className="mt-2 text-lg sm:text-xl lg:text-2xl font-black text-cobalt truncate">{naira(totalDigitalVolume)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">Settled direct to balance</p>
         </div>
 

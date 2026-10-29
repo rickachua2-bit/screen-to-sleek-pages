@@ -190,7 +190,7 @@ export function PersonalSavings() {
             Automate goal savings, lock fixed funds up to 16% p.a., or rotate thrift pots with trusted Ajo circles.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             onClick={() => setShowNewTarget(true)}

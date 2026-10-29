@@ -627,7 +627,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm font-black text-foreground">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm font-black text-foreground">
                             <span>{offer.departureTime} ({offer.origin})</span>
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                               <span className="h-0.5 w-6 bg-border" />
@@ -768,7 +768,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
           <div
             role="dialog"
             aria-modal="true"
-            className="slik-popup w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+            className="slik-popup w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -799,7 +799,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
 
             {/* Passenger Details Form */}
             <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
                   <label className="block text-muted-foreground mb-1 font-bold">Title</label>
                   <select
@@ -835,7 +835,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-muted-foreground mb-1 font-bold">Email for E-Ticket</label>
                   <input
@@ -857,7 +857,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-muted-foreground mb-1 font-bold">Passport / NIN Number</label>
                   <input
@@ -912,7 +912,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
           <div
             role="dialog"
             aria-modal="true"
-            className="slik-popup w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+            className="slik-popup w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
