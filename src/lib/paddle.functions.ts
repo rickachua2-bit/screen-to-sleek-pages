@@ -9,7 +9,7 @@ export const getBankingProfile = createServerFn({ method: "POST" }).handler(asyn
   const [kyc, ledger, receipts, resources] = await Promise.all([
     db.from("kyc_steps").select("step, status, summary, created_at").eq("user_id", user.id),
     db.from("ledger_entries").select("amount, currency, status").eq("user_id", user.id).eq("mode", mode).in("status", ["held", "posted"]),
-    db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, session_id, created_at, mode").eq("user_id", user.id).order("created_at", { ascending: false }).limit(25),
+    db.from("payment_receipts").select("id, operation, status, amount, currency, provider_reference, session_id, created_at, mode, summary").eq("user_id", user.id).order("created_at", { ascending: false }).limit(25),
     db.from("paddle_resources").select("resource_id, operation").eq("user_id", user.id).eq("mode", mode).order("created_at", { ascending: true }),
   ]);
   const owned = resources.data ?? [];
@@ -27,7 +27,7 @@ export const getBankingProfile = createServerFn({ method: "POST" }).handler(asyn
   const cardIssued = owned.some((r) => r.operation.startsWith("POST /v1/cards"));
   const balances: Record<string, number> = {};
   for (const e of ledger.data ?? []) balances[e.currency] = (balances[e.currency] ?? 0) + Number(e.amount);
-  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: receipts.data ?? [], virtualAccount, accountDetails, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
+  return { role, mode, review, kyc: kyc.data ?? [], balances, receipts: (receipts.data ?? []).map((r) => ({ ...r, amount: typeof r.summary?.principal === "number" ? r.summary.principal : r.amount })), virtualAccount, accountDetails, cardIssued, sandboxReady: Boolean(process.env["PADDLE_SANDBOX_KEY"]) };
 });
 
 const runSchema = z.object({
@@ -46,6 +46,10 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
     if (!endpoint) throw new Error("Unknown service.");
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { db, user, role, mode, review } = await bankingUser();
+    if (endpoint.path === "/v1/crypto/swap") {
+      const { requireVerifiedSwapContract } = await import("./wallet-safety");
+      requireVerifiedSwapContract();
+    }
     const access = accessFor(endpoint, role, mode);
     if (!access.allowed) throw new Error(access.reason);
     if (JSON.stringify(data.body).length > 20000) throw new Error("Request is too large.");
@@ -80,6 +84,10 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
       const prior = await db.from("payment_receipts").select("id").eq("idempotency_key", data.idempotencyKey).maybeSingle();
       if (prior.error) throw new Error("Could not check this payment. Try again.");
       if (prior.data) throw new Error("This payment was already submitted. Check your ledger before sending again.");
+      if (isTransfer) {
+        const { guardMoney } = await import("./wallets.server");
+        await guardMoney({ db, user, mode, review }, "NGN", amount + transferFee, data.pin, operation, data.idempotencyKey);
+      } else {
       if (mode === "live") {
         if (!data.pin) throw new Error("Enter your 4-digit transaction PIN.");
         const sec = await db.from("merchant_security").select("pin_digest, pin_salt").eq("user_id", user.id).maybeSingle();
@@ -94,6 +102,7 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
           await db.from("payment_receipts").update({ status: "failed" }).eq("user_id", user.id).eq("idempotency_key", data.idempotencyKey);
           throw new Error(held.error ? "Could not reserve funds. Check your ledger before retrying." : "Insufficient balance including fees.");
         }
+      }
       }
     }
 
@@ -113,11 +122,16 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
         const status = isTransfer ? payoutStatus(result.data) : "succeeded";
         const body = (data.body ?? {}) as Record<string, unknown>;
         const recipient = [body["destinationAccountName"], body["accountName"], body["beneficiaryName"]].find((v) => typeof v === "string") as string | undefined;
+        if (isTransfer) {
+          const { settleMoney } = await import("./wallets.server");
+          await settleMoney({ db, user, mode, review }, data.idempotencyKey, status, ref ?? null, { principal: amount, fee: transferFee, ...(session ? { nipSessionId: session } : {}), ...(recipient ? { recipient } : {}) });
+        } else {
         const saved = await db.from("payment_receipts").update({ status, provider_reference: ref ?? null, session_id: session ?? null, summary: { ...(fee !== undefined ? { fee } : {}), ...(recipient ? { recipient } : {}) } }).eq("user_id", user.id).eq("idempotency_key", data.idempotencyKey);
         if (saved.error) throw new Error("Payment submitted but the receipt could not update. Check your ledger before retrying.");
         if (mode === "live" && status !== "pending") {
           const ledger = await db.from("ledger_entries").update({ status: status === "succeeded" ? "posted" : "released" }).eq("user_id", user.id).eq("reference", data.idempotencyKey);
           if (ledger.error) throw new Error("Payment status needs reconciliation. Do not send again.");
+        }
         }
         receipt = { status, reference: ref ?? null, sessionId: session ?? null, amount, currency: data.currency, mode };
       }

@@ -44,7 +44,7 @@ export function receiptChannel(op: string): string {
 
 /** Outgoing movements recorded as receipts (transfers, withdrawals, swaps, bills). */
 export function fromReceipt(r: ReceiptRow): Txn | null {
-  const amount = n(r.amount);
+  const amount = n(r.summary?.["principal"]) ?? n(r.amount);
   if (amount === undefined || amount <= 0) return null;
   const s = r.summary ?? {};
   const currency = r.currency || "NGN";
@@ -58,7 +58,7 @@ export function fromReceipt(r: ReceiptRow): Txn | null {
     status: r.status === "succeeded" ? "Successful" : r.status === "failed" ? "Failed" : "Pending",
     ...(fee !== undefined ? { fee, net: amount + fee } : {}),
     ...(swapTo && n(s["fee"]) !== undefined ? { note: `Fee ${n(s["fee"])} ${swapTo} taken from the amount received` } : {}),
-    ...(r.session_id ? { nipSessionId: r.session_id } : {}),
+    ...(r.session_id ? { nipSessionId: r.session_id } : typeof s["nipSessionId"] === "string" ? { nipSessionId: s["nipSessionId"] } : {}),
   };
 }
 
