@@ -5,6 +5,8 @@ import type { LinkStatus } from "./checkout-links.server";
 export const TAG_CURRENCIES = ["NGN", "USD", "EUR", "GBP", "GHS", "KES", "ZAR"] as const;
 export const TAG_OP = "SMARTTAG";
 export const TAG_CHARGE_OP = "SMARTTAG-CHARGE";
+export const SOUNDBOX_OP = "SOUNDBOX";
+export const SOUNDBOX_VOICES = ["English", "Pidgin", "Hausa", "Yorùbá", "Igbo"] as const;
 
 export interface SmartTagView {
   handle: string;
