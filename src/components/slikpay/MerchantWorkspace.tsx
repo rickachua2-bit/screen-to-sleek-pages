@@ -19,6 +19,7 @@ import { Cards } from "./Cards";
 import { Airtime } from "./Airtime";
 import { MobileData } from "./MobileData";
 import { BillsService } from "./BillsService";
+import { GovernmentPayments } from "./GovernmentPayments";
 
 const BILLS_MODULES: Record<string, string> = { "svc-power": "power", "svc-tv": "tv", "svc-internet": "internet", "svc-betting": "betting", "svc-education": "education" };
 
@@ -45,6 +46,7 @@ export function MerchantWorkspace({ module, account, onAction, search = "" }: { 
   if (module === "svc-escrow") return <Escrow />;
   if (module === "svc-airtime") return <Airtime />;
   if (module === "svc-data") return <MobileData />;
+  if (module === "svc-firs" || module === "svc-remita") return <GovernmentPayments service={module === "svc-firs" ? "firs" : "remita"} />;
   if (BILLS_MODULES[module]) return <BillsService serviceId={BILLS_MODULES[module]} />;
   if (module.startsWith("svc-")) return <ServicesHub key={module} role="merchant" only={[module.slice(4)]} title={item.label} autoOpen />;
   if (module === "developer") return <PaddleConsole role="merchant" />;
