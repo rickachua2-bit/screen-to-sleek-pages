@@ -31,7 +31,7 @@ const createSchema = z.object({
   handle: z.string().trim().toLowerCase().regex(HANDLE, "Use 2-30 lowercase letters, numbers or dashes."),
   name: z.string().trim().min(2).max(80),
   amount: z.number().positive().max(1e9).optional(),
-  currency: z.enum(LINK_CURRENCIES),
+  currency: z.enum(TAG_CURRENCIES),
   email: z.string().email().max(160),
 });
 

@@ -6,8 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { chargeSmartTag, createSmartTag, listSmartTags, tagUrl, type SmartTagView, type TagChargeView } from "@/lib/smarttag.functions";
-import { LINK_CURRENCIES } from "@/lib/checkout-links.server";
+import { chargeSmartTag, createSmartTag, listSmartTags, tagUrl, TAG_CURRENCIES, type SmartTagView, type TagChargeView } from "@/lib/smarttag.functions";
 import { useBankingProfile } from "./PaddleConsole";
 import hero from "@/assets/collections-hero.jpg";
 
