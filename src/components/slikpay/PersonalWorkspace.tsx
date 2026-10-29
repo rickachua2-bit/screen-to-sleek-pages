@@ -1,3 +1,4 @@
+import { InternationalServices } from "./InternationalServices";
 import { GoLive, PaddleConsole, useBankingProfile } from "./PaddleConsole";
 import { ServicesHub } from "./ServicesHub";
 import { personalTier } from "@/lib/go-live";
@@ -121,7 +122,7 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
         <QuickAction icon={Smartphone} title="Airtime & Data" sub="MTN, Airtel, Glo, 9mobile" tone="bg-gradient-brand" onClick={() => open("airtime")} />
         <QuickAction icon={Zap} title="Pay Utilities" sub="Electricity & Cable TV" tone="bg-magenta/80" onClick={() => open("bills")} />
         <QuickAction icon={CreditCard} title="USD Virtual Card" sub="Top up in dollars" tone="bg-magenta" onClick={() => open("fund")} />
-        <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => open("swap")} />
+        <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => { window.location.href = "/personal?module=swap"; }} />
       </div>
       <Panel title="Recent Activity">
         <ActivityList txns={txns} limit={5} />
@@ -205,6 +206,9 @@ export function PersonalWorkspace({ module, open }: { module: string; open: (k: 
     case "flights": return <FlightBooking role="personal" />;
     case "savings": return <PersonalSavings />;
     case "rewards": return <PersonalRewards />;
+    case "swap": return <InternationalServices initial="swap" />;
+    case "intl": return <InternationalServices initial="send" />;
+    case "treasury": return <InternationalServices initial="treasury" />;
     case "profile": return <ProfileModule />;
     case "services": return <ServicesHub role="personal" />;
     case "golive": return <GoLive role="personal" />;

@@ -33,7 +33,7 @@ export const PERSONAL_TABS: PersonalNavItem[] = [
 ];
 
 export function personalModule(value: unknown): string {
-  return typeof value === "string" && PERSONAL_NAV.some((n) => n.id === value) ? value : "home";
+  return typeof value === "string" && (PERSONAL_NAV.some((n) => n.id === value) || ["swap", "intl", "treasury"].includes(value)) ? value : "home";
 }
 
 export const AIRTIME_NETWORKS = [

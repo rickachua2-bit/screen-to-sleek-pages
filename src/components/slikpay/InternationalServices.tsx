@@ -1,3 +1,4 @@
+import { TreasuryAutomation } from "./TreasuryAutomation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, BadgeCheck, Clock3, Download, Globe2, GraduationCap, History, Info, Landmark, Repeat, Wallet, Loader2, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
@@ -313,15 +314,15 @@ function TrackPayments({ profile, refresh }: { profile: ProfileLike; refresh: ()
   </section>;
 }
 
-type Tab = "receive" | "hold" | "swap" | "send" | "track";
+type Tab = "receive" | "hold" | "swap" | "send" | "track" | "treasury";
 const TABS: Array<{ id: Tab; label: string; icon: typeof Globe2 }> = [
   { id: "receive", label: "Receive", icon: Landmark }, { id: "hold", label: "Hold", icon: Wallet }, { id: "swap", label: "Swap", icon: Repeat },
-  { id: "send", label: "Send", icon: ArrowRight }, { id: "track", label: "Track", icon: History },
+  { id: "send", label: "Send", icon: ArrowRight }, { id: "track", label: "Track", icon: History }, { id: "treasury", label: "Treasury Vault & Sweeps", icon: Landmark },
 ];
 
-export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" | "crypto" }) {
+export function InternationalServices({ initial = "cross-border" }: { initial?: "cross-border" | "remittance" | "crypto" | "swap" | "treasury" | "receive" | "hold" | "track" | "send" }) {
   const { profile, error: profileError, refresh } = useBankingProfile();
-  const [tab, setTab] = useState<Tab>(initial === "crypto" ? "swap" : "send");
+  const [tab, setTab] = useState<Tab>(initial === "crypto" || initial === "swap" ? "swap" : initial === "treasury" ? "treasury" : initial === "receive" ? "receive" : initial === "hold" ? "hold" : initial === "track" ? "track" : "send");
   const [kind, setKind] = useState<"cross-border" | "remittance" | "tuition">(initial === "remittance" ? "remittance" : "cross-border");
   const unavailable = <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{profileError || "Your account could not be confirmed. Refresh to try again."}</p>;
   return <section className="space-y-5" aria-label="International services">
@@ -338,6 +339,7 @@ export function InternationalServices({ initial = "cross-border" }: { initial?: 
           <p className="flex items-start gap-2 rounded-xl border border-cyan/40 bg-cyan/5 p-3 text-xs text-muted-foreground"><Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan" />Live conversion is available for USDT and USDC into naira, with an optional payout to any Nigerian bank. Other currency pairs are not yet available for conversion.</p>
           <CryptoBankFunding balances={profileError ? undefined : profile?.balances} />
         </div>
+      : tab === "treasury" ? <TreasuryAutomation />
       : profileError || !profile ? unavailable
       : tab === "track" ? <TrackPayments profile={profile} refresh={refresh} />
       : <div className="space-y-4">
