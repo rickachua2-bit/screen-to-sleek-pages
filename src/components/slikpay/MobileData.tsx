@@ -146,11 +146,13 @@ export function MobileData() {
       run({ data: { id: "post-bills-airtime-detect", params: {}, body: { phone }, idempotencyKey: crypto.randomUUID(), currency: "NGN" } })
         .then((r) => {
           if (detectSeq.current !== seq) return;
-          const name = detectedNetwork(JSON.parse(r.resultJson));
-          setDetected(name);
-          if (name && operators?.length) {
-            const match = operators.find((o) => o.label.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(o.label.toLowerCase()));
-            if (match) setOperatorId(match.id);
+          const payload = JSON.parse(r.resultJson);
+          const match = matchOperator(payload, operators ?? []);
+          if (match) {
+            setOperatorId(match.id);
+            setDetected(match.label);
+          } else {
+            setDetected(detectedNetwork(payload));
           }
         })
         .catch(() => undefined)

@@ -1,5 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { toDataPlans } from "@/components/slikpay/MobileData";
+import { matchOperator, toDataPlans } from "@/components/slikpay/MobileData";
+
+const OPS = [
+  { id: "341", label: "MTN" },
+  { id: "342", label: "Airtel" },
+  { id: "343", label: "Glo" },
+  { id: "344", label: "9mobile" },
+];
+
+describe("matchOperator", () => {
+  it("matches by operator id when the payload carries one", () => {
+    expect(matchOperator({ operatorId: "342", network: "Airtel" }, OPS)?.label).toBe("Airtel");
+  });
+
+  it("matches decorated names like 'Airtel Nigeria'", () => {
+    expect(matchOperator({ network: "Airtel Nigeria" }, OPS)?.id).toBe("342");
+    expect(matchOperator({ operator: "MTN NIGERIA LTD" }, OPS)?.id).toBe("341");
+  });
+
+  it("matches aliases like Etisalat to 9mobile", () => {
+    expect(matchOperator({ network: "Etisalat" }, OPS)?.id).toBe("344");
+  });
+
+  it("returns null when nothing matches", () => {
+    expect(matchOperator({ network: "Vodafone" }, OPS)).toBeNull();
+    expect(matchOperator(null, OPS)).toBeNull();
+    expect(matchOperator({ network: "MTN" }, [])).toBeNull();
+  });
+});
 
 describe("toDataPlans", () => {
   it("parses a plans array with price/validity fields", () => {
