@@ -97,11 +97,12 @@ export const SERVICES: ServiceDef[] = [
     id: "tv", label: "Cable TV", category: "bills", keywords: "cable tv dstv gotv startimes showmax subscription", icon: "Tv",
     flow: {
       fields: [
-        { name: "provider", label: "Provider", kind: "select", choices: [{ value: "dstv", label: "DStv" }, { value: "gotv", label: "GOtv" }, { value: "startimes", label: "StarTimes" }] },
+        { name: "provider", label: "Provider", kind: "select", choices: [{ value: "dstv", label: "DStv" }, { value: "gotv", label: "GOtv" }, { value: "startimes", label: "StarTimes" }, { value: "showmax", label: "Showmax" }] },
+        { name: "smartCardNumber", label: "Smartcard / IUC number", kind: "text", pattern: /^\d{10,11}$/, patternHint: "10 to 11 digits" },
         { name: "plan", label: "Package", kind: "select", options: { op: "get-bills-cable-plans", dependsOn: "provider", query: (v) => (v["provider"] ? { provider: v["provider"] } : null), pick: list, map: (i) => ({ value: str(i["itemCode"]) || str(i["id"]), label: `${str(i["name"])} · ₦${Number(i["amount"] ?? 0).toLocaleString()}`, item: i }) }, setsAmount: (i) => Number(i["amount"]) || null },
-        { name: "smartCardNumber", label: "Smartcard / IUC number", kind: "text", pattern: /^\d{8,12}$/, patternHint: "8 to 12 digits" },
         amount,
       ],
+      validate: { op: "post-bills-cable-validate", body: (v) => ({ provider: v["provider"]?.toUpperCase(), smartcardNumber: v["smartCardNumber"] }), show: ["customerName", "currentPlan", "dueDate"] },
       pay: { op: "post-bills-cable-renew", verb: "Renew subscription", body: (v, p) => ({ smartCardNumber: v["smartCardNumber"], amount: n(v["amount"] ?? ""), billerCode: str(p["plan"]?.["billerCode"]), itemCode: item(p, "plan") }) },
       fee: (p) => Number(p["plan"]?.["fee"]) || null,
     },

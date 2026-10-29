@@ -8,7 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] Cable TV automatic customer lookup: awaiting documented provider verification endpoint, request fields and response sample; existing catalog only lists plans and renewal.
+- [ ] Cable TV: implement confirmed smartcard verification, four providers, verified-customer banner and verification-gated plans; test lookup and stale-response handling.
 - [ ] Logo for Slikpay: 4 concepts generated (Flow S, Pulse Tile, Secure S, Orbit Coin) in /mnt/documents/slikpay/; user to pick, then refine + favicon + app header
 - [x] Escrow page: full lifecycle (create/fund/release/dispute/refund, live status), 7 tests, build OK; user picked Split Composer design — applying mockup details (live deal preview, milestone %)
 - [x] Virtual cards page: full lifecycle (issue/fund/withdraw/freeze/controls/reveal/activity) via provider card API, Split Composer design, 9 tests, build OK; wired merchant + personal
