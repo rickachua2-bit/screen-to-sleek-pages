@@ -183,12 +183,12 @@ function TagCard({ tag, onCharge }: { tag: SmartTagView; onCharge: (t: SmartTagV
 
 function QrStands({ tags }: { tags: SmartTagView[] }) {
   const [selected, setSelected] = useState("");
-  const tag = tags.find((t) => t.handle === selected) ?? tags[0];
   if (!tags.length) return <div className="flex flex-col items-center rounded-2xl border border-border bg-card px-6 py-14 text-center">
     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan/10"><QrCode className="h-6 w-6 text-cyan" /></span>
     <h3 className="mt-4 font-bold">Create a SmartTag first</h3>
     <p className="mt-2 max-w-sm text-sm text-muted-foreground">Your printable QR stand is generated from a SmartTag. Create one in the SmartTags tab, then come back here.</p>
   </div>;
+  const tag = tags.find((t) => t.handle === selected) ?? tags[0]!;
   const url = tag.checkoutUrl ?? tagUrl(tag.handle);
   return <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
     <div className="rounded-2xl border border-border bg-card p-5">
