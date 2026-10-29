@@ -199,7 +199,7 @@ function CardRow({ card, busy, onFund, onWithdraw, onToggleFreeze, onControls, o
   const st = STATUS_STYLE[card.status];
   return <li className="rounded-xl border border-border bg-card p-4">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-center gap-4">
+      <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
         <CardGraphic label={card.holderName} last4={card.last4} />
         <div className="min-w-0">
           <p className="truncate text-sm font-bold">{card.brand === "VISA" ? "Visa" : "Mastercard"} {card.currency} · <span className="font-mono">···{card.last4}</span></p>
