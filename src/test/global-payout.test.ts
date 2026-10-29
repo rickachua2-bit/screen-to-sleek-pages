@@ -3,6 +3,7 @@ const mocks = vi.hoisted(() => ({ user: vi.fn(), call: vi.fn(), guard: vi.fn(), 
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => ({ inputValidator: () => ({ handler: (fn: unknown) => fn }), handler: (fn: unknown) => fn }) }));
 vi.mock("@/lib/paddle.server", () => ({ bankingUser: mocks.user, callPaddle: mocks.call }));
 vi.mock("@/lib/wallets.server", () => ({ guardMoney: mocks.guard, settleMoney: mocks.settle, readRecord: vi.fn(), holderName: vi.fn() }));
+beforeEach(() => vi.clearAllMocks());
 import { beneficiaryFor, corridorFor, globalWalletFee, minimumTargetAmount, nairaCrossBorderFee, safeDeclineReason } from "@/lib/international";
 import { payoutStatus } from "@/lib/transfer-validation";
 import { parseFxRates } from "@/lib/pricing";
