@@ -22,7 +22,11 @@ const CHARGES = [
 ];
 
 describe("QR & SmartTag page", () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.list.mockResolvedValue({ mode: "sandbox", tags: TAGS, charges: CHARGES }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.list.mockResolvedValue({ mode: "sandbox", tags: TAGS, charges: CHARGES });
+    mocks.listBoxes.mockResolvedValue({ soundboxes: [] });
+  });
 
   it("lists tags with fixed/open amounts and live charge statuses", async () => {
     render(<SmartTag />);
