@@ -8,9 +8,9 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] Team screen upgrade: colour-rich Team/Security/Profile/Activity, seven requested invitation roles, resend and activity controls; verify focused tests and layouts.
+- [x] Team screen upgrade: colour-rich Team/Security/Profile/Activity, seven validated requested invitation roles, resend, status/search filters and activity export; focused tests passed.
 - [x] Team & Security: branded tabs, owner profile, authenticator setup, current-password-protected password/session actions, PIN replacement, pending invitation notices/revocation and activity; focused tests added.
-- [ ] Team activation: manually apply supabase/slikpay_team_security.sql for invitations, PIN attempt limits and audit storage. Real shared-team roles/access remain unavailable until workspace authorization is implemented; authenticated live actions remain unverified.
+- [ ] Team activation: manually apply the updated supabase/slikpay_team_security.sql (requested roles, invitations, PIN attempt limits and audit storage). Shared-team roles/access need workspace authorization across banking operations; authenticated live actions and layouts remain unverified without an external account session.
 - [x] Federal tax and Remita: dedicated pages, automatic verification, assessed amount/fee binding, atomic payments, honest statuses and downloadable saved records; 11 focused tests and 297 regression tests passed.
 - [ ] Tax/Remita live confirmation: needs a real authenticated service response with assessed amount/fee; official receipt retrieval and pending recovery need provider-confirmed contracts. No guessed pricing rail or status endpoint added.
 - [x] Betting wallet: automatic customer/user ID verification, server-side revalidation, stale-result protection, atomic funding and pending safety; tests passed. Real authenticated service response remains unverified without a session.
