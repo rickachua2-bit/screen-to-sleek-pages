@@ -4,7 +4,7 @@ import {
   Nfc, ReceiptText, ShieldCheck, Smartphone, UserRound, Users, Zap,
 } from "lucide-react";
 import { useState, type CSSProperties } from "react";
-import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
+import { APP_SIGNIN, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import {
   AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter, CountUp,
   CtaBand, Faq, FeatureCard, FlightVisual, MediaBanner, ProductSuite, RateTicker, SectionHead,
