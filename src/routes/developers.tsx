@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Braces, KeyRound, Webhook } from "lucide-react";
 import type { CSSProperties } from "react";
-import { API_BASE, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
+import { API_BASE, APP_SIGNIN, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
 import apiImg from "@/assets/marketing/mkt-api.png";
 
@@ -55,7 +55,7 @@ function DevelopersPage() {
       >
         <div className="mkt-hero-actions">
           <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-primary">Read the documentation <ArrowRight className="h-4 w-4" /></a>
-          <a href="/auth" className="mkt-btn-ghost">Get sandbox keys</a>
+          <a href={APP_SIGNIN} className="mkt-btn-ghost">Get sandbox keys</a>
         </div>
       </PageHero>
 

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { toast } from "sonner";
 import { getLiveFxQuote, type LiveFxQuote } from "@/lib/fx.functions";
 import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
-import { API_BASE, DOCS_URL } from "./shell";
+import { API_BASE, APP_SIGNIN, DOCS_URL } from "./shell";
 
 /* ------------------------------ copy button ------------------------------ */
 
@@ -435,7 +435,7 @@ export function CtaBand({ title, sub }: { title: string; sub?: string }) {
         <h2>{title}</h2>
         {sub ? <p>{sub}</p> : null}
         <div className="mkt-ctaband-actions">
-          <a href="/auth" className="mkt-btn-primary">Open a free account <ArrowRight className="h-4 w-4" /></a>
+          <a href={APP_SIGNIN} className="mkt-btn-primary">Open a free account <ArrowRight className="h-4 w-4" /></a>
           <a href="/contact" className="mkt-btn-ghost">Talk to sales</a>
         </div>
       </div>
@@ -485,7 +485,7 @@ export function ProductSuite() {
 
 export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, image }: {
   kicker: string; title: ReactNode; sub: string; bullets: string[];
-  cta: { label: string; to: "/business" | "/personal" | "/developers" | "/pricing" | "/auth" | "/contact" };
+  cta: { label: string; to?: "/business" | "/personal" | "/developers" | "/pricing" | "/contact"; href?: string };
   visual: ReactNode; flip?: boolean; image?: { src: string; alt: string };
 }) {
   return (
@@ -497,7 +497,9 @@ export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, im
         <ul className="mkt-checklist">
           {bullets.map((b) => <li key={b}><Check className="h-4 w-4" /> {b}</li>)}
         </ul>
-        <Link to={cta.to} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
+        {cta.href
+          ? <a href={cta.href} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></a>
+          : <Link to={cta.to ?? "/"} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>}
       </div>
       <div className="mkt-showcase-visual mkt-reveal" style={{ "--mkt-d": "120ms" } as CSSProperties}>
         {image ? (

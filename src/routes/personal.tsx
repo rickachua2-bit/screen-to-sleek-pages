@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, CardSim, Coins, Plane, ReceiptText, Send, Wallet } from "lucide-react";
-import { MarketingShell } from "@/components/marketing/shell";
+import { APP_SIGNIN, MarketingShell } from "@/components/marketing/shell";
 import { BillsVisual, Converter, CtaBand, FeatureCard, FlightVisual, SectionHead, ShowcaseRow, StepsRow, VirtualCard } from "@/components/marketing/widgets";
 import personalImg from "@/assets/marketing/mkt-personal.png";
 import remittanceImg from "@/assets/marketing/mkt-remittance.png";
@@ -34,7 +34,7 @@ function PersonalPage() {
               instant utility and airtime payments, and automated savings vaults that grow while you sleep.
             </p>
             <div className="mkt-hero-actions">
-              <a href="/auth" className="mkt-btn-primary">Start with Slikcash Personal <ArrowRight className="h-4 w-4" /></a>
+              <a href={APP_SIGNIN} className="mkt-btn-primary">Start with Slikcash Personal <ArrowRight className="h-4 w-4" /></a>
               <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
             </div>
           </div>
@@ -129,7 +129,7 @@ function PersonalPage() {
               "Fares revalidated before payment, never a bait price",
               "Pay in any wallet currency with transparent conversion",
             ]}
-            cta={{ label: "Start with Slikcash Personal", to: "/auth" }}
+            cta={{ label: "Start with Slikcash Personal", href: APP_SIGNIN }}
             visual={<FlightVisual />}
             image={{ src: flightsImg, alt: "An airplane taking off over a globe with a boarding pass and phone" }}
           />
