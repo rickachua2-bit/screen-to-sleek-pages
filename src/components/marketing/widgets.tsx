@@ -1,7 +1,9 @@
 import { ArrowLeftRight, ArrowRight, Braces, CardSim, Check, CheckCircle2, Copy, Globe2, Landmark, Minus, Nfc, Plane, Plus, ReceiptText, ShieldCheck, Ticket, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { toast } from "sonner";
+import { getLiveFxQuote, type LiveFxQuote } from "@/lib/fx.functions";
+import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
 import { API_BASE, DOCS_URL } from "./shell";
 
 /* ------------------------------ copy button ------------------------------ */
