@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { Converter, CtaBand, PageHero, SectionHead } from "@/components/marketing/widgets";
-import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
+import remittanceImg from "@/assets/marketing/mkt-remittance.png";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({

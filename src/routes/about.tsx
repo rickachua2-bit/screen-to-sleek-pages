@@ -3,7 +3,7 @@ import { Landmark, Lock, Scale, ShieldCheck } from "lucide-react";
 import type { CSSProperties } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
-import securityImg from "@/assets/marketing/mkt-security.jpg";
+import securityImg from "@/assets/marketing/mkt-security.png";
 
 export const Route = createFileRoute("/about")({
   head: () => ({

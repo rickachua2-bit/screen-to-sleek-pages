@@ -4,7 +4,7 @@ import { useState, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
 import { MarketingShell } from "@/components/marketing/shell";
 import { PageHero, SectionHead } from "@/components/marketing/widgets";
-import supportImg from "@/assets/marketing/mkt-support.jpg";
+import supportImg from "@/assets/marketing/mkt-support.png";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({

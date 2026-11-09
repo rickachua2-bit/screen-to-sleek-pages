@@ -3,9 +3,9 @@ import { ArrowLeftRight, ArrowRight, Braces, Briefcase, CalendarClock, FileText,
 import { useState } from "react";
 import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import { CtaBand, FeatureCard, MediaBanner, PageHero, SectionHead, StepsRow } from "@/components/marketing/widgets";
-import businessImg from "@/assets/marketing/mkt-business.jpg";
-import gatewayImg from "@/assets/marketing/mkt-gateway.jpg";
-import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
+import businessImg from "@/assets/marketing/mkt-business.png";
+import gatewayImg from "@/assets/marketing/mkt-gateway.png";
+import remittanceImg from "@/assets/marketing/mkt-remittance.png";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
