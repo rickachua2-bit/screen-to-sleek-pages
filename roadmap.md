@@ -34,3 +34,5 @@
 - [ ] Logo for Slikpay: 4 concepts generated (Flow S, Pulse Tile, Secure S, Orbit Coin) in /mnt/documents/slikpay/; user to pick, then refine + favicon + app header
 - [x] Escrow page: full lifecycle (create/fund/release/dispute/refund, live status), 7 tests, build OK; user picked Split Composer design — applying mockup details (live deal preview, milestone %)
 - [x] Virtual cards page: full lifecycle (issue/fund/withdraw/freeze/controls/reveal/activity) via provider card API, Split Composer design, 9 tests, build OK; wired merchant + personal
+- [x] Slikcash marketing site: flagship landing + Business/Personal/Developers/Pricing/About/Contact pages, obsidian theme, wallet app moved to /wallet; brief's ₦10.75 NIP fee replaced with real 1%-capped-₦80 rule (conflict flagged to user)
+- [ ] Slikcash rebrand follow-ups: docs/API domains still slikpay.online; decide whether the app itself renames to Slikcash; verify marketing pages visually signed-out
