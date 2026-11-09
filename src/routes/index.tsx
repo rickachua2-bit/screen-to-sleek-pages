@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowRight, Building2, CardSim, Check, Fingerprint, Globe2, Landmark,
+  ArrowRight, Braces, Building2, CardSim, Fingerprint, Globe2, Landmark,
   Nfc, ReceiptText, ShieldCheck, Smartphone, UserRound, Users, Zap,
 } from "lucide-react";
 import { useState, type CSSProperties } from "react";
-import { MarketingShell } from "@/components/marketing/shell";
+import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import {
   AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter,
   CtaBand, Faq, FeatureCard, FlightVisual, MediaBanner, ProductSuite, RateTicker, SectionHead,
@@ -17,7 +17,6 @@ import remittanceImg from "@/assets/marketing/mkt-remittance.png";
 import cardsImg from "@/assets/marketing/mkt-cards.png";
 import billsImg from "@/assets/marketing/mkt-bills.png";
 import flightsImg from "@/assets/marketing/mkt-flights.png";
-import apiImg from "@/assets/marketing/mkt-api.png";
 import softposImg from "@/assets/marketing/mkt-softpos.png";
 import securityImg from "@/assets/marketing/mkt-security.png";
 
@@ -228,19 +227,33 @@ function Landing() {
         </div>
       </section>
 
-      {/* API section */}
-      <section className="mkt-section" id="developers-preview">
+      {/* API band */}
+      <section className="mkt-apiband" id="developers-preview">
         <div className="mkt-container">
-          <SectionHead
-            kicker="API services"
-            title="Every product on this page is also an API"
-            sub="Other businesses build entire fintechs on Slikcash rails — payments, accounts, cards, transfers, remittance, bills and flights — with signed webhooks, SDKs and full documentation."
-          />
-          <MediaBanner src={apiImg} alt="Developer API illustration with a code window, connected nodes and a plug" />
-          <ApiProductGrid />
-          <div style={{ marginTop: "2rem" }}>
-            <CodeTabs />
+          <div className="mkt-apiband-grid">
+            <div className="mkt-apiband-copy mkt-reveal">
+              <span className="mkt-kicker"><Braces className="h-3.5 w-3.5" /> API services</span>
+              <h2>Every product on this page is also an API</h2>
+              <p>
+                Other businesses build entire fintechs on Slikcash rails — payments, accounts, cards, transfers,
+                remittance, bills and flights — with signed webhooks, SDKs and full documentation.
+              </p>
+              <ul className="mkt-apiband-chips">
+                <li><ShieldCheck className="h-3.5 w-3.5" /> HMAC-signed webhooks</li>
+                <li><Zap className="h-3.5 w-3.5" /> Sandbox keys on signup</li>
+                <li><Braces className="h-3.5 w-3.5" /> Node · Python · PHP · Flutter</li>
+                <li><Globe2 className="h-3.5 w-3.5" /> 99.99% core uptime</li>
+              </ul>
+              <div className="mkt-apiband-actions">
+                <Link to="/developers" className="mkt-btn-primary">Explore the API <ArrowRight className="h-4 w-4" /></Link>
+                <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-ghost">Read the docs</a>
+              </div>
+            </div>
+            <div className="mkt-reveal" style={{ "--mkt-d": "120ms" } as CSSProperties}>
+              <CodeTabs />
+            </div>
           </div>
+          <ApiProductGrid />
         </div>
       </section>
 
