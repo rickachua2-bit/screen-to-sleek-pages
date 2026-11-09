@@ -9,10 +9,10 @@ export type Airport = { code: string; name: string; city: string; country: strin
 export type FlightSegment = { 
   from: string; 
   to: string; 
-  fromCity?: string;
-  toCity?: string;
-  fromName?: string;
-  toName?: string;
+  fromCity?: string | undefined;
+  toCity?: string | undefined;
+  fromName?: string | undefined;
+  toName?: string | undefined;
   fromTerminal?: string | null;
   toTerminal?: string | null;
   departAt: string; 
@@ -312,7 +312,8 @@ export function parseOffer(raw: unknown): FlightOffer | null {
   const rawSegs = (rawSlices[0] && typeof rawSlices[0] === "object") ? obj(rawSlices[0])["segments"] : null;
   if (Array.isArray(rawSegs)) {
     for (const s of rawSegs) {
-      const paxList = Array.isArray(obj(s)["passengers"]) ? obj(s)["passengers"] : [];
+      const rawPassengers = obj(s)["passengers"];
+      const paxList = Array.isArray(rawPassengers) ? rawPassengers : [];
       for (const p of paxList) {
         const rawBaggages = obj(p)["baggages"];
         const bList = Array.isArray(rawBaggages) ? rawBaggages : [];
