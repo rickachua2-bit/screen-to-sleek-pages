@@ -18,6 +18,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DevelopersRouteImport } from './routes/developers'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
 import { Route as ApiPublicBusinessV1BalancesRouteImport } from './routes/api/public/business/v1/balances'
@@ -69,6 +71,16 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -108,6 +120,8 @@ export interface FileRoutesByFullPath {
   '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -124,6 +138,8 @@ export interface FileRoutesByTo {
   '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -141,6 +157,8 @@ export interface FileRoutesById {
   '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -159,6 +177,8 @@ export interface FileRouteTypes {
     | '/developers'
     | '/personal'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -175,6 +195,8 @@ export interface FileRouteTypes {
     | '/developers'
     | '/personal'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -191,6 +213,8 @@ export interface FileRouteTypes {
     | '/developers'
     | '/personal'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -208,6 +232,8 @@ export interface RootRouteChildren {
   DevelopersRoute: typeof DevelopersRoute
   PersonalRoute: typeof PersonalRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
   ApiPublicBusinessV1BalancesRoute: typeof ApiPublicBusinessV1BalancesRoute
@@ -280,6 +306,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallet': {
       id: '/wallet'
       path: '/wallet'
@@ -328,6 +368,8 @@ const rootRouteChildren: RootRouteChildren = {
   DevelopersRoute: DevelopersRoute,
   PersonalRoute: PersonalRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,
   ApiPublicBusinessV1BalancesRoute: ApiPublicBusinessV1BalancesRoute,
