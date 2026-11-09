@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, CardSim, Coins, Plane, ReceiptText, Send, Wallet } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/shell";
-import { CtaBand, FeatureCard, SectionHead, VirtualCard } from "@/components/marketing/widgets";
+import { BillsVisual, Converter, CtaBand, FeatureCard, FlightVisual, SectionHead, ShowcaseRow, StepsRow, VirtualCard } from "@/components/marketing/widgets";
 
 export const Route = createFileRoute("/personal")({
   head: () => ({
@@ -68,6 +68,73 @@ function PersonalPage() {
               Search and book flights across 450+ airlines with instant PNRs, paid straight from your wallet.
             </FeatureCard>
           </div>
+        </div>
+      </section>
+
+      {/* Remittance showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            kicker="Cross-border & remittance"
+            title={<>Send money home — and everywhere else</>}
+            sub="Move money across eleven countries in ten currencies. The rate you see is what your recipient gets, with live tracking until it lands."
+            bullets={[
+              "Flat 0.5% cross-border fee — no hidden FX markup",
+              "US, UK, Eurozone, Ghana, Kenya, South Africa and more",
+              "Hold and swap USD, GBP, EUR, GHS, KES, ZAR, USDT and USDC",
+            ]}
+            cta={{ label: "See corridors & fees", to: "/pricing" }}
+            visual={<Converter />}
+          />
+        </div>
+      </section>
+
+      {/* Bills showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            flip
+            kicker="Bills & utilities"
+            title={<>Every bill, paid before the lights blink</>}
+            sub="Airtime, data, electricity, cable TV, internet, betting wallets, exam pins and federal tax — verified customers, instant value, shareable receipts."
+            bullets={[
+              "Network auto-detection shows the right data plans for any number",
+              "Meter and smartcard lookups confirm the real customer first",
+              "Receipts with references you can share or download",
+            ]}
+            cta={{ label: "See pricing", to: "/pricing" }}
+            visual={<BillsVisual />}
+          />
+        </div>
+      </section>
+
+      {/* Flights showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            kicker="Flights & travel"
+            title={<>Search any airport on earth, book in minutes</>}
+            sub="Real fares across 450+ airlines worldwide. Type a city or IATA code, pick a fare, pay from your wallet — your PNR and e-ticket arrive instantly."
+            bullets={[
+              "Global airport search — no fixed route list",
+              "Fares revalidated before payment, never a bait price",
+              "Pay in any wallet currency with transparent conversion",
+            ]}
+            cta={{ label: "Start with Slikcash Personal", to: "/auth" }}
+            visual={<FlightVisual />}
+          />
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead kicker="Getting started" title="Your wallet is minutes away" />
+          <StepsRow steps={[
+            { title: "Sign up", text: "Create your account with your email and phone number — no paperwork, no branch visits." },
+            { title: "Verify once", text: "A quick KYC check unlocks your NUBAN, @SlikTag, wallets and virtual cards." },
+            { title: "Move money your way", text: "Send, spend, save, pay bills and book flights — all from one balance view." },
+          ]} />
         </div>
       </section>
 

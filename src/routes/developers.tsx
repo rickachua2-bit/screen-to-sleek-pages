@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Braces, KeyRound, Webhook } from "lucide-react";
 import { API_BASE, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
-import { CodeTabs, CopyButton, CtaBand, FeatureCard, SectionHead } from "@/components/marketing/widgets";
+import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, SectionHead } from "@/components/marketing/widgets";
 
 export const Route = createFileRoute("/developers")({
   head: () => ({
@@ -67,6 +67,17 @@ function DevelopersPage() {
             sub={`Base URL: ${API_BASE} — authenticate with your sk_test_ or sk_live_ secret key.`}
           />
           <CodeTabs />
+        </div>
+      </section>
+
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead
+            kicker="API products"
+            title="Every Slikcash product, one integration away"
+            sub="Payments, accounts, transfers, cards, remittance, bills, flights and events — the same rails that power our own console, documented end to end."
+          />
+          <ApiProductGrid />
         </div>
       </section>
 

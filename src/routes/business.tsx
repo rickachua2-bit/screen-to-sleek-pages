@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeftRight, ArrowRight, CalendarClock, FileText, Globe2, Link2, ReceiptText, ShieldCheck, Store, Users } from "lucide-react";
-import { MarketingShell } from "@/components/marketing/shell";
-import { CtaBand, FeatureCard, SectionHead } from "@/components/marketing/widgets";
+import { ArrowLeftRight, ArrowRight, Braces, Briefcase, CalendarClock, FileText, Globe2, Link2, ReceiptText, ShieldCheck, Store, Users } from "lucide-react";
+import { useState } from "react";
+import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
+import { CtaBand, FeatureCard, SectionHead, StepsRow } from "@/components/marketing/widgets";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
@@ -17,7 +18,32 @@ export const Route = createFileRoute("/business")({
   component: BusinessPage,
 });
 
+const SEGMENTS = {
+  corporates: [
+    { icon: <Users className="h-5 w-5" />, title: "Multi-team governance", text: "Seven invitation roles, maker-checker approvals and audit trails your board and auditors can export." },
+    { icon: <Globe2 className="h-5 w-5" />, title: "Global supplier payouts", text: "Pay suppliers and remote teams across 11 countries at a flat 0.5% with live tracking and automatic recovery." },
+    { icon: <Braces className="h-5 w-5" />, title: "API-first operations", text: "Embed collections, payouts and account issuance into your own systems with sandbox keys issued on signup." },
+  ],
+  small: [
+    { icon: <Store className="h-5 w-5" />, title: "Get paid in store & online", text: "SoftPOS tap-to-pay, SmartTag QR stands, payment links and invoices — every naira lands in your NUBAN instantly." },
+    { icon: <ReceiptText className="h-5 w-5" />, title: "Cashier shifts & tills", text: "Open and close shifts with per-till collections, variance tracking and end-of-day reconciliation." },
+    { icon: <CalendarClock className="h-5 w-5" />, title: "Recurring collections", text: "Direct debit mandates on weekly or monthly schedules keep subscriptions and dues flowing automatically." },
+  ],
+  freelancers: [
+    { icon: <Link2 className="h-5 w-5" />, title: "Invoice like a company", text: "Send branded invoices and hosted payment links — clients pay by card or transfer and you settle instantly." },
+    { icon: <ArrowLeftRight className="h-5 w-5" />, title: "Get paid from abroad", text: "Receive USD, GBP and EUR into your own foreign-currency accounts and convert at transparent rates." },
+    { icon: <Briefcase className="h-5 w-5" />, title: "Separate work from life", text: "A dedicated business NUBAN, spending cards and exportable statements keep your finances clean at tax time." },
+  ],
+} as const;
+
+const STEPS = [
+  { title: "Open your business account", text: "Sign up with your business details and verify your contacts — it takes minutes, not weeks." },
+  { title: "Complete KYB", text: "Registry lookup, director and beneficial-owner verification. Sandbox API keys are issued instantly; live keys follow approval." },
+  { title: "Start collecting everywhere", text: "Your NUBAN, gateway, SoftPOS, payment links and API keys go live — with live support whenever you need it." },
+];
+
 function BusinessPage() {
+  const [segment, setSegment] = useState<keyof typeof SEGMENTS>("corporates");
   return (
     <MarketingShell active="/business">
       <section className="mkt-pagehero">
@@ -85,6 +111,51 @@ function BusinessPage() {
               Seven invitation roles, transaction approvals and biometric gates keep sensitive actions under dual control.
             </FeatureCard>
           </div>
+        </div>
+      </section>
+
+      {/* Segment tabs */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead kicker="For every stage" title="Building solutions for every type of business" />
+          <div className="mkt-tabs" role="tablist" aria-label="Business type">
+            <button role="tab" aria-selected={segment === "corporates"} data-active={segment === "corporates" || undefined} onClick={() => setSegment("corporates")}>For Corporates</button>
+            <button role="tab" aria-selected={segment === "small"} data-active={segment === "small" || undefined} onClick={() => setSegment("small")}>For Small Businesses</button>
+            <button role="tab" aria-selected={segment === "freelancers"} data-active={segment === "freelancers" || undefined} onClick={() => setSegment("freelancers")}>For Freelancers</button>
+          </div>
+          <div className="mkt-grid-3" style={{ marginTop: "1.5rem" }}>
+            {SEGMENTS[segment].map((f) => (
+              <FeatureCard key={f.title} icon={f.icon} title={f.title}>{f.text}</FeatureCard>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* API teaser */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <div className="mkt-card" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ maxWidth: "34rem" }}>
+              <span className="mkt-kicker">Build on Slikcash</span>
+              <h3 style={{ margin: ".7rem 0 .4rem", fontSize: "1.25rem" }}>Every console feature is also an API</h3>
+              <p style={{ margin: 0, fontSize: ".9rem", color: "var(--mkt-muted)" }}>
+                Payments, accounts, cards, transfers, remittance, bills and flights — with signed webhooks,
+                SDKs for every stack and full documentation.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: ".7rem", flexWrap: "wrap" }}>
+              <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-primary mkt-btn-sm">Read the docs <ArrowRight className="h-4 w-4" /></a>
+              <a href="/developers" className="mkt-btn-ghost mkt-btn-sm">API quickstart</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead kicker="Getting started" title="Your business account is minutes away" />
+          <StepsRow steps={STEPS} />
         </div>
       </section>
 
