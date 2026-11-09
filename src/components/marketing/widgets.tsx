@@ -1,4 +1,5 @@
-import { ArrowLeftRight, ArrowRight, Check, Copy, Minus, Plus, ShieldCheck, Zap } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Braces, CardSim, Check, CheckCircle2, Copy, Globe2, Landmark, Minus, Nfc, Plane, Plus, ReceiptText, ShieldCheck, Ticket, Zap } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { API_BASE, DOCS_URL } from "./shell";
@@ -358,6 +359,160 @@ export function FeatureCard({ icon, title, children }: { icon: ReactNode; title:
       <span className="mkt-feature-icon">{icon}</span>
       <h3>{title}</h3>
       <p>{children}</p>
+    </div>
+  );
+}
+
+/* ---------------------------- product suite grid --------------------------- */
+
+const SUITE = [
+  { to: "/business", icon: <Globe2 className="h-5 w-5" />, title: "Payment Gateway", text: "Cards, bank transfer, Apple Pay, Google Pay and USSD in one hosted checkout." },
+  { to: "/business", icon: <Landmark className="h-5 w-5" />, title: "Virtual Bank Accounts", text: "Dedicated NUBANs and multi-currency accounts issued instantly in any name." },
+  { to: "/personal", icon: <CardSim className="h-5 w-5" />, title: "Card Issuance", text: "Virtual USD & NGN Mastercards with 3D Secure, limits and one-tap freeze." },
+  { to: "/business", icon: <ArrowLeftRight className="h-5 w-5" />, title: "Cross-border & Remittance", text: "Payouts across 11 countries at a flat 0.5% with live status tracking." },
+  { to: "/personal", icon: <ReceiptText className="h-5 w-5" />, title: "Bills & Utilities", text: "Airtime, data, electricity, cable TV, internet, betting and exam pins." },
+  { to: "/personal", icon: <Plane className="h-5 w-5" />, title: "Flight Booking", text: "Search and book 450+ airlines worldwide with instant PNRs and e-tickets." },
+  { to: "/business", icon: <Nfc className="h-5 w-5" />, title: "SoftPOS & SmartTag", text: "Tap-to-pay on any NFC phone plus chargeable QR stands and Soundbox alerts." },
+  { to: "/developers", icon: <Braces className="h-5 w-5" />, title: "Developer API", text: "Every product above as a clean REST API with signed webhooks and SDKs." },
+] as const;
+
+export function ProductSuite() {
+  return (
+    <div className="mkt-suite">
+      {SUITE.map((p) => (
+        <Link key={p.title} to={p.to} className="mkt-card mkt-suite-card">
+          <span className="mkt-feature-icon">{p.icon}</span>
+          <h3>{p.title}</h3>
+          <p>{p.text}</p>
+          <span className="mkt-suite-arrow">Explore <ArrowRight className="h-3.5 w-3.5" /></span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------ showcase rows ------------------------------ */
+
+export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip }: {
+  kicker: string; title: ReactNode; sub: string; bullets: string[];
+  cta: { label: string; to: "/business" | "/personal" | "/developers" | "/pricing" | "/auth" | "/contact" };
+  visual: ReactNode; flip?: boolean;
+}) {
+  return (
+    <div className="mkt-showcase-grid" data-flip={flip || undefined}>
+      <div className="mkt-showcase-copy">
+        <span className="mkt-kicker">{kicker}</span>
+        <h2>{title}</h2>
+        <p>{sub}</p>
+        <ul className="mkt-checklist">
+          {bullets.map((b) => <li key={b}><Check className="h-4 w-4" /> {b}</li>)}
+        </ul>
+        <Link to={cta.to} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
+      </div>
+      <div className="mkt-showcase-visual">{visual}</div>
+    </div>
+  );
+}
+
+/* ------------------------------ API products ------------------------------- */
+
+const API_PRODUCTS = [
+  { path: "POST /v1/gateway/charge", title: "Payments API", text: "Charge cards, transfers, Apple Pay, Google Pay and USSD with one call." },
+  { path: "POST /v1/accounts", title: "Accounts API", text: "Issue dedicated NUBANs and multi-currency accounts to your customers." },
+  { path: "POST /v1/transfers", title: "Transfers API", text: "Single and bulk NIP payouts with idempotency keys and instant status." },
+  { path: "POST /v1/cards", title: "Cards API", text: "Issue and manage virtual USD & NGN cards programmatically." },
+  { path: "POST /v1/payouts", title: "Remittance API", text: "Cross-border payouts across 11 countries with live tracking and recovery." },
+  { path: "GET /v1/flights/search", title: "Flights API", text: "Search fares and issue tickets across 450+ airlines worldwide." },
+  { path: "POST /v1/bills", title: "Bills API", text: "Vend airtime, data, electricity, TV and exam pins programmatically." },
+  { path: "HMAC x-slikcash-signature", title: "Webhooks & Events", text: "Signed events for every charge, payout, collection and card action." },
+] as const;
+
+export function ApiProductGrid() {
+  return (
+    <div className="mkt-api-grid">
+      {API_PRODUCTS.map((a) => (
+        <div key={a.title} className="mkt-card mkt-api-card">
+          <span className="mkt-api-method">{a.path}</span>
+          <h3>{a.title}</h3>
+          <p>{a.text}</p>
+          <a className="mkt-api-docs" href={DOCS_URL} target="_blank" rel="noreferrer">Read the docs <ArrowRight className="h-3.5 w-3.5" /></a>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* --------------------------- showcase mini-visuals -------------------------- */
+
+export function AccountVisual() {
+  return (
+    <div className="mkt-acct" aria-label="Dedicated NUBAN account preview">
+      <div className="mkt-acct-top">
+        <span>Acme Technologies Ltd</span>
+        <span className="mkt-pill-live"><span className="mkt-live-dot" /> Active</span>
+      </div>
+      <div className="mkt-acct-label">Dedicated NUBAN · Licensed partner bank</div>
+      <div className="mkt-acct-num">0071 4429 05</div>
+      <div className="mkt-acct-curs">
+        {["NGN", "USD", "GBP", "EUR", "USDT"].map((c) => <span key={c}>{c}</span>)}
+      </div>
+      <div className="mkt-acct-foot"><ShieldCheck className="h-3 w-3" /> Inbound transfers captured automatically — even direct ones</div>
+    </div>
+  );
+}
+
+export function FlightVisual() {
+  return (
+    <div className="mkt-flight mkt-card" aria-label="Flight booking preview">
+      <div className="mkt-flight-head">
+        <strong>Lagos → London, return</strong>
+        <span className="mkt-pill-live"><span className="mkt-live-dot" /> Live fares</span>
+      </div>
+      <div className="mkt-flight-route">
+        <div><strong>LOS</strong><span>08:35 · Lagos</span></div>
+        <div className="mkt-flight-line"><Plane className="h-4 w-4" /></div>
+        <div><strong>LHR</strong><span>14:05 · London</span></div>
+      </div>
+      <div className="mkt-flight-meta">
+        <span>Economy · 1 adult · 6h 30m</span>
+        <strong>₦845,000</strong>
+      </div>
+      <div className="mkt-flight-foot"><Ticket className="h-3.5 w-3.5" /> PNR &amp; e-ticket issued instantly on payment</div>
+    </div>
+  );
+}
+
+const BILL_ITEMS = [
+  "Airtime — MTN, Airtel, Glo & 9mobile",
+  "Data plans — network auto-detected",
+  "Electricity — prepaid & postpaid meters",
+  "Cable TV — DStv, GOtv & StarTimes",
+  "Home internet subscriptions",
+  "Betting wallets — verified IDs",
+  "Exam pins — WAEC & NECO",
+  "Federal tax & Remita",
+];
+
+export function BillsVisual() {
+  return (
+    <ul className="mkt-bills mkt-card" aria-label="Bills and services preview">
+      {BILL_ITEMS.map((b) => <li key={b}><CheckCircle2 className="h-4 w-4" /> {b}</li>)}
+    </ul>
+  );
+}
+
+/* --------------------------------- steps ----------------------------------- */
+
+export function StepsRow({ steps }: { steps: { title: string; text: string }[] }) {
+  return (
+    <div className="mkt-steps">
+      {steps.map((s, i) => (
+        <div key={s.title} className="mkt-card mkt-step">
+          <span className="mkt-step-num">{String(i + 1).padStart(2, "0")}</span>
+          <h3>{s.title}</h3>
+          <p>{s.text}</p>
+        </div>
+      ))}
     </div>
   );
 }
