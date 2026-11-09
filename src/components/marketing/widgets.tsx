@@ -327,11 +327,11 @@ export function CheckoutWidget() {
 
 /* ------------------------------ shared sections ---------------------------- */
 
-export function SectionHead({ kicker, title, sub }: { kicker: string; title: string; sub?: string }) {
+export function SectionHead({ kicker, title, sub }: { kicker: string; title?: string; sub?: string }) {
   return (
     <div className="mkt-section-head">
       <span className="mkt-kicker">{kicker}</span>
-      <h2>{title}</h2>
+      {title ? <h2>{title}</h2> : null}
       {sub ? <p>{sub}</p> : null}
     </div>
   );
