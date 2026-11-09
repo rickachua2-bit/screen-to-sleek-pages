@@ -3,7 +3,8 @@ const mocks = vi.hoisted(() => ({ user: vi.fn(), call: vi.fn(), guard: vi.fn(), 
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => ({ inputValidator: () => ({ handler: (fn: unknown) => fn }), handler: (fn: unknown) => fn }) }));
 vi.mock("@/lib/paddle.server", () => ({ bankingUser: mocks.user, callPaddle: mocks.call }));
 vi.mock("@/lib/wallets.server", () => ({ guardMoney: mocks.guard, settleMoney: mocks.settle }));
-vi.mock("@/lib/fx-pricing.server", () => ({ fetchLiveNipTransferFee: vi.fn().mockResolvedValue(10.75) }));
+// A plain function survives vi.resetAllMocks() — the live fee never hits the network in tests.
+vi.mock("@/lib/fx-pricing.server", () => ({ fetchLiveNipTransferFee: async () => 10.75 }));
 import { runPaddleOperation } from "@/lib/paddle.functions";
 const invoke = runPaddleOperation as unknown as (input: { data: Record<string, unknown> }) => Promise<{ receipt: { status: string; amount: number } }>;
 describe("bank payout transactional execution", () => {
