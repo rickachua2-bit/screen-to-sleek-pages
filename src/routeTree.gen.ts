@@ -16,9 +16,11 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DevelopersRouteImport } from './routes/developers'
+import { Route as LicensingRouteImport } from './routes/licensing'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
@@ -61,6 +63,11 @@ const DevelopersRoute = DevelopersRouteImport.update({
   path: '/developers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LicensingRoute = LicensingRouteImport.update({
+  id: '/licensing',
+  path: '/licensing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
@@ -74,6 +81,11 @@ const PricingRoute = PricingRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -118,9 +130,11 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
+  '/licensing': typeof LicensingRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
@@ -136,9 +150,11 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
+  '/licensing': typeof LicensingRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
@@ -155,9 +171,11 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
+  '/licensing': typeof LicensingRoute
   '/personal': typeof PersonalRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
@@ -175,9 +193,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/developers'
+    | '/licensing'
     | '/personal'
     | '/pricing'
     | '/privacy'
+    | '/security'
     | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
@@ -193,9 +213,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/developers'
+    | '/licensing'
     | '/personal'
     | '/pricing'
     | '/privacy'
+    | '/security'
     | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
@@ -211,9 +233,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/developers'
+    | '/licensing'
     | '/personal'
     | '/pricing'
     | '/privacy'
+    | '/security'
     | '/terms'
     | '/wallet'
     | '/api/public/paddle-webhook'
@@ -230,9 +254,11 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   DevelopersRoute: typeof DevelopersRoute
+  LicensingRoute: typeof LicensingRoute
   PersonalRoute: typeof PersonalRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
@@ -292,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevelopersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/licensing': {
+      id: '/licensing'
+      path: '/licensing'
+      fullPath: '/licensing'
+      preLoaderRoute: typeof LicensingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/personal': {
       id: '/personal'
       path: '/personal'
@@ -311,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -366,9 +406,11 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   DevelopersRoute: DevelopersRoute,
+  LicensingRoute: LicensingRoute,
   PersonalRoute: PersonalRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,

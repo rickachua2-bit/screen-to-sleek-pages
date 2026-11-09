@@ -42,9 +42,18 @@ const FOOTER_COLS: { title: string; links: { label: string; to?: string; href?: 
     title: "Company",
     links: [
       { label: "About Slikcash", to: "/about" },
-      { label: "Regulatory & Licensing", to: "/about" },
-      { label: "Security", to: "/about" },
+      { label: "Security", to: "/security" },
+      { label: "Regulatory & Licensing", to: "/licensing" },
       { label: "Contact & Support", to: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", to: "/terms" },
+      { label: "Privacy Policy", to: "/privacy" },
+      { label: "Security", to: "/security" },
+      { label: "Regulatory & Licensing", to: "/licensing" },
     ],
   },
 ];
@@ -92,6 +101,12 @@ export function MarketingFooter() {
             bank partners. Deposits are held with NDIC-insured partner banks and payments move over CBN-licensed
             clearing rails. Card services are PCI-DSS Level 1 certified.
           </p>
+          <nav className="mkt-footer-legal-links" aria-label="Legal">
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/security">Security</Link>
+            <Link to="/licensing">Regulatory & Licensing</Link>
+          </nav>
           <p>© {new Date().getFullYear()} Slikcash Technologies Ltd. All rights reserved.</p>
         </div>
       </div>
