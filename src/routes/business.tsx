@@ -69,6 +69,7 @@ function BusinessPage() {
             title="Get paid anywhere, settle instantly"
             sub="Every collection lands in your dedicated NUBAN and is captured automatically — even transfers sent straight to your account number."
           />
+          <MediaBanner src={gatewayImg} alt="Online checkout on a laptop and phone with a payment card and shield" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Globe2 className="h-5 w-5" />} title="Universal gateway">
               Cards, bank transfer, Apple Pay, Google Pay and USSD in one checkout, with instant T+0 NGN settlement and T+1 foreign settlement.
@@ -90,6 +91,7 @@ function BusinessPage() {
             title="Move money out with total control"
             sub="From one-off supplier payments to thousand-row payroll files, every payout is reserved, approved and tracked."
           />
+          <MediaBanner src={remittanceImg} alt="A globe with glowing money-transfer routes and currency coins" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Users className="h-5 w-5" />} title="Bulk payroll payouts">
               Upload a payment file, validate every row, review the total and fees, then release the whole batch with one approval.
