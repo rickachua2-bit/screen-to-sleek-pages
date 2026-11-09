@@ -105,6 +105,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
         <Link
           to={isBiz ? "/dashboard" : "/wallet"}
+          search={{ module: isBiz ? "overview" : "home" }}
           className="flex items-center gap-1.5 shrink-0 lg:hidden mr-1 group transition-transform active:scale-95"
           aria-label="Slikpay Home"
         >

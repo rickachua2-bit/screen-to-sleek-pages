@@ -215,7 +215,7 @@ launchUrl(Uri.parse(charge.data.authorizationUrl));`,
 
 export function CodeTabs() {
   const [active, setActive] = useState(0);
-  const snippet = SNIPPETS[active];
+  const snippet = SNIPPETS[active] ?? { lang: "", code: "" };
   return (
     <div className="mkt-codebox">
       <div className="mkt-codebox-head">

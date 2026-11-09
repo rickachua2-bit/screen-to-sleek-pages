@@ -15,6 +15,7 @@ import { useLivePricing } from "@/lib/live-pricing";
 import { quoteSwap, type FxRates } from "@/lib/pricing";
 import { paymentFeedback } from "@/lib/payment-feedback";
 import { useBankingProfile } from "./PaddleConsole";
+import { useAuth } from "@/lib/auth";
 
 type Trip = Awaited<ReturnType<typeof getFlightTrips>>[number];
 const CABIN_LABEL: Record<Cabin, string> = { economy: "Economy", premium_economy: "Premium economy", business: "Business", first: "First" };
@@ -232,7 +233,7 @@ function AirlineLogo({
 }: { 
   code: string; 
   name: string; 
-  logoUrl?: string | null; 
+  logoUrl?: string | null | undefined;
   className?: string 
 }) {
   const [srcIndex, setSrcIndex] = useState(0);
@@ -533,7 +534,7 @@ function FlightDetailsModal({
                 Complete Flight Route & Layovers
               </h3>
               <span className="text-xs font-medium text-muted-foreground">
-                Total duration: {prettyDuration(offer.slices[0]?.duration) || "Direct"}
+                Total duration: {prettyDuration(offer.slices[0]?.duration ?? null) || "Direct"}
               </span>
             </div>
 
@@ -783,6 +784,7 @@ function FlightDetailsModal({
 
 export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "personal" }) {
   const { profile } = useBankingProfile();
+  const { user } = useAuth();
   const live = profile?.mode === "live";
   const livePricing = useLivePricing();
   const liveRates = livePricing?.rates ?? null;
@@ -796,8 +798,8 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
   const [tab, setTab] = useState<"search" | "trips">("search");
   const [online, setOnline] = useState<boolean | null>(null);
   const [roundTrip, setRoundTrip] = useState(false);
-  const [from, setFrom] = useState<Airport | null>(POPULAR_AIRPORTS[0]); // default Lagos
-  const [to, setTo] = useState<Airport | null>(POPULAR_AIRPORTS[2]);     // default London
+  const [from, setFrom] = useState<Airport | null>(POPULAR_AIRPORTS[0] ?? null); // default Lagos
+  const [to, setTo] = useState<Airport | null>(POPULAR_AIRPORTS[2] ?? null);     // default London
   const [depart, setDepart] = useState(inDays(14)), [ret, setRet] = useState(inDays(21));
   const [adults, setAdults] = useState(1), [cabin, setCabin] = useState<Cabin>("economy");
   const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>("NGN");
@@ -991,16 +993,15 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
   };
 
   const autofillPrimaryTraveller = () => {
-    if (!profile) return;
-    const parts = (profile.companyName || "").split(" ");
+    if (!user) return;
+    const parts = user.name.split(" ");
     setPax((all) => all.map((x, j) => j === 0 ? {
       ...x,
       givenName: x.givenName || parts[0] || "",
       familyName: x.familyName || parts.slice(1).join(" ") || "",
-      email: x.email || profile.email || "",
-      phone: x.phone || profile.phone || "",
+      email: x.email || user.email || "",
     } : x));
-    toast.info("Autofilled traveller 1 with profile credentials");
+    toast.info("Autofilled traveller 1 with your account details");
   };
 
   const confirm = async () => {
@@ -1755,7 +1756,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
 
             <div className="mt-4 flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Passenger Information</span>
-              {profile && (
+              {user && (
                 <button
                   type="button"
                   onClick={autofillPrimaryTraveller}
