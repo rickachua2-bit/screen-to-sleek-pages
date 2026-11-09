@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, CardSim, Coins, Plane, ReceiptText, Send, Wallet } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { BillsVisual, Converter, CtaBand, FeatureCard, FlightVisual, SectionHead, ShowcaseRow, StepsRow, VirtualCard } from "@/components/marketing/widgets";
+import personalImg from "@/assets/marketing/mkt-personal.jpg";
+import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
+import billsImg from "@/assets/marketing/mkt-bills.jpg";
+import flightsImg from "@/assets/marketing/mkt-flights.jpg";
 
 export const Route = createFileRoute("/personal")({
   head: () => ({
@@ -35,6 +39,9 @@ function PersonalPage() {
             </div>
           </div>
           <div className="mkt-hero-visual">
+            <figure className="mkt-media mkt-hero-media">
+              <img src={personalImg} alt="A phone wallet with coins, a piggy bank and growing savings" width={1024} height={1024} />
+            </figure>
             <VirtualCard />
           </div>
         </div>
@@ -85,6 +92,7 @@ function PersonalPage() {
             ]}
             cta={{ label: "See corridors & fees", to: "/pricing" }}
             visual={<Converter />}
+            image={{ src: remittanceImg, alt: "A globe with glowing money-transfer routes and currency coins" }}
           />
         </div>
       </section>
@@ -104,6 +112,7 @@ function PersonalPage() {
             ]}
             cta={{ label: "See pricing", to: "/pricing" }}
             visual={<BillsVisual />}
+            image={{ src: billsImg, alt: "Bill payments: phone, lightbulb, television and wifi symbols" }}
           />
         </div>
       </section>
@@ -122,6 +131,7 @@ function PersonalPage() {
             ]}
             cta={{ label: "Start with Slikcash Personal", to: "/auth" }}
             visual={<FlightVisual />}
+            image={{ src: flightsImg, alt: "An airplane taking off over a globe with a boarding pass and phone" }}
           />
         </div>
       </section>

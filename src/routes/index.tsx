@@ -7,9 +7,19 @@ import { useState } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import {
   AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter,
-  CtaBand, Faq, FeatureCard, FlightVisual, ProductSuite, RateTicker, SectionHead,
+  CtaBand, Faq, FeatureCard, FlightVisual, MediaBanner, ProductSuite, RateTicker, SectionHead,
   ShowcaseRow, StepsRow, VirtualCard,
 } from "@/components/marketing/widgets";
+import heroImg from "@/assets/marketing/mkt-hero.jpg";
+import gatewayImg from "@/assets/marketing/mkt-gateway.jpg";
+import accountsImg from "@/assets/marketing/mkt-accounts.jpg";
+import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
+import cardsImg from "@/assets/marketing/mkt-cards.jpg";
+import billsImg from "@/assets/marketing/mkt-bills.jpg";
+import flightsImg from "@/assets/marketing/mkt-flights.jpg";
+import apiImg from "@/assets/marketing/mkt-api.jpg";
+import softposImg from "@/assets/marketing/mkt-softpos.jpg";
+import securityImg from "@/assets/marketing/mkt-security.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,8 +89,10 @@ function Landing() {
             </ul>
           </div>
           <div className="mkt-hero-visual">
+            <figure className="mkt-media mkt-hero-media">
+              <img src={heroImg} alt="Slikcash app with a virtual card, coins and the brand ribbon" width={1024} height={1024} />
+            </figure>
             <VirtualCard />
-            <CheckoutWidget />
           </div>
         </div>
       </section>
@@ -113,6 +125,7 @@ function Landing() {
             ]}
             cta={{ label: "Explore the Business Console", to: "/business" }}
             visual={<CheckoutWidget />}
+            image={{ src: gatewayImg, alt: "Online checkout on a laptop and phone with a payment card and shield" }}
           />
         </div>
       </section>
@@ -132,6 +145,7 @@ function Landing() {
             ]}
             cta={{ label: "See accounts & wallets", to: "/personal" }}
             visual={<AccountVisual />}
+            image={{ src: accountsImg, alt: "Virtual bank accounts with a bank building, wallet and currency coins" }}
           />
         </div>
       </section>
@@ -150,6 +164,7 @@ function Landing() {
             ]}
             cta={{ label: "See corridors & fees", to: "/pricing" }}
             visual={<Converter />}
+            image={{ src: remittanceImg, alt: "A globe with glowing money-transfer routes and currency coins" }}
           />
         </div>
       </section>
@@ -169,6 +184,7 @@ function Landing() {
             ]}
             cta={{ label: "Get a virtual card", to: "/personal" }}
             visual={<VirtualCard />}
+            image={{ src: cardsImg, alt: "Floating green and blue virtual payment cards with a security shield" }}
           />
         </div>
       </section>
@@ -187,6 +203,7 @@ function Landing() {
             ]}
             cta={{ label: "See everyday services", to: "/personal" }}
             visual={<BillsVisual />}
+            image={{ src: billsImg, alt: "Bill payments: phone, lightbulb, television and wifi symbols" }}
           />
         </div>
       </section>
@@ -206,6 +223,7 @@ function Landing() {
             ]}
             cta={{ label: "Book flights with Slikcash", to: "/personal" }}
             visual={<FlightVisual />}
+            image={{ src: flightsImg, alt: "An airplane taking off over a globe with a boarding pass and phone" }}
           />
         </div>
       </section>
@@ -218,6 +236,7 @@ function Landing() {
             title="Every product on this page is also an API"
             sub="Other businesses build entire fintechs on Slikcash rails — payments, accounts, cards, transfers, remittance, bills and flights — with signed webhooks, SDKs and full documentation."
           />
+          <MediaBanner src={apiImg} alt="Developer API illustration with a code window, connected nodes and a plug" />
           <ApiProductGrid />
           <div style={{ marginTop: "2rem" }}>
             <CodeTabs />
@@ -233,6 +252,7 @@ function Landing() {
             title="Turn any NFC phone into a contactless POS terminal"
             sub="Accept EMVCo L2 tap-to-pay cards and wallets directly on your Android phone — no expensive hardware, no queues, no downtime."
           />
+          <MediaBanner src={softposImg} alt="A hand tapping a payment card on a smartphone POS beside a QR stand" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Nfc className="h-5 w-5" />} title="Tap-to-pay on your phone">
               Your smartphone becomes a certified contactless terminal. Customers tap their card or phone and get an instant receipt.
@@ -275,6 +295,7 @@ function Landing() {
             title="Dual-control governance on every naira"
             sub="Maker-checker transaction approvals, biometric gates and real-time fraud monitoring keep your money exactly where you left it."
           />
+          <MediaBanner src={securityImg} alt="A security shield with a padlock and fingerprint symbol" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Users className="h-5 w-5" />} title="Maker-checker approvals">
               Large or sensitive payments wait for a second approver from your team before a single kobo moves.
