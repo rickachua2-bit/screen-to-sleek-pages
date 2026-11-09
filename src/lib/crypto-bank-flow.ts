@@ -1,4 +1,3 @@
-import { slikpayTransferFee } from "./transfer-validation";
 import { SWAP_NOT_READY } from "./wallet-safety";
 import { paymentFeedback } from "./payment-feedback";
 
@@ -20,6 +19,8 @@ export function createCryptoBankFlow(deps: {
   swap: (input: SwapInput) => Promise<{ credited: number }>;
   withdraw: (input: WithdrawalInput) => Promise<unknown>;
   id: () => string;
+  /** Reads the live flat NIP bank fee at sizing time; null while it is still loading. */
+  transferFeeNgn: () => number | null;
   changed: (state: CryptoBankState) => void;
   resume?: { coin: "USDT" | "USDC"; amount: number; swapId: string };
 }) {
@@ -36,10 +37,12 @@ export function createCryptoBankFlow(deps: {
       try {
         const result = await deps.swap({ from: coin, to: "NGN", amount, pin, idempotencyKey: state.swapId });
         if (!Number.isFinite(result.credited) || result.credited <= 0) throw new Error("Conversion confirmation is unavailable.");
-        // Reserve room for the bank fee instead of attempting to withdraw all credited funds plus fees.
-        let kobo = Math.floor(result.credited * 100);
-        while (kobo > 0 && kobo / 100 + slikpayTransferFee(kobo / 100) > result.credited) kobo--;
-        update({ stage: "converted", credited: result.credited, payoutAmount: kobo / 100, message: "Conversion complete. Review your bank withdrawal." });
+        // Reserve the flat live bank fee out of confirmed proceeds instead of withdrawing everything plus fees.
+        const flatFee = deps.transferFeeNgn();
+        if (flatFee === null || !Number.isFinite(flatFee) || flatFee <= 0) throw new Error("The bank transfer fee is unavailable. Try again.");
+        const payoutAmount = Math.floor((result.credited - flatFee) * 100) / 100;
+        if (payoutAmount <= 0) throw new Error("The confirmed credit does not cover the bank transfer fee.");
+        update({ stage: "converted", credited: result.credited, payoutAmount, message: "Conversion complete. Review your bank withdrawal." });
       } catch (error) {
         const blocked = error instanceof Error && error.message === SWAP_NOT_READY;
         update({ stage: blocked ? "ready" : "conversion_pending", message: blocked ? SWAP_NOT_READY : `${paymentFeedback(error, "conversion")} No bank payout was submitted.` });

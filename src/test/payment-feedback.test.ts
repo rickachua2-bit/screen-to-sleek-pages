@@ -13,7 +13,7 @@ describe("withdrawal failure classification", () => {
   it("preserves payout locking while showing the actual preflight failure", async () => {
     let current: CryptoBankState | undefined;
     let calls = 0;
-    const flow = createCryptoBankFlow({ swap: async () => ({ credited: 1000 }), withdraw: async () => { calls++; throw new Error("Insufficient balance including fees."); }, id: () => "stable", changed: (s) => { current = s; } });
+    const flow = createCryptoBankFlow({ swap: async () => ({ credited: 1000 }), withdraw: async () => { calls++; throw new Error("Insufficient balance including fees."); }, id: () => "stable", transferFeeNgn: () => 10.75, changed: (s) => { current = s; } });
     await flow.convert("USDT", 1, "1234");
     await flow.pay("1234");
     await flow.pay("1234");

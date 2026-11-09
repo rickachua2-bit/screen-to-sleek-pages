@@ -5,7 +5,7 @@ import { SWAP_NOT_READY } from "@/lib/wallet-safety";
 function setup(swap = vi.fn().mockResolvedValue({ credited: 1000 }), withdraw = vi.fn().mockResolvedValue({ reference: "bank-confirmed" })) {
   let state: CryptoBankState | undefined;
   let next = 0;
-  const flow = createCryptoBankFlow({ swap, withdraw, id: () => `leg-${++next}`, changed: (value) => { state = value; } });
+  const flow = createCryptoBankFlow({ swap, withdraw, id: () => `leg-${++next}`, transferFeeNgn: () => 10.75, changed: (value) => { state = value; } });
   return { flow, swap, withdraw, state: () => state };
 }
 describe("guarded two-step crypto bank review", () => {
@@ -16,14 +16,14 @@ describe("guarded two-step crypto bank review", () => {
     expect(t.withdraw).not.toHaveBeenCalled();
     expect(t.state()?.stage).toBe("ready");
   });
-  it("uses confirmed credited funds, includes the 1% bank fee and requires a separate payout confirmation", async () => {
+  it("uses confirmed credited funds, includes the flat live bank fee and requires a separate payout confirmation", async () => {
     const t = setup();
     await t.flow.convert("USDC", 1, "1234");
     expect(t.withdraw).not.toHaveBeenCalled();
-    expect(t.state()?.payoutAmount).toBe(990.1);
+    expect(t.state()?.payoutAmount).toBe(989.25);
     await t.flow.pay("1234");
     expect(t.swap).toHaveBeenCalledWith({ from: "USDC", to: "NGN", amount: 1, pin: "1234", idempotencyKey: "leg-1" });
-    expect(t.withdraw).toHaveBeenCalledWith({ currency: "NGN", amount: 990.1, pin: "1234", idempotencyKey: "leg-2" });
+    expect(t.withdraw).toHaveBeenCalledWith({ currency: "NGN", amount: 989.25, pin: "1234", idempotencyKey: "leg-2" });
     expect(t.state()?.stage).toBe("completed");
   });
   it("never repeats conversion or payout after an uncertain bank dispatch", async () => {
@@ -46,17 +46,23 @@ describe("guarded two-step crypto bank review", () => {
     expect(t.swap).toHaveBeenNthCalledWith(2, { from: "USDC", to: "NGN", amount: 9, pin: "1234", idempotencyKey: "leg-1" });
     expect(t.withdraw).not.toHaveBeenCalled();
   });
-  it("reserves the capped 80 NGN fee out of confirmed proceeds", async () => {
+  it("reserves the flat live fee out of confirmed proceeds", async () => {
     const t = setup(vi.fn().mockResolvedValue({ credited: 10000 }));
     await t.flow.convert("USDT", 10, "1234");
-    expect(t.state()?.payoutAmount).toBe(9920);
+    expect(t.state()?.payoutAmount).toBe(9989.25);
+  });
+  it("blocks conversion sizing when the live fee is unavailable", async () => {
+    const t = setup();
+    const flow = createCryptoBankFlow({ swap: t.swap, withdraw: t.withdraw, id: () => "leg-x", transferFeeNgn: () => null, changed: () => {} });
+    await flow.convert("USDT", 1, "1234");
+    expect(t.withdraw).not.toHaveBeenCalled();
   });
   it("pays a selected recipient rather than requiring an own settlement account", async () => {
     const t = setup();
     const recipient = { bankCode: "058", accountNumber: "0123456789", accountName: "Another recipient" };
     await t.flow.convert("USDT", 1, "1234");
     await t.flow.pay("1234", recipient);
-    expect(t.withdraw).toHaveBeenCalledWith(expect.objectContaining({ recipient, currency: "NGN", amount: 990.1 }));
+    expect(t.withdraw).toHaveBeenCalledWith(expect.objectContaining({ recipient, currency: "NGN", amount: 989.25 }));
     expect(t.state()?.stage).toBe("completed");
   });
   it("suppresses overlapping conversion requests", async () => {

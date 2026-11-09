@@ -97,7 +97,8 @@ export const runPaddleOperation = createServerFn({ method: "POST" })
       const accountName = (resolved.data as Record<string, unknown> | null)?.["accountName"];
       if (typeof accountName !== "string" || !accountName.trim()) throw new Error("The bank did not confirm the recipient. Check the account details.");
       data.body["destinationAccountName"] = accountName.trim();
-      transferFee = slikpayTransferFee(Number(data.body["amount"]));
+      const { fetchLiveNipTransferFee } = await import("./fx-pricing.server");
+      transferFee = slikpayTransferFee(Number(data.body["amount"]), await fetchLiveNipTransferFee());
     }
     const path = fillPath(endpoint.path, data.params);
 

@@ -62,5 +62,6 @@ export const readPaymentBatch = createServerFn({ method: "POST" })
       const receipt = receipts.data?.find((x) => x.idempotency_key === r.key);
       if (receipt) { r.state = receipt.status === "succeeded" ? "sent" : receipt.status === "failed" ? "failed" : "pending"; r.msg = receipt.provider_reference ?? (r.state === "pending" ? "Awaiting bank confirmation; do not resend" : "Payment recorded in ledger"); }
     }
-    return { id: data.id, rows, totals: bulkTotals(rows.filter((r) => r.state === "ready")), mode: ctx.mode };
+    const { fetchLiveNipTransferFee } = await import("./fx-pricing.server");
+    return { id: data.id, rows, totals: bulkTotals(rows.filter((r) => r.state === "ready"), await fetchLiveNipTransferFee()), mode: ctx.mode };
   });

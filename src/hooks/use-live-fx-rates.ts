@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLiveFxPricing, getLiveFxRates } from "@/lib/fx.functions";
+import { getLiveFxPricing, getLiveFxRates, getLiveNipTransferFee } from "@/lib/fx.functions";
 
 /**
  * Live FX rates from the Slikcash business API, refreshed every 30 seconds.
@@ -21,6 +21,18 @@ export function useLiveFxRates() {
     unavailable: query.isError,
     refresh: query.refetch,
   };
+}
+
+/** Live flat NIP transfer fee (NGN) from the Slikcash pricing service. */
+export function useLiveNipTransferFee() {
+  const query = useQuery({
+    queryKey: ["live-nip-transfer-fee"],
+    queryFn: () => getLiveNipTransferFee(),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 1,
+  });
+  return { feeNgn: query.data?.feeNgn ?? null, loading: query.isPending, unavailable: query.isError };
 }
 
 /** Live platform fee structure from the Slikcash business API. */
