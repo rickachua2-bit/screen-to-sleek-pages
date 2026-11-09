@@ -78,7 +78,7 @@ export type FlightOffer = {
     gbp?: number | undefined;
     eur?: number | undefined;
     usdt?: number | undefined;
-  };
+  } | undefined;
   logoUrl?: string | null;
 };
 export type FlightSearchResult = { searchId: string | null; complete: boolean; offers: FlightOffer[] };

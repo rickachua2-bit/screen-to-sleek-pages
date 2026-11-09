@@ -54,7 +54,7 @@ function PricingPage() {
         <div className="mkt-container" style={{ display: "grid", gap: "2rem" }}>
           {ROWS.map((rows, i) => (
             <div key={TABLE_TITLES[i]}>
-              <SectionHead kicker={TABLE_TITLES[i]} title="" />
+              <SectionHead kicker={TABLE_TITLES[i] ?? "Pricing"} />
               <div className="mkt-table-wrap">
                 <table className="mkt-table">
                   <thead>
