@@ -1,7 +1,9 @@
 import { ArrowLeftRight, ArrowRight, Braces, CardSim, Check, CheckCircle2, Copy, Globe2, Landmark, Minus, Nfc, Plane, Plus, ReceiptText, ShieldCheck, Ticket, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { toast } from "sonner";
+import { getLiveFxQuote, type LiveFxQuote } from "@/lib/fx.functions";
+import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
 import { API_BASE, DOCS_URL } from "./shell";
 
 /* ------------------------------ copy button ------------------------------ */
@@ -27,31 +29,71 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
 
 /* ------------------------------- rate ticker ------------------------------ */
 
-const TICKER = [
-  { pair: "USD/NGN", rate: "₦1,612.40", delta: "+0.42%" },
-  { pair: "GBP/NGN", rate: "₦2,048.15", delta: "+0.18%" },
-  { pair: "EUR/NGN", rate: "₦1,746.30", delta: "-0.09%" },
-  { pair: "CAD/NGN", rate: "₦1,154.80", delta: "+0.11%" },
-  { pair: "USDT/NGN", rate: "₦1,613.90", delta: "+0.05%" },
-  { pair: "GHS/NGN", rate: "₦103.90", delta: "-0.22%" },
-  { pair: "KES/NGN", rate: "₦12.47", delta: "+0.08%" },
-  { pair: "ZAR/NGN", rate: "₦88.40", delta: "+0.14%" },
-];
+const TICKER_PAIRS = [
+  { pair: "USD/NGN", key: "USD_NGN" },
+  { pair: "GBP/NGN", key: "GBP_NGN" },
+  { pair: "EUR/NGN", key: "EUR_NGN" },
+  { pair: "CAD/NGN", key: "CAD_NGN" },
+  { pair: "USDT/NGN", key: "USDT_NGN" },
+  { pair: "GHS/NGN", key: "GHS_NGN" },
+  { pair: "KES/NGN", key: "KES_NGN" },
+  { pair: "ZAR/NGN", key: "ZAR_NGN" },
+] as const;
+
+const fmtRate = (n: number) =>
+  new Intl.NumberFormat("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
 export function RateTicker() {
-  const row = [...TICKER, ...TICKER];
+  const { rates, loading, unavailable } = useLiveFxRates();
+  const previous = useRef<Record<string, number>>({});
+  const [directions, setDirections] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!rates) return;
+    const dirs: Record<string, number> = {};
+    for (const { key } of TICKER_PAIRS) {
+      const before = previous.current[key];
+      const now = rates[key];
+      dirs[key] = before === undefined || now === undefined ? 0 : Math.sign(now - before);
+    }
+    previous.current = { ...rates };
+    setDirections(dirs);
+  }, [rates]);
+
+  const items = TICKER_PAIRS.map(({ pair, key }) => ({
+    pair,
+    key,
+    value: rates?.[key],
+    dir: directions[key] ?? 0,
+  }));
+  const row = [...items, ...items];
+
   return (
-    <div className="mkt-ticker" aria-label="Indicative FX rates">
+    <div className="mkt-ticker" aria-label="Live FX rates from Slikcash">
       <div className="mkt-ticker-track">
         {row.map((t, i) => (
-          <span key={`${t.pair}-${i}`} className="mkt-ticker-item">
-            <span className="mkt-live-dot" />
-            <strong>{t.pair}</strong> {t.rate}
-            <em data-down={t.delta.startsWith("-") || undefined}>{t.delta}</em>
+          <span key={`${t.key}-${i}`} className="mkt-ticker-item">
+            <span className="mkt-live-dot" data-paused={unavailable || undefined} />
+            <strong>{t.pair}</strong>
+            {t.value !== undefined ? (
+              <>
+                ₦{fmtRate(t.value)}
+                {t.dir !== 0 ? (
+                  <em data-down={t.dir < 0 || undefined}>{t.dir > 0 ? "▲" : "▼"}</em>
+                ) : null}
+              </>
+            ) : (
+              <span className="mkt-ticker-loading">{loading ? "···" : "—"}</span>
+            )}
           </span>
         ))}
         <span className="mkt-ticker-item mkt-ticker-tps">
-          <Zap className="h-3 w-3" /> 12,480 tx/s throughput · indicative rates
+          <Zap className="h-3 w-3" />
+          {unavailable
+            ? "Live rates temporarily unavailable — retrying"
+            : loading
+              ? "Connecting to live rates…"
+              : "Live rates · refreshed every 30s"}
         </span>
       </div>
     </div>
@@ -60,33 +102,63 @@ export function RateTicker() {
 
 /* ---------------------------- currency converter --------------------------- */
 
-const CURRENCIES = ["NGN", "USD", "GBP", "EUR", "CAD", "AUD", "KES", "GHS", "ZAR", "USDT"] as const;
-type Currency = (typeof CURRENCIES)[number];
-const NGN_PER: Record<Currency, number> = {
-  NGN: 1, USD: 1612.4, GBP: 2048.15, EUR: 1746.3, CAD: 1154.8,
-  AUD: 1039.6, KES: 12.47, GHS: 103.9, ZAR: 88.4, USDT: 1613.9,
+const FROM_CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "USDT"] as const;
+const TO_CURRENCIES = ["NGN", "KES", "GHS", "ZAR"] as const;
+type FromCurrency = (typeof FROM_CURRENCIES)[number];
+type ToCurrency = (typeof TO_CURRENCIES)[number];
+const SYMBOL: Record<string, string> = {
+  NGN: "₦", USD: "$", GBP: "£", EUR: "€", CAD: "C$", AUD: "A$",
+  KES: "KSh", GHS: "GH₵", ZAR: "R", USDT: "₮",
 };
-const SYMBOL: Record<Currency, string> = {
-  NGN: "₦", USD: "$", GBP: "£", EUR: "€", CAD: "C$", AUD: "A$", KES: "KSh", GHS: "GH₵", ZAR: "R", USDT: "₮",
-};
+const fmtAmount = (n: number) => new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(n);
 
 export function Converter() {
   const [amount, setAmount] = useState("1000");
-  const [from, setFrom] = useState<Currency>("USD");
-  const [to, setTo] = useState<Currency>("NGN");
-  const [tick, setTick] = useState(0);
+  const [from, setFrom] = useState<FromCurrency>("USD");
+  const [to, setTo] = useState<ToCurrency>("NGN");
+  const [quote, setQuote] = useState<LiveFxQuote | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [attempt, setAttempt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  const parsed = Number(amount.replace(/,/g, ""));
+  const valid = Number.isFinite(parsed) && parsed > 0;
+
+  // Debounced live quote — every edit re-quotes the backend after 450ms.
+  useEffect(() => {
+    if (!valid) {
+      setQuote(null);
+      setStatus("idle");
+      return;
+    }
+    setStatus("loading");
+    let cancelled = false;
+    const id = setTimeout(() => {
+      getLiveFxQuote({ data: { fromCurrency: from, toCurrency: to, amount: parsed } })
+        .then((q) => { if (!cancelled) { setQuote(q); setStatus("ready"); } })
+        .catch(() => { if (!cancelled) { setQuote(null); setStatus("error"); } });
+    }, 450);
+    return () => { cancelled = true; clearTimeout(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount, from, to, attempt]);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 2400);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const parsed = Number(amount.replace(/,/g, "")) || 0;
-  const received = (parsed * NGN_PER[from]) / NGN_PER[to];
-  const formatted = useMemo(
-    () => new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(received),
-    [received],
-  );
+  const secondsLeft = quote?.expiresAt
+    ? Math.max(0, Math.floor((new Date(quote.expiresAt).getTime() - now) / 1000))
+    : null;
+
+  // An expired guarantee re-quotes automatically — never show a stale rate.
+  useEffect(() => {
+    if (secondsLeft === 0 && status === "ready") setAttempt((a) => a + 1);
+  }, [secondsLeft, status]);
+
+  const mmss = secondsLeft !== null
+    ? `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(secondsLeft % 60).padStart(2, "0")}`
+    : null;
 
   return (
     <div className="mkt-converter mkt-card">
@@ -101,36 +173,53 @@ export function Converter() {
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
               aria-label="Amount to send"
             />
-            <select className="mkt-field mkt-select" value={from} onChange={(e) => setFrom(e.target.value as Currency)} aria-label="Currency you send">
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <select className="mkt-field mkt-select" value={from} onChange={(e) => setFrom(e.target.value as FromCurrency)} aria-label="Currency you send">
+              {FROM_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </label>
-        <button
-          type="button"
-          className="mkt-swap"
-          aria-label="Swap currencies"
-          onClick={() => { setFrom(to); setTo(from); }}
-        >
-          <ArrowLeftRight className="h-4 w-4" />
-        </button>
+        <span className="mkt-swap" aria-hidden>
+          <ArrowRight className="h-4 w-4" />
+        </span>
         <label className="mkt-field-group">
           <span>Recipient receives</span>
           <div className="mkt-field-combo">
-            <output className="mkt-field mkt-output">{SYMBOL[to]}{formatted}</output>
-            <select className="mkt-field mkt-select" value={to} onChange={(e) => setTo(e.target.value as Currency)} aria-label="Currency received">
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <output className="mkt-field mkt-output" aria-live="polite">
+              {status === "loading" ? "…" : quote ? `${SYMBOL[to]}${fmtAmount(quote.destinationAmount ?? 0)}` : "—"}
+            </output>
+            <select className="mkt-field mkt-select" value={to} onChange={(e) => setTo(e.target.value as ToCurrency)} aria-label="Currency received">
+              {TO_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </label>
       </div>
       <div className="mkt-converter-meta">
-        <span><ShieldCheck className="h-3.5 w-3.5" /> 0 hidden fees</span>
-        <span>1 {from} = {SYMBOL[to]}{new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(NGN_PER[from] / NGN_PER[to])} · indicative</span>
-        <span className="mkt-delivery">
-          <span key={tick} className="mkt-delivery-bar" />
-          Delivered in 0.8s
-        </span>
+        {status === "error" ? (
+          <span className="mkt-converter-error">
+            Live quote unavailable for this corridor right now
+            <button type="button" className="mkt-converter-retry" onClick={() => setAttempt((a) => a + 1)}>Retry</button>
+          </span>
+        ) : (
+          <>
+            <span>
+              {status === "loading"
+                ? "Fetching live rate…"
+                : quote?.rate
+                  ? <>1 {from} = {SYMBOL[to]}{fmtAmount(quote.rate)} · live</>
+                  : "Enter an amount for a live quote"}
+            </span>
+            {quote?.platformFee != null ? (
+              <span>Fee {SYMBOL[to]}{fmtAmount(quote.platformFee)} · 0 hidden charges</span>
+            ) : quote ? (
+              <span><ShieldCheck className="h-3.5 w-3.5" /> Fee included in quote · 0 hidden charges</span>
+            ) : null}
+            {mmss && secondsLeft !== null && secondsLeft > 0 ? (
+              <span className="mkt-quote-badge">
+                <ShieldCheck className="h-3.5 w-3.5" /> Rate guaranteed for {mmss} · Slikcash Treasury Vault
+              </span>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );
