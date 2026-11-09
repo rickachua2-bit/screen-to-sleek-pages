@@ -209,7 +209,7 @@ export function Converter() {
                   : "Enter an amount for a live quote"}
             </span>
             {quote?.platformFee != null ? (
-              <span>Fee {fmtAmount(quote.platformFee)} {from} · 0 hidden charges</span>
+              <span>Fee {SYMBOL[to]}{fmtAmount(quote.platformFee)} · 0 hidden charges</span>
             ) : quote ? (
               <span><ShieldCheck className="h-3.5 w-3.5" /> Fee included in quote · 0 hidden charges</span>
             ) : null}

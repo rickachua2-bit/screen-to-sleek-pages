@@ -92,7 +92,7 @@ export type LiveFxPricingValue =
   | number
   | boolean
   | null
-  | { [key: string]: string | number | boolean | null };
+  | { [key: string]: LiveFxPricingValue };
 export type LiveFxPricing = Record<string, LiveFxPricingValue>;
 
 export const getLiveFxPricing = createServerFn({ method: "GET" }).handler(
