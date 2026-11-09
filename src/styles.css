@@ -76,8 +76,8 @@
   --radius: 0.875rem;
   --cobalt: oklch(0.55 0.25 262);
   --cobalt-deep: oklch(0.43 0.19 262);
-  --cyan: oklch(0.9 0.16 195);
-  --magenta: oklch(0.68 0.32 328);
+  --cyan: oklch(0.88 0.19 150);
+  --magenta: oklch(0.72 0.22 145);
   --obsidian: oklch(0.21 0.04 265);
   --navy: oklch(0.17 0.025 265);
   --success: oklch(0.55 0.15 155);
@@ -277,7 +277,7 @@ html { scroll-behavior: smooth; }
     radial-gradient(60% 60% at 60% 100%, color-mix(in oklab, var(--cyan) 30%, transparent), transparent 70%),
     oklch(0.985 0.012 250);
   --gradient-tint-cyan: linear-gradient(180deg, oklch(0.975 0.025 210), oklch(0.99 0.01 230));
-  --gradient-tint-magenta: linear-gradient(180deg, oklch(0.975 0.025 320), oklch(0.985 0.015 280));
+  --gradient-tint-magenta: linear-gradient(180deg, oklch(0.965 0.035 150), oklch(0.985 0.015 160));
   --gradient-band: radial-gradient(80% 120% at 0% 0%, color-mix(in oklab, var(--cyan) 45%, transparent), transparent 60%),
     radial-gradient(70% 100% at 100% 100%, color-mix(in oklab, var(--magenta) 45%, transparent), transparent 60%),
     linear-gradient(135deg, var(--cobalt-deep), var(--cobalt));
@@ -468,8 +468,8 @@ html { scroll-behavior: smooth; }
   --border: var(--overlay-border);
   --input: var(--overlay-border);
   --cobalt: oklch(0.62 0.22 262);
-  --cyan: oklch(0.9 0.16 195);
-  --magenta: oklch(0.68 0.32 328);
+  --cyan: oklch(0.88 0.19 150);
+  --magenta: oklch(0.72 0.22 145);
   --success: oklch(0.85 0.16 155);
   --success-soft: oklch(0.55 0.15 155 / 18%);
   --primary-foreground: oklch(1 0 0);
@@ -585,8 +585,8 @@ html { scroll-behavior: smooth; }
   --border: oklch(0.45 0.08 262 / 11%);
   --input: oklch(0.45 0.08 262 / 18%);
   --cobalt: oklch(0.52 0.25 262);
-  --cyan: oklch(0.62 0.14 215);
-  --magenta: oklch(0.6 0.27 335);
+  --cyan: oklch(0.6 0.17 148);
+  --magenta: oklch(0.62 0.2 145);
   --success: oklch(0.58 0.16 155);
   --success-soft: oklch(0.6 0.15 155 / 12%);
   --navy: oklch(0.22 0.06 266);
@@ -602,13 +602,13 @@ html { scroll-behavior: smooth; }
 /* The balance card stays deep navy with a glowing brand edge. */
 .light-workspace .hero-surface {
   --foreground: oklch(0.98 0.01 250); --muted-foreground: oklch(0.78 0.04 255); --border: oklch(1 0 0 / 14%);
-  --cyan: oklch(0.88 0.15 195); --magenta: oklch(0.72 0.28 330); --cobalt: oklch(0.62 0.22 262); --muted: oklch(1 0 0 / 10%); --card: oklch(1 0 0 / 8%);
+  --cyan: oklch(0.86 0.18 150); --magenta: oklch(0.74 0.21 145); --cobalt: oklch(0.62 0.22 262); --muted: oklch(1 0 0 / 10%); --card: oklch(1 0 0 / 8%);
   color: var(--foreground); border: 0;
   background: radial-gradient(60% 120% at 100% 50%, color-mix(in oklab, var(--magenta) 55%, transparent), transparent 60%), radial-gradient(40% 80% at 85% 100%, color-mix(in oklab, var(--cyan) 35%, transparent), transparent 70%), linear-gradient(120deg, oklch(0.16 0.07 268), oklch(0.2 0.1 266));
   box-shadow: 0 30px 60px -30px oklch(0.3 0.15 262 / 60%);
 }
 /* Pop-ups keep their dark branded surface inside the light workspace. */
-.light-workspace .merchant-popover { --foreground: oklch(0.97 0.01 250); --muted-foreground: oklch(0.75 0.035 255); --border: oklch(1 0 0 / 12%); --muted: oklch(1 0 0 / 8%); --cyan: oklch(0.88 0.15 195); color: var(--foreground); }
+.light-workspace .merchant-popover { --foreground: oklch(0.97 0.01 250); --muted-foreground: oklch(0.75 0.035 255); --border: oklch(1 0 0 / 12%); --muted: oklch(1 0 0 / 8%); --cyan: oklch(0.86 0.18 150); color: var(--foreground); }
 .light-workspace .tint-cobalt { color: var(--cobalt); }
 .light-workspace span.bg-gradient-tri:not(.keep-gradient) { color: var(--cobalt); background: color-mix(in oklab, var(--cobalt) 10%, transparent); }
 .light-workspace .dropdown-list { background: transparent; }
@@ -659,9 +659,9 @@ html { scroll-behavior: smooth; }
   --background: oklch(0.19 0.065 266);
   --foreground: oklch(0.99 0.005 250);
   --muted-foreground: oklch(0.8 0.035 255);
-  --cyan: oklch(0.9 0.16 195);
+  --cyan: oklch(0.88 0.19 150);
   --cobalt: oklch(0.59 0.23 262);
-  --magenta: oklch(0.68 0.28 330);
+  --magenta: oklch(0.72 0.21 145);
   --accent: oklch(1 0 0 / 10%);
   --accent-foreground: var(--foreground);
   --ring: var(--cyan);
@@ -1019,8 +1019,8 @@ html { scroll-behavior: smooth; }
   --background: oklch(.19 .07 264);
   --foreground: oklch(.99 .003 255);
   --muted-foreground: oklch(.82 .025 255);
-  --cyan: oklch(.9 .16 195);
-  --magenta: oklch(.76 .25 330);
+  --cyan: oklch(.88 .19 150);
+  --magenta: oklch(.76 .2 145);
   --border: oklch(.99 .003 255 / 16%);
   background: var(--background);
   color: var(--foreground);
@@ -1309,7 +1309,7 @@ html, body {
 @media (max-width: 760px) { .international-wallet-strip { grid-auto-columns: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); } .international-tabs > button { flex: 1 0 auto; } .international-bento button { white-space: normal; } }
 
 /* ================= Slikcash flagship marketing site ================= */
-.mkt { --mkt-bg: #080B11; --mkt-panel: #0B0E17; --mkt-cobalt: #0047FF; --mkt-cyan: #00E5FF; --mkt-magenta: #FF007A; --mkt-green: #10B981; --mkt-text: #F5F8FF; --mkt-muted: #9DABD0; color-scheme: dark; min-height: 100vh; background: var(--mkt-bg); color: var(--mkt-text); font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; overflow-x: clip; }
+.mkt { --mkt-bg: #080B11; --mkt-panel: #0B0E17; --mkt-cobalt: #0064F5; --mkt-cyan: #5EE06A; --mkt-magenta: #03B401; --mkt-green: #22C55E; --mkt-text: #F5F8FF; --mkt-muted: #9DABD0; color-scheme: dark; min-height: 100vh; background: var(--mkt-bg); color: var(--mkt-text); font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; overflow-x: clip; }
 .mkt a { color: inherit; text-decoration: none; }
 .mkt-aurora { position: fixed; inset: -10%; z-index: 0; pointer-events: none; background: radial-gradient(52% 42% at 12% 0%, color-mix(in srgb, var(--mkt-cobalt) 24%, transparent), transparent 70%), radial-gradient(46% 38% at 88% 12%, color-mix(in srgb, var(--mkt-magenta) 14%, transparent), transparent 70%), radial-gradient(60% 50% at 50% 110%, color-mix(in srgb, var(--mkt-cyan) 11%, transparent), transparent 70%); animation: mkt-aurora-shift 18s ease-in-out infinite alternate; }
 @keyframes mkt-aurora-shift { to { transform: scale(1.1) rotate(2deg); } }
