@@ -393,10 +393,10 @@ export function ProductSuite() {
 
 /* ------------------------------ showcase rows ------------------------------ */
 
-export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip }: {
+export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, image }: {
   kicker: string; title: ReactNode; sub: string; bullets: string[];
   cta: { label: string; to: "/business" | "/personal" | "/developers" | "/pricing" | "/auth" | "/contact" };
-  visual: ReactNode; flip?: boolean;
+  visual: ReactNode; flip?: boolean; image?: { src: string; alt: string };
 }) {
   return (
     <div className="mkt-showcase-grid" data-flip={flip || undefined}>
@@ -409,8 +409,45 @@ export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip }: 
         </ul>
         <Link to={cta.to} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
       </div>
-      <div className="mkt-showcase-visual">{visual}</div>
+      <div className="mkt-showcase-visual">
+        {image ? (
+          <figure className="mkt-media">
+            <img src={image.src} alt={image.alt} loading="lazy" width={1024} height={1024} />
+          </figure>
+        ) : null}
+        {visual}
+      </div>
     </div>
+  );
+}
+
+/* ------------------------------ page hero + media ---------------------------- */
+
+export function PageHero({ kicker, title, sub, image, imageAlt, children }: {
+  kicker: string; title: ReactNode; sub: string; image: string; imageAlt: string; children?: ReactNode;
+}) {
+  return (
+    <section className="mkt-pagehero">
+      <div className="mkt-container mkt-pagehero-grid">
+        <div>
+          <span className="mkt-kicker">{kicker}</span>
+          <h1>{title}</h1>
+          <p>{sub}</p>
+          {children}
+        </div>
+        <figure className="mkt-media mkt-pagehero-media">
+          <img src={image} alt={imageAlt} width={1024} height={1024} />
+        </figure>
+      </div>
+    </section>
+  );
+}
+
+export function MediaBanner({ src, alt }: { src: string; alt: string }) {
+  return (
+    <figure className="mkt-media mkt-media-banner">
+      <img src={src} alt={alt} loading="lazy" width={1024} height={1024} />
+    </figure>
   );
 }
 
