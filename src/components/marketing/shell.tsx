@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Instagram, Linkedin, Mail, MapPin, Menu, Twitter, X } from "lucide-react";
+import { ArrowRight, Briefcase, Home, Instagram, Linkedin, Mail, MapPin, Menu, ReceiptText, Rocket, Twitter, Wallet, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
 import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
@@ -117,6 +117,36 @@ export function MarketingFooter() {
   );
 }
 
+const MOBILE_TABS = [
+  { to: "/", label: "Home", icon: Home },
+  { to: "/personal", label: "Personal", icon: Wallet },
+  { to: "/business", label: "Business", icon: Briefcase },
+  { to: "/pricing", label: "Pricing", icon: ReceiptText },
+] as const;
+
+/** Floating bottom tab bar — mobile only, on every marketing page. */
+function MarketingMobileNav({ active }: { active: string }) {
+  return (
+    <nav aria-label="Mobile navigation" className="mkt-tabbar">
+      {MOBILE_TABS.slice(0, 2).map(({ to, label, icon: Icon }) => (
+        <Link key={to} to={to} className="mkt-tab" data-active={active === to || undefined} aria-current={active === to ? "page" : undefined}>
+          <Icon className="h-5 w-5" strokeWidth={2.2} />
+          <span>{label}</span>
+        </Link>
+      ))}
+      <a href={APP_SIGNIN} className="mkt-tab-cta" aria-label="Get Started — open the app">
+        <Rocket className="h-5 w-5" strokeWidth={2.4} />
+      </a>
+      {MOBILE_TABS.slice(2).map(({ to, label, icon: Icon }) => (
+        <Link key={to} to={to} className="mkt-tab" data-active={active === to || undefined} aria-current={active === to ? "page" : undefined}>
+          <Icon className="h-5 w-5" strokeWidth={2.2} />
+          <span>{label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 /** Live USD/NGN badge — never shows a hardcoded rate. */
 function FxBadge({ suffix = "" }: { suffix?: string }) {
   const { rates, loading, unavailable } = useLiveFxRates();
@@ -222,6 +252,7 @@ export function MarketingShell({ active, children }: { active: string; children:
 
         <main>{children}</main>
         <MarketingFooter />
+        <MarketingMobileNav active={active} />
       </div>
     </div>
   );
