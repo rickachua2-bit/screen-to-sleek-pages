@@ -52,7 +52,7 @@ function asNum(value: unknown): number | null {
  * string built only from values the service actually returned, or null so the
  * published figure stays in place.
  */
-function liveFee(pricing: Record<string, unknown> | null, keys?: string[]): string | null {
+function liveFee(pricing: LiveFxPricing | null, keys?: string[]): string | null {
   if (!pricing || !keys?.length) return null;
   const entries = Object.entries(pricing);
   for (const key of keys) {
@@ -61,14 +61,14 @@ function liveFee(pricing: Record<string, unknown> | null, keys?: string[]): stri
     const v = hit[1];
     if (typeof v === "string" && v.trim()) return v.trim();
     if (v && typeof v === "object") {
-      const o = v as Record<string, unknown>;
-      if (typeof o.display === "string" && o.display.trim()) return o.display.trim();
-      if (typeof o.label === "string" && o.label.trim()) return o.label.trim();
-      if (typeof o.fee === "string" && o.fee.trim()) return o.fee.trim();
-      const pct = asNum(o.percent ?? o.percentage ?? o.rate);
-      const flat = asNum(o.flat ?? o.flatFee ?? o.fixed ?? o.amount);
-      const cap = asNum(o.cap ?? o.max ?? o.maximum);
-      const min = asNum(o.min ?? o.minimum);
+      const o = v;
+      if (typeof o["display"] === "string" && o["display"].trim()) return o["display"].trim();
+      if (typeof o["label"] === "string" && o["label"].trim()) return o["label"].trim();
+      if (typeof o["fee"] === "string" && o["fee"].trim()) return o["fee"].trim();
+      const pct = asNum(o["percent"] ?? o["percentage"] ?? o["rate"]);
+      const flat = asNum(o["flat"] ?? o["flatFee"] ?? o["fixed"] ?? o["amount"]);
+      const cap = asNum(o["cap"] ?? o["max"] ?? o["maximum"]);
+      const min = asNum(o["min"] ?? o["minimum"]);
       const parts: string[] = [];
       if (pct !== null) parts.push(`${pct}%`);
       if (flat !== null) parts.push(`₦${new Intl.NumberFormat("en").format(flat)}`);

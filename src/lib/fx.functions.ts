@@ -39,7 +39,7 @@ export type LiveFxRates = Record<string, number>;
 export const getLiveFxRates = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ rates: LiveFxRates; fetchedAt: string }> => {
     const data = (await fxFetch("/api/fx/rates")) as Record<string, unknown>;
-    const source = (data?.rates ?? data) as Record<string, unknown>;
+    const source = (data?.["rates"] ?? data) as Record<string, unknown>;
     const rates: LiveFxRates = {};
     for (const [key, value] of Object.entries(source ?? {})) {
       const n = asNumber(value);
@@ -73,26 +73,32 @@ export const getLiveFxQuote = createServerFn({ method: "POST" })
       method: "POST",
       body: JSON.stringify({ fromCurrency, toCurrency, amount }),
     })) as Record<string, unknown>;
-    const quote = (raw?.quote ?? raw) as Record<string, unknown>;
-    const destinationAmount = asNumber(quote?.destinationAmount);
+    const quote = (raw?.["quote"] ?? raw) as Record<string, unknown>;
+    const destinationAmount = asNumber(quote?.["destinationAmount"]);
     if (destinationAmount === null) throw new Error("This corridor has no live quote right now.");
     return {
-      rate: asNumber(quote?.rate ?? quote?.effectiveRate),
-      sourceAmount: asNumber(quote?.sourceAmount) ?? amount,
+      rate: asNumber(quote?.["rate"] ?? quote?.["effectiveRate"]),
+      sourceAmount: asNumber(quote?.["sourceAmount"]) ?? amount,
       destinationAmount,
-      platformFee: asNumber(quote?.platformFee),
-      expiresAt: typeof quote?.expiresAt === "string" ? quote.expiresAt : null,
+      platformFee: asNumber(quote?.["platformFee"]),
+      expiresAt: typeof quote?.["expiresAt"] === "string" ? quote["expiresAt"] : null,
     };
   });
 
 /* -------------------------------- pricing -------------------------------- */
 
-export type LiveFxPricing = Record<string, unknown>;
+export type LiveFxPricingValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: string | number | boolean | null };
+export type LiveFxPricing = Record<string, LiveFxPricingValue>;
 
 export const getLiveFxPricing = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ pricing: LiveFxPricing; fetchedAt: string }> => {
     const data = (await fxFetch("/api/fx/pricing")) as Record<string, unknown>;
-    const pricing = ((data?.pricing ?? data?.fees ?? data) ?? {}) as LiveFxPricing;
+    const pricing = ((data?.["pricing"] ?? data?.["fees"] ?? data) ?? {}) as LiveFxPricing;
     if (typeof pricing !== "object" || Object.keys(pricing).length === 0) {
       throw new Error("Live FX service returned no pricing");
     }
