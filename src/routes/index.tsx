@@ -6,17 +6,18 @@ import {
 import { useState } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import {
-  CheckoutWidget, CodeTabs, Converter, CtaBand, Faq, FeatureCard,
-  RateTicker, SectionHead, VirtualCard,
+  AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter,
+  CtaBand, Faq, FeatureCard, FlightVisual, ProductSuite, RateTicker, SectionHead,
+  ShowcaseRow, StepsRow, VirtualCard,
 } from "@/components/marketing/widgets";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Slikcash — Global Banking & Payments for Africa and Beyond" },
-      { name: "description", content: "Instant NUBAN accounts with 0.8-second NIP settlement, virtual USD Mastercards, SoftPOS tap-to-pay and a universal multi-currency payment gateway." },
+      { name: "description", content: "Payment gateway, virtual bank accounts, card issuance, cross-border remittance, bills, flight booking and developer APIs — all in one platform." },
       { property: "og:title", content: "Slikcash — Global Banking & Payments for Africa and Beyond" },
-      { property: "og:description", content: "Multi-currency wallets, instant NUBAN accounts, virtual USD cards and a universal payment gateway for businesses and individuals." },
+      { property: "og:description", content: "Multi-currency wallets, instant NUBAN accounts, virtual USD cards, remittance, flights and a universal payment gateway for businesses and individuals." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -43,8 +44,14 @@ const FAQ = [
   { q: "Is Slikcash a bank?", a: "No. Slikcash is a financial service provider — every account, card and payment is delivered through licensed partner banks, with deposits held at NDIC-insured institutions and transfers moving over CBN-licensed rails." },
   { q: "How fast are transfers really?", a: "NIP transfers settle in an average of 0.8 seconds, and your recipient's bank confirms the credit instantly. Cross-border payouts deliver on confirmed corridors with live status tracking." },
   { q: "What does it cost to accept payments?", a: "Local card acquiring is 1.4%, cross-border card checkout is 3.5%, and NIP transfers cost 1% capped at ₦80. Virtual card creation is free. See the full breakdown on our pricing page." },
-  { q: "Can developers test without going live?", a: "Yes. Every business account gets automatic sandbox API keys with a full test environment, HMAC-SHA256 signed webhooks and SDKs for Node, Python, PHP and Flutter." },
+  { q: "Can developers test without going live?", a: "Yes. Every business account gets automatic sandbox API keys with a full test environment, HMAC-SHA256 signed webhooks and SDKs for Node, Python, PHP and Flutter — and every product on this page is available as an API." },
   { q: "Which currencies can I hold?", a: "NGN, USD, GBP, EUR, GHS, KES, ZAR plus USDT and USDC — all in one wallet, with swaps and payouts on supported corridors." },
+];
+
+const STEPS = [
+  { title: "Create your account", text: "Sign up in minutes with your email and phone — no paperwork, no queues, no branch visits." },
+  { title: "Verify once", text: "Individuals complete a quick KYC; businesses complete KYB and get sandbox API keys instantly, with live keys on approval." },
+  { title: "Get everything at once", text: "Your NUBAN, @SlikTag, multi-currency wallets and virtual cards are issued immediately — start collecting, spending and building." },
 ];
 
 function Landing() {
@@ -61,7 +68,7 @@ function Landing() {
             </h1>
             <p className="mkt-hero-sub">
               Instant NUBAN accounts with 0.8-second NIP settlement, virtual USD Mastercards, SoftPOS
-              contactless tap-to-pay, and a universal multi-currency payment gateway — all in one platform.
+              contactless tap-to-pay, cross-border remittance and a universal payment gateway — all in one platform.
             </p>
             <div className="mkt-hero-actions">
               <Link to="/auth" className="mkt-btn-primary">Start with Slikcash Personal <ArrowRight className="h-4 w-4" /></Link>
@@ -80,58 +87,140 @@ function Landing() {
 
       <RateTicker />
 
-      {/* Converter */}
+      {/* Product suite */}
+      <section className="mkt-section" id="products">
+        <div className="mkt-container">
+          <SectionHead
+            kicker="The full stack"
+            title="Everything we offer — from checkout to takeoff"
+            sub="One platform for collections, accounts, cards, payouts, bills, travel and developer APIs. Every product is available in the console and over the API."
+          />
+          <ProductSuite />
+        </div>
+      </section>
+
+      {/* Gateway showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            kicker="Payment gateway"
+            title={<>One checkout for every way your customers pay</>}
+            sub="Cards, bank transfers, Apple Pay, Google Pay and USSD — with zero redirect drop-off, instant T+0 NGN settlement and a rolling-reserve chargeback shield."
+            bullets={[
+              "Hosted checkout, payment links and branded invoices — no code required",
+              "Instant T+0 settlement to your Slikcash NUBAN, T+1 for foreign currencies",
+              "Multi-currency acceptance with automatic conversion at transparent rates",
+            ]}
+            cta={{ label: "Explore the Business Console", to: "/business" }}
+            visual={<CheckoutWidget />}
+          />
+        </div>
+      </section>
+
+      {/* Virtual accounts showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            flip
+            kicker="Virtual bank accounts"
+            title={<>Dedicated NUBANs and multi-currency accounts, issued in seconds</>}
+            sub="Give every customer, branch or cashier their own account number. Inbound transfers are captured automatically — even payments sent straight to the account."
+            bullets={[
+              "Instant NUBAN issuance in your personal or verified business name",
+              "USD, GBP, EUR, GHS, KES and ZAR accounts side by side",
+              "USDT & USDC vaults for verified users, with bank cash-out built in",
+            ]}
+            cta={{ label: "See accounts & wallets", to: "/personal" }}
+            visual={<AccountVisual />}
+          />
+        </div>
+      </section>
+
+      {/* Remittance showcase */}
       <section className="mkt-section" id="converter">
         <div className="mkt-container">
-          <SectionHead
-            kicker="Live FX & fees"
-            title="Convert and send across ten currencies — with zero hidden fees"
-            sub="Switch between NGN, USD, GBP, EUR, CAD, AUD, KES, GHS, ZAR and USDT. What you see is what your recipient gets, delivered in 0.8 seconds on local rails."
+          <ShowcaseRow
+            kicker="Cross-border & remittance"
+            title={<>Send money across eleven countries — with zero hidden fees</>}
+            sub="Switch between NGN, USD, GBP, EUR, CAD, AUD, KES, GHS, ZAR and USDT. What you see is what your recipient gets, delivered on confirmed corridors with live tracking."
+            bullets={[
+              "Flat 0.5% cross-border fee — no hidden FX markup on quoted conversions",
+              "Live status tracking with automatic recovery on uncertain outcomes",
+              "Fund payouts from NGN or matching foreign-currency wallets",
+            ]}
+            cta={{ label: "See corridors & fees", to: "/pricing" }}
+            visual={<Converter />}
           />
-          <Converter />
         </div>
       </section>
 
-      {/* Gateway */}
+      {/* Cards showcase */}
       <section className="mkt-section">
         <div className="mkt-container">
-          <SectionHead
-            kicker="Payment gateway"
-            title="One checkout for every way your customers pay"
-            sub="Cards, bank transfers, Apple Pay, Google Pay and USSD — with zero redirect drop-off, instant T+0 NGN settlement and T+1 foreign settlement behind a rolling-reserve chargeback shield."
-          />
-          <div className="mkt-grid-3">
-            <FeatureCard icon={<Globe2 className="h-5 w-5" />} title="Multi-currency checkout">
-              Accept NGN, USD, GBP, EUR, GHS, KES and ZAR from a single integration, with automatic conversion at transparent rates.
-            </FeatureCard>
-            <FeatureCard icon={<Zap className="h-5 w-5" />} title="Instant T+0 settlement">
-              NGN sales land in your Slikcash NUBAN the moment the customer pays. Foreign currencies settle T+1 with full reconciliation.
-            </FeatureCard>
-            <FeatureCard icon={<ReceiptText className="h-5 w-5" />} title="Invoicing & payment links">
-              Send branded invoices and hosted payment links from the console — no code required, every naira tracked.
-            </FeatureCard>
-          </div>
-        </div>
-      </section>
-
-      {/* Cards */}
-      <section className="mkt-section">
-        <div className="mkt-container">
-          <SectionHead
-            kicker="Virtual cards"
-            title="Instant virtual USD &amp; Naira cards that work everywhere"
+          <ShowcaseRow
+            flip
+            kicker="Card issuance"
+            title={<>Instant virtual USD &amp; Naira cards that work everywhere</>}
             sub="High-limit virtual Mastercards for software subscriptions, digital advertising and global travel — issued in seconds, frozen in one tap, protected by 3D Secure OTP."
+            bullets={[
+              "Pay AWS, OpenAI, GitHub, ads and airlines without declines",
+              "Freeze, unfreeze, set limits and reveal details only after PIN verification",
+              "Zero creation fees — you only ever pay the transaction fee on spend",
+            ]}
+            cta={{ label: "Get a virtual card", to: "/personal" }}
+            visual={<VirtualCard />}
           />
-          <div className="mkt-grid-3">
-            <FeatureCard icon={<CardSim className="h-5 w-5" />} title="Built for subscriptions">
-              Pay AWS, OpenAI, GitHub, Vercel and your entire SaaS stack without card declines or FX surprises.
-            </FeatureCard>
-            <FeatureCard icon={<Fingerprint className="h-5 w-5" />} title="3D Secure & controls">
-              Every online payment is confirmed with an OTP. Freeze, unfreeze, set limits and reveal details only after PIN verification.
-            </FeatureCard>
-            <FeatureCard icon={<Check className="h-5 w-5" />} title="Zero creation fees">
-              Create unlimited virtual USD and NGN cards at no cost — you only ever pay the transaction fee on spend.
-            </FeatureCard>
+        </div>
+      </section>
+
+      {/* Bills showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            kicker="Bills & utilities"
+            title={<>Every bill in Nigeria, paid in one place</>}
+            sub="Airtime, data, electricity, cable TV, internet, betting wallets, exam pins and federal tax — with customer verification, instant receipts and zero failed vend surprises."
+            bullets={[
+              "Network auto-detection for airtime and data on any Nigerian number",
+              "Meter and smartcard lookups confirm the real customer before you pay",
+              "Shareable receipts with references for every vend",
+            ]}
+            cta={{ label: "See everyday services", to: "/personal" }}
+            visual={<BillsVisual />}
+          />
+        </div>
+      </section>
+
+      {/* Flights showcase */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <ShowcaseRow
+            flip
+            kicker="Flight booking"
+            title={<>Book any airline on earth, straight from your wallet</>}
+            sub="Search real fares across 450+ airlines worldwide, review the details, and pay from any wallet currency — your PNR and e-ticket arrive instantly."
+            bullets={[
+              "Global airport search by city name or IATA code — no fixed route list",
+              "One-way or return, four cabin classes, up to nine travellers",
+              "Fares revalidated before payment, so the price you see is the price you pay",
+            ]}
+            cta={{ label: "Book flights with Slikcash", to: "/personal" }}
+            visual={<FlightVisual />}
+          />
+        </div>
+      </section>
+
+      {/* API section */}
+      <section className="mkt-section" id="developers-preview">
+        <div className="mkt-container">
+          <SectionHead
+            kicker="API services"
+            title="Every product on this page is also an API"
+            sub="Other businesses build entire fintechs on Slikcash rails — payments, accounts, cards, transfers, remittance, bills and flights — with signed webhooks, SDKs and full documentation."
+          />
+          <ApiProductGrid />
+          <div style={{ marginTop: "2rem" }}>
+            <CodeTabs />
           </div>
         </div>
       </section>
@@ -175,18 +264,6 @@ function Landing() {
               <FeatureCard key={f.title} icon={f.icon} title={f.title}>{f.text}</FeatureCard>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Developers */}
-      <section className="mkt-section" id="developers-preview">
-        <div className="mkt-container">
-          <SectionHead
-            kicker="For CTOs & engineers"
-            title="A developer experience your team will love"
-            sub="Charge customers, verify webhooks with HMAC-SHA256 signatures and test everything in a full sandbox — with SDKs for Node, Python, PHP and Flutter."
-          />
-          <CodeTabs />
         </div>
       </section>
 
@@ -234,6 +311,14 @@ function Landing() {
               <footer><span className="mkt-avatar">KM</span><span><strong>Kudi Markets</strong>E-commerce group</span></footer>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead kicker="Getting started" title="Your account is minutes away" />
+          <StepsRow steps={STEPS} />
         </div>
       </section>
 
