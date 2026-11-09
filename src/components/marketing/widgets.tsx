@@ -27,31 +27,75 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
 
 /* ------------------------------- rate ticker ------------------------------ */
 
-const TICKER = [
-  { pair: "USD/NGN", rate: "₦1,612.40", delta: "+0.42%" },
-  { pair: "GBP/NGN", rate: "₦2,048.15", delta: "+0.18%" },
-  { pair: "EUR/NGN", rate: "₦1,746.30", delta: "-0.09%" },
-  { pair: "CAD/NGN", rate: "₦1,154.80", delta: "+0.11%" },
-  { pair: "USDT/NGN", rate: "₦1,613.90", delta: "+0.05%" },
-  { pair: "GHS/NGN", rate: "₦103.90", delta: "-0.22%" },
-  { pair: "KES/NGN", rate: "₦12.47", delta: "+0.08%" },
-  { pair: "ZAR/NGN", rate: "₦88.40", delta: "+0.14%" },
-];
+const TICKER_PAIRS = [
+  { pair: "USD/NGN", key: "USD_NGN" },
+  { pair: "GBP/NGN", key: "GBP_NGN" },
+  { pair: "EUR/NGN", key: "EUR_NGN" },
+  { pair: "CAD/NGN", key: "CAD_NGN" },
+  { pair: "USDT/NGN", key: "USDT_NGN" },
+  { pair: "GHS/NGN", key: "GHS_NGN" },
+  { pair: "KES/NGN", key: "KES_NGN" },
+  { pair: "ZAR/NGN", key: "ZAR_NGN" },
+] as const;
+
+const fmtRate = (n: number) =>
+  new Intl.NumberFormat("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
 export function RateTicker() {
-  const row = [...TICKER, ...TICKER];
+  const { rates, loading, unavailable } = useLiveFxRates();
+  const previous = useRef<Record<string, number>>({});
+  const [directions, setDirections] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!rates) return;
+    const dirs: Record<string, number> = {};
+    for (const { key } of TICKER_PAIRS) {
+      const before = previous.current[key];
+      const now = rates[key];
+      dirs[key] = before === undefined || now === undefined ? 0 : Math.sign(now - before);
+    }
+    previous.current = { ...rates };
+    setDirections(dirs);
+  }, [rates]);
+
+  const items = TICKER_PAIRS.map(({ pair, key }) => {
+    const value = rates?.[key];
+    const dir = directions[key] ?? 0;
+    const delta =
+      value !== undefined && previous.current[key] !== undefined && dir !== 0
+        ? null // percentage between polls is tiny; direction arrow is the honest signal
+        : null;
+    void delta;
+    return { pair, key, value, dir };
+  });
+  const row = [...items, ...items];
+
   return (
-    <div className="mkt-ticker" aria-label="Indicative FX rates">
+    <div className="mkt-ticker" aria-label="Live FX rates from Slikcash">
       <div className="mkt-ticker-track">
         {row.map((t, i) => (
-          <span key={`${t.pair}-${i}`} className="mkt-ticker-item">
-            <span className="mkt-live-dot" />
-            <strong>{t.pair}</strong> {t.rate}
-            <em data-down={t.delta.startsWith("-") || undefined}>{t.delta}</em>
+          <span key={`${t.key}-${i}`} className="mkt-ticker-item">
+            <span className="mkt-live-dot" data-paused={unavailable || undefined} />
+            <strong>{t.pair}</strong>
+            {t.value !== undefined ? (
+              <>
+                ₦{fmtRate(t.value)}
+                {t.dir !== 0 ? (
+                  <em data-down={t.dir < 0 || undefined}>{t.dir > 0 ? "▲" : "▼"}</em>
+                ) : null}
+              </>
+            ) : (
+              <span className="mkt-ticker-loading">{loading ? "···" : "—"}</span>
+            )}
           </span>
         ))}
         <span className="mkt-ticker-item mkt-ticker-tps">
-          <Zap className="h-3 w-3" /> 12,480 tx/s throughput · indicative rates
+          <Zap className="h-3 w-3" />
+          {unavailable
+            ? "Live rates temporarily unavailable — retrying"
+            : loading
+              ? "Connecting to live rates…"
+              : "Live rates · refreshed every 30s"}
         </span>
       </div>
     </div>
