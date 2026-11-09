@@ -52,7 +52,7 @@ const AUDIENCE = {
 const FAQ = [
   { q: "Is Slikcash a bank?", a: "No. Slikcash is a financial service provider — every account, card and payment is delivered through licensed partner banks, with deposits held at NDIC-insured institutions and transfers moving over CBN-licensed rails." },
   { q: "How fast are transfers really?", a: "NIP transfers settle in an average of 0.8 seconds, and your recipient's bank confirms the credit instantly. Cross-border payouts deliver on confirmed corridors with live status tracking." },
-  { q: "What does it cost to accept payments?", a: "Local card acquiring is 1.4%, cross-border card checkout is 3.5%, and NIP transfers cost 1% capped at ₦80. Virtual card creation is free. See the full breakdown on our pricing page." },
+  { q: "What does it cost to accept payments?", a: "Local card acquiring is 1.4%, cross-border card checkout is 3.5%, and NIP transfers cost a low flat fee. Virtual card creation is free. See the live figures on our pricing page." },
   { q: "Can developers test without going live?", a: "Yes. Every business account gets automatic sandbox API keys with a full test environment, HMAC-SHA256 signed webhooks and SDKs for Node, Python, PHP and Flutter — and every product on this page is available as an API." },
   { q: "Which currencies can I hold?", a: "NGN, USD, GBP, EUR, GHS, KES, ZAR plus USDT and USDC — all in one wallet, with swaps and payouts on supported corridors." },
 ];

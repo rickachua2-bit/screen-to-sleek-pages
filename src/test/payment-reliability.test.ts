@@ -24,8 +24,8 @@ describe("payment reliability", () => {
     expect(insufficientBulkBalance(true, 101, 100)).toBe(true);
     expect(insufficientBulkBalance(true, 101, 101)).toBe(false);
   });
-  it("uses one-percent fees individually capped at 80 NGN in batch totals", () => {
-    expect(bulkTotals([{ amount: 100 }, { amount: 5000 }, { amount: 10000 }])).toEqual({ principal: 15100, fees: 131, total: 15231 });
+  it("applies the flat live NIP fee to every row in batch totals", () => {
+    expect(bulkTotals([{ amount: 100 }, { amount: 5000 }, { amount: 10000 }], 10.75)).toEqual({ principal: 15100, fees: 32.25, total: 15132.25 });
   });
   it("parses quoted notes containing commas and newlines", () => {
     expect(parseBulkCsv('bank_code,account_number,amount,note\n058,0123456789,100,"Invoice, October\nPaid"')[0]?.note).toBe("Invoice, October\nPaid");

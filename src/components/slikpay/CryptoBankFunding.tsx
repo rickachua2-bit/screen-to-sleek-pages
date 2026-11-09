@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getCryptoOfframpPreview } from "@/lib/crypto-offramp.functions";
 import type { CryptoOfframpPreview } from "@/lib/crypto-offramp";
 import { naira } from "@/lib/api";
-import { slikpayTransferFee } from "@/lib/transfer-validation";
+import { useLiveNipTransferFee } from "@/hooks/use-live-fx-rates";
 import { getWalletExtras, swapCurrency } from "@/lib/wallets.functions";
 import { createCryptoBankFlow, type CryptoBankState, type CryptoBankRecipient } from "@/lib/crypto-bank-flow";
 import { runPaddleOperation } from "@/lib/paddle.functions";
@@ -24,6 +24,9 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
   const banksFn = useServerFn(listBanks);
   const getExtras = useServerFn(getWalletExtras);
   const flow = useRef<ReturnType<typeof createCryptoBankFlow> | null>(null);
+  const { feeNgn: nipFee } = useLiveNipTransferFee();
+  const nipFeeRef = useRef<number | null>(null);
+  nipFeeRef.current = nipFee;
   const [payment, setPayment] = useState<CryptoBankState | null>(null);
   const [pin, setPin] = useState("");
   const [destination, setDestination] = useState<CryptoBankRecipient | null>(null);
@@ -72,9 +75,11 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
     setPreparing(true); setError("");
     try {
       if (!destination && payment?.stage !== "conversion_pending") throw new Error("Select a bank and verify the recipient account first.");
+      if (nipFeeRef.current == null) throw new Error("The bank transfer fee is still loading — try again in a moment.");
       if (!flow.current) flow.current = createCryptoBankFlow({
         swap: (data) => swap({ data }), withdraw,
         id: () => crypto.randomUUID(), changed: setPayment,
+        transferFeeNgn: () => nipFeeRef.current,
       });
       await flow.current.convert(coin, Number(amount), pin);
     } catch (e) { setError(paymentFeedback(e, "conversion")); }
@@ -111,7 +116,7 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
   const estimate = preview ? { amount: preview.netNgn, rate: preview.effectiveRate } : null;
   const recovering = payment?.stage === "conversion_pending";
   const step = payment?.stage === "completed" ? 3 : payment?.stage === "converted" || payment?.stage === "paying" || payment?.stage === "payout_pending" ? 2 : 1;
-  const fee = payment?.stage === "converted" ? (payment.payoutAmount > 0 ? slikpayTransferFee(payment.payoutAmount) : 0) : estimate ? slikpayTransferFee(estimate.amount) : null;
+  const fee = payment?.stage === "converted" ? (payment.payoutAmount > 0 ? nipFee : 0) : estimate ? nipFee : null;
   return <section className="transfer-center crypto-composer space-y-5">
     <div><h2 className="text-2xl font-bold text-foreground">Crypto to bank</h2><p className="mt-1 text-sm text-muted-foreground">USDT or USDC → NGN → bank account</p></div>
     <div className="transfer-composer-layout">
@@ -125,10 +130,10 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
         <p className="crypto-story-security"><Lock className="h-3.5 w-3.5" />PIN protected · Verified recipients</p>
       </aside>
       <section className="transfer-composer space-y-4" aria-label="Crypto bank transfer form">
-        {!payment && recoveries.length > 0 && <div className="space-y-2"><p className="text-xs font-semibold text-foreground">Pending conversions</p>{recoveries.map((r) => <Button key={r.idempotency_key} variant="outline" className="max-w-full" onClick={() => {
+        {!payment && recoveries.length > 0 && <div className="space-y-2"><p className="text-xs font-semibold text-foreground">Pending conversions</p>{recoveries.map((r) => <Button key={r.idempotency_key} variant="outline" className="max-w-full" disabled={nipFee == null} onClick={() => {
           const originalCoin = r.operation === "SWAP USDC->NGN" ? "USDC" : "USDT";
           setCoin(originalCoin); setAmount(String(r.amount));
-          flow.current = createCryptoBankFlow({ swap: (data) => swap({ data }), withdraw, id: () => crypto.randomUUID(), changed: setPayment, resume: { coin: originalCoin, amount: r.amount, swapId: r.idempotency_key } });
+          flow.current = createCryptoBankFlow({ swap: (data) => swap({ data }), withdraw, id: () => crypto.randomUUID(), changed: setPayment, transferFeeNgn: () => nipFeeRef.current, resume: { coin: originalCoin, amount: r.amount, swapId: r.idempotency_key } });
           setPayment({ stage: "conversion_pending", credited: 0, payoutAmount: 0, swapId: r.idempotency_key, payoutId: "", message: "Recover the original conversion." });
         }}>Recover {r.amount} {r.operation.includes("USDC") ? "USDC" : "USDT"}</Button>)}</div>}
         <div><p className="crypto-field-label">Select crypto asset</p><div className="grid grid-cols-2 gap-2" role="group" aria-label="Crypto funding currency">{(["USDT", "USDC"] as const).map((c) => <Button key={c} disabled={locked || preparing} variant="outline" className="crypto-asset" aria-pressed={coin === c} onClick={() => { setCoin(c); setAmount(""); }}><span className={c === "USDT" ? "crypto-asset-symbol crypto-tether" : "crypto-asset-symbol"}>{c === "USDT" ? "₮" : "$"}</span><span className="text-left"><strong className="block">{c}</strong><span className="block text-xs font-normal text-muted-foreground">{c === "USDT" ? "Tether" : "USD Coin"}</span></span></Button>)}</div></div>
@@ -138,11 +143,11 @@ export function CryptoBankFunding({ balances }: { balances?: Record<string, numb
         {loading && <p role="status" className="text-xs text-muted-foreground">Fetching conversion rates…</p>}
         {(!payment || ["ready", "converted", "conversion_pending"].includes(payment.stage)) && <><RecipientBankPicker banks={banks} bank={bank} error={bankError} onRetry={loadBanks} onSelect={(selected) => { setDestination(null); setBank(selected); }} /><label className="block"><span className="crypto-field-label">Account number</span><input aria-label="Cash-out recipient account number" inputMode="numeric" autoComplete="off" maxLength={10} placeholder="Enter account number" className="field" value={account} onChange={(e) => { setDestination(null); setAccount(e.target.value.replace(/\D/g, "")); }} /></label></>}
         <div><p className="crypto-field-label">Recipient name</p><div className="crypto-recipient">{destination ? <><CheckCircle2 className="h-4 w-4 shrink-0 text-success" /><span>{destination.accountName}</span></> : <span>{lookup || "—"}</span>}</div></div>
-        <div className="crypto-bank-fee"><span>Bank fee · 1% capped at ₦80</span><strong>{fee !== null ? naira(fee) : "—"}</strong></div>
+        <div className="crypto-bank-fee"><span>Bank fee · flat live rate</span><strong>{fee !== null ? naira(fee) : "—"}</strong></div>
         {payment && <div role="status" className="crypto-payment-status"><p>{payment.message}</p>{payment.stage === "converted" && <p className="mt-1">Bank receives {naira(payment.payoutAmount)} · Total debit {naira(payment.payoutAmount + (fee ?? 0))}</p>}<p className="mt-2 break-all text-xs text-muted-foreground">{payment.stage === "payout_pending" || payment.stage === "completed" ? payment.payoutId : payment.swapId}</p></div>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {(!locked || recovering || payment?.stage === "converted") && <label className="block"><span className="crypto-field-label">Enter your PIN</span><input aria-label="Crypto bank transaction PIN" type="password" inputMode="numeric" placeholder="4-digit transaction PIN" autoComplete="off" maxLength={4} className="field" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} /></label>}
-        {payment?.stage === "converted" ? <Button variant="brand" disabled={pin.length !== 4 || payment.payoutAmount <= 0 || !destination} onClick={() => void pay()} className="crypto-submit"><Landmark className="h-4 w-4" />Confirm bank withdrawal</Button> : <Button variant="brand" disabled={(locked && !recovering) || preparing || (!recovering && (loading || !preview || !destination)) || pin.length !== 4} onClick={() => void convert()} className="crypto-submit">{preparing ? "Preparing conversion…" : recovering ? "Recover original conversion" : "Convert and review"}<ArrowRight className="h-4 w-4" /></Button>}
+        {payment?.stage === "converted" ? <Button variant="brand" disabled={pin.length !== 4 || payment.payoutAmount <= 0 || !destination} onClick={() => void pay()} className="crypto-submit"><Landmark className="h-4 w-4" />Confirm bank withdrawal</Button> : <Button variant="brand" disabled={(locked && !recovering) || preparing || nipFee == null || (!recovering && (loading || !preview || !destination)) || pin.length !== 4} onClick={() => void convert()} className="crypto-submit">{preparing ? "Preparing conversion…" : recovering ? "Recover original conversion" : "Convert and review"}<ArrowRight className="h-4 w-4" /></Button>}
       </section>
     </div>
   </section>;

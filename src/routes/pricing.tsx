@@ -23,7 +23,7 @@ type PricingRow = { product: string; fee: string; note: string; liveKeys?: strin
 
 const ROWS: PricingRow[][] = [
   [
-    { product: "NIP bank transfers", fee: "1% · capped at ₦80", note: "Flat percentage with a hard cap — a ₦1,000,000 transfer still costs ₦80.", liveKeys: ["nipdomestic"] },
+    { product: "NIP bank transfers", fee: "₦10.75 flat", note: "The same low flat fee on every transfer, whatever the amount — instant 0.8s settlement.", liveKeys: ["nipdomestic"] },
     { product: "NUBAN account issuance", fee: "Free", note: "Dedicated account numbers for every verified user and business." },
     { product: "@SlikTag P2P", fee: "0%", note: "Free between Slikcash users, always.", liveKeys: ["sliktagp2p"] },
   ],
