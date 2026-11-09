@@ -84,7 +84,7 @@ function ContactPage() {
             <SectionHead kicker="Send a message" title="How can we help?" />
             {sent ? (
               <p className="mkt-note" style={{ fontSize: ".9rem" }}>
-                Thanks — your message is with our team. Watch your inbox for a reply from support@slikcash.com.
+                Thanks — your message is with our team. Watch your inbox for a reply from info@slikcash.com.
               </p>
             ) : (
               <form className="mkt-form" onSubmit={submit}>
