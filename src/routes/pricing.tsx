@@ -62,7 +62,7 @@ function liveFee(pricing: LiveFxPricing | null, keys?: string[]): string | null 
     const v = hit[1];
     if (typeof v === "string" && v.trim()) return v.trim();
     if (v && typeof v === "object") {
-      const o = v;
+      const o = v as { [key: string]: string | number | boolean | null };
       if (typeof o["display"] === "string" && o["display"].trim()) return o["display"].trim();
       if (typeof o["label"] === "string" && o["label"].trim()) return o["label"].trim();
       if (typeof o["fee"] === "string" && o["fee"].trim()) return o["fee"].trim();
