@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landmark, Lock, Scale, ShieldCheck } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/shell";
-import { CtaBand, FeatureCard, SectionHead } from "@/components/marketing/widgets";
+import { CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
+import securityImg from "@/assets/marketing/mkt-security.jpg";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -27,17 +28,13 @@ const TEAM = [
 function AboutPage() {
   return (
     <MarketingShell active="/about">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">About Slikcash</span>
-          <h1>Banking infrastructure for <span className="mkt-grad-text">Africa's ambition</span></h1>
-          <p>
-            We started Slikcash with a simple conviction: moving money in and out of Africa should be as
-            fast, cheap and reliable as sending a message. Today we power wallets, cards, gateways and
-            cross-border payouts for hundreds of thousands of people and businesses.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        kicker="About Slikcash"
+        title={<>Banking infrastructure for <span className="mkt-grad-text">Africa's ambition</span></>}
+        sub="We started Slikcash with a simple conviction: moving money in and out of Africa should be as fast, cheap and reliable as sending a message. Today we power wallets, cards, gateways and cross-border payouts for hundreds of thousands of people and businesses."
+        image={securityImg}
+        imageAlt="A security shield with a padlock and fingerprint symbol"
+      />
 
       <section className="mkt-section">
         <div className="mkt-container">

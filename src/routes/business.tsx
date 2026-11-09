@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeftRight, ArrowRight, Braces, Briefcase, CalendarClock, FileText, Globe2, Link2, ReceiptText, ShieldCheck, Store, Users } from "lucide-react";
 import { useState } from "react";
 import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
-import { CtaBand, FeatureCard, SectionHead, StepsRow } from "@/components/marketing/widgets";
+import { CtaBand, FeatureCard, MediaBanner, PageHero, SectionHead, StepsRow } from "@/components/marketing/widgets";
+import businessImg from "@/assets/marketing/mkt-business.jpg";
+import gatewayImg from "@/assets/marketing/mkt-gateway.jpg";
+import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
@@ -46,20 +49,18 @@ function BusinessPage() {
   const [segment, setSegment] = useState<keyof typeof SEGMENTS>("corporates");
   return (
     <MarketingShell active="/business">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">For businesses</span>
-          <h1>The console your <span className="mkt-grad-text">finance team</span> has been waiting for</h1>
-          <p>
-            Merchant settlements, bulk payroll payouts, automated tax statements, cashier shifts and direct
-            debit mandates — with maker-checker approvals and a full audit trail on every transaction.
-          </p>
-          <div className="mkt-hero-actions">
-            <a href="/auth" className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
-            <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
-          </div>
+      <PageHero
+        kicker="For businesses"
+        title={<>The console your <span className="mkt-grad-text">finance team</span> has been waiting for</>}
+        sub="Merchant settlements, bulk payroll payouts, automated tax statements, cashier shifts and direct debit mandates — with maker-checker approvals and a full audit trail on every transaction."
+        image={businessImg}
+        imageAlt="A business dashboard with charts, a briefcase, calculator and coins"
+      >
+        <div className="mkt-hero-actions">
+          <a href="/auth" className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
+          <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
         </div>
-      </section>
+      </PageHero>
 
       <section className="mkt-section">
         <div className="mkt-container">

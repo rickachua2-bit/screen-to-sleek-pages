@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
-import { Converter, CtaBand, SectionHead } from "@/components/marketing/widgets";
+import { Converter, CtaBand, PageHero, SectionHead } from "@/components/marketing/widgets";
+import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -39,16 +40,13 @@ const TABLE_TITLES = ["Transfers & accounts", "Accepting payments", "Global & cr
 function PricingPage() {
   return (
     <MarketingShell active="/pricing">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">Pricing</span>
-          <h1>Transparent fees, <span className="mkt-grad-text">no surprises</span></h1>
-          <p>
-            Every fee is shown before you confirm a payment. No setup costs, no monthly minimums,
-            no hidden FX markups on quoted conversions.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        kicker="Pricing"
+        title={<>Transparent fees, <span className="mkt-grad-text">no surprises</span></>}
+        sub="Every fee is shown before you confirm a payment. No setup costs, no monthly minimums, no hidden FX markups on quoted conversions."
+        image={remittanceImg}
+        imageAlt="A globe with glowing money-transfer routes and currency coins"
+      />
 
       <section className="mkt-section" style={{ paddingTop: 0 }}>
         <div className="mkt-container" style={{ display: "grid", gap: "2rem" }}>

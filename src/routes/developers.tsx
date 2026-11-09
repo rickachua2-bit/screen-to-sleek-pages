@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Braces, KeyRound, Webhook } from "lucide-react";
 import { API_BASE, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
-import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, SectionHead } from "@/components/marketing/widgets";
+import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
+import apiImg from "@/assets/marketing/mkt-api.jpg";
 
 export const Route = createFileRoute("/developers")({
   head: () => ({
@@ -44,20 +45,18 @@ const SDKS = [
 function DevelopersPage() {
   return (
     <MarketingShell active="/developers">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">Developers</span>
-          <h1>Build on rails that settle in <span className="mkt-grad-text">0.8 seconds</span></h1>
-          <p>
-            A clean REST API, signed webhooks and SDKs for every stack. Sandbox keys are issued automatically
-            when you open a business account — live keys follow KYB approval.
-          </p>
-          <div className="mkt-hero-actions">
-            <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-primary">Read the documentation <ArrowRight className="h-4 w-4" /></a>
-            <a href="/auth" className="mkt-btn-ghost">Get sandbox keys</a>
-          </div>
+      <PageHero
+        kicker="Developers"
+        title={<>Build on rails that settle in <span className="mkt-grad-text">0.8 seconds</span></>}
+        sub="A clean REST API, signed webhooks and SDKs for every stack. Sandbox keys are issued automatically when you open a business account — live keys follow KYB approval."
+        image={apiImg}
+        imageAlt="Developer API illustration with a code window, connected nodes and a plug"
+      >
+        <div className="mkt-hero-actions">
+          <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-primary">Read the documentation <ArrowRight className="h-4 w-4" /></a>
+          <a href="/auth" className="mkt-btn-ghost">Get sandbox keys</a>
         </div>
-      </section>
+      </PageHero>
 
       <section className="mkt-section">
         <div className="mkt-container">
