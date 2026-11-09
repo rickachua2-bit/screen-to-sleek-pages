@@ -118,7 +118,7 @@ export function MarketingFooter() {
 /** Live USD/NGN badge — never shows a hardcoded rate. */
 function FxBadge({ suffix = "" }: { suffix?: string }) {
   const { rates, loading, unavailable } = useLiveFxRates();
-  const usdNgn = rates?.USD_NGN;
+  const usdNgn = rates?.["USD_NGN"];
   const text = usdNgn != null
     ? `USD/NGN ₦${usdNgn.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix}`
     : loading ? "Live FX loading…" : unavailable ? "Live FX unavailable" : "Live FX";
