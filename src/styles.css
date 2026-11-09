@@ -1322,7 +1322,7 @@ html, body {
 .mkt main section:nth-of-type(even):not(.mkt-ctaband) { background: rgb(255 255 255 / .48); }
 
 /* header */
-.mkt-header { position: sticky; top: 0; z-index: 60; border-bottom: 1px solid var(--mkt-line); background: color-mix(in srgb, var(--mkt-bg) 78%, #fff 22%); background: rgb(248 251 247 / .8); backdrop-filter: blur(20px) saturate(150%); }
+.mkt-header { position: sticky; top: 0; z-index: 60; border-bottom: 1px solid var(--mkt-line); background: rgb(248 251 247 / .8); backdrop-filter: blur(20px) saturate(150%); }
 .mkt-header-inner { margin-inline: auto; display: flex; align-items: center; gap: .75rem; max-width: 76rem; padding: .7rem 1rem; }
 .mkt-brand { display: inline-flex; align-items: center; gap: .55rem; font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; color: var(--mkt-ink); }
 .mkt-nav { display: none; align-items: center; gap: .15rem; margin-inline: auto; }
