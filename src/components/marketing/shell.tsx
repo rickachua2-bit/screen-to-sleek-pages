@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram, Linkedin, Mail, MapPin, Menu, Twitter, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
+import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
 import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
 
 export const DOCS_URL = "https://docs.slikpay.online";
@@ -114,6 +115,16 @@ export function MarketingFooter() {
   );
 }
 
+/** Live USD/NGN badge — never shows a hardcoded rate. */
+function FxBadge({ suffix = "" }: { suffix?: string }) {
+  const { rates, loading, unavailable } = useLiveFxRates();
+  const usdNgn = rates?.USD_NGN;
+  const text = usdNgn != null
+    ? `USD/NGN ₦${usdNgn.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix}`
+    : loading ? "Live FX loading…" : unavailable ? "Live FX unavailable" : "Live FX";
+  return <span className="mkt-header-fx"><span className="mkt-live-dot" /> {text}</span>;
+}
+
 export function MarketingShell({ active, children }: { active: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
@@ -170,7 +181,7 @@ export function MarketingShell({ active, children }: { active: string; children:
                 </Link>
               ))}
             </nav>
-            <span className="mkt-header-fx"><span className="mkt-live-dot" /> USD/NGN ₦1,612.40</span>
+            <FxBadge />
             <div className="mkt-header-actions">
               <Link to="/auth" className="mkt-btn-ghost mkt-btn-sm">Sign In</Link>
               <Link to="/auth" className="mkt-btn-primary mkt-btn-sm">Get Started <ArrowRight className="h-4 w-4" /></Link>
@@ -202,7 +213,7 @@ export function MarketingShell({ active, children }: { active: string; children:
                 <Link to="/auth" className="mkt-btn-ghost" onClick={() => setOpen(false)}>Sign In</Link>
                 <Link to="/auth" className="mkt-btn-primary" onClick={() => setOpen(false)}>Get Started <ArrowRight className="h-4 w-4" /></Link>
               </div>
-              <p className="mkt-drawer-fx"><span className="mkt-live-dot" /> USD/NGN ₦1,612.40 · indicative</p>
+              <p className="mkt-drawer-fx"><FxBadge suffix=" · indicative" /></p>
             </div>
           </div>
         ) : null}
