@@ -1,6 +1,6 @@
 import { ArrowLeftRight, ArrowRight, Braces, CardSim, Check, CheckCircle2, Copy, Globe2, Landmark, Minus, Nfc, Plane, Plus, ReceiptText, ShieldCheck, Ticket, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { toast } from "sonner";
 import { API_BASE, DOCS_URL } from "./shell";
 
@@ -537,6 +537,41 @@ export function BillsVisual() {
       {BILL_ITEMS.map((b) => <li key={b}><CheckCircle2 className="h-4 w-4" /> {b}</li>)}
     </ul>
   );
+}
+
+/* ------------------------------ count-up stat ------------------------------ */
+
+export function CountUp({ value, decimals = 0, prefix = "", suffix = "", duration = 1600 }: {
+  value: number; decimals?: number; prefix?: string; suffix?: string; duration?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [display, setDisplay] = useState(() => format(0));
+  function format(n: number) { return `${prefix}${n.toFixed(decimals)}${suffix}`; }
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      setDisplay(format(value));
+      return;
+    }
+    let raf = 0;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries[0]?.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        setDisplay(format(value * eased));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, decimals, prefix, suffix, duration]);
+  return <span ref={ref}>{display}</span>;
 }
 
 /* --------------------------------- steps ----------------------------------- */

@@ -125,6 +125,19 @@ export function MarketingShell({ active, children }: { active: string; children:
     return () => io.disconnect();
   }, [active]);
 
+  // Spotlight hover: cards glow toward the cursor via --mx/--my custom properties.
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const card = (e.target as HTMLElement | null)?.closest?.(".mkt-card");
+      if (!(card instanceof HTMLElement)) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      card.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    document.addEventListener("mousemove", onMove, { passive: true });
+    return () => document.removeEventListener("mousemove", onMove);
+  }, []);
+
   return (
     <div className="mkt">
       <div className="mkt-aurora" aria-hidden />
