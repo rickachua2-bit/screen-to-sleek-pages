@@ -51,7 +51,7 @@ export function ServicesHub({ role, only, title, autoOpen }: { role: Role; only?
     const mod = role === "merchant" ? s.module : PERSONAL_MODULES[s.module ?? ""];
     if (!mod) return;
     if (s.note) toast.message(s.note);
-    void navigate({ to: role === "merchant" ? "/dashboard" : "/personal", search: { module: mod } as never });
+    void navigate({ to: role === "merchant" ? "/dashboard" : "/wallet", search: { module: mod } as never });
   };
 
   return <section className="space-y-6">

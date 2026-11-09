@@ -10,9 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BusinessRouteImport } from './routes/business'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DevelopersRouteImport } from './routes/developers'
 import { Route as PersonalRouteImport } from './routes/personal'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
 import { Route as ApiPublicBusinessV1BalancesRouteImport } from './routes/api/public/business/v1/balances'
@@ -24,9 +29,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -34,9 +54,19 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevelopersRoute = DevelopersRouteImport.update({
+  id: '/developers',
+  path: '/developers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -70,9 +100,14 @@ const ApiPublicBusinessV1ReceiptsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
+  '/pricing': typeof PricingRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -81,9 +116,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
+  '/pricing': typeof PricingRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -93,9 +133,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/personal': typeof PersonalRoute
+  '/pricing': typeof PricingRoute
   '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
@@ -106,9 +151,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/auth'
+    | '/business'
+    | '/contact'
     | '/dashboard'
+    | '/developers'
     | '/personal'
+    | '/pricing'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -117,9 +167,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/auth'
+    | '/business'
+    | '/contact'
     | '/dashboard'
+    | '/developers'
     | '/personal'
+    | '/pricing'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -128,9 +183,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/auth'
+    | '/business'
+    | '/contact'
     | '/dashboard'
+    | '/developers'
     | '/personal'
+    | '/pricing'
     | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
@@ -140,9 +200,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BusinessRoute: typeof BusinessRoute
+  ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
+  DevelopersRoute: typeof DevelopersRoute
   PersonalRoute: typeof PersonalRoute
+  PricingRoute: typeof PricingRoute
   WalletRoute: typeof WalletRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
   ApiPublicBusinessV1BalancesRoute: typeof ApiPublicBusinessV1BalancesRoute
@@ -159,11 +224,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -173,11 +259,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developers': {
+      id: '/developers'
+      path: '/developers'
+      fullPath: '/developers'
+      preLoaderRoute: typeof DevelopersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/personal': {
       id: '/personal'
       path: '/personal'
       fullPath: '/personal'
       preLoaderRoute: typeof PersonalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -220,9 +320,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BusinessRoute: BusinessRoute,
+  ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
+  DevelopersRoute: DevelopersRoute,
   PersonalRoute: PersonalRoute,
+  PricingRoute: PricingRoute,
   WalletRoute: WalletRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,
   ApiPublicBusinessV1BalancesRoute: ApiPublicBusinessV1BalancesRoute,

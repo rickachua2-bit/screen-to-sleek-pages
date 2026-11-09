@@ -73,12 +73,12 @@ export type FlightOffer = {
   expiresAt: string | null; 
   passengerIds: string[];
   convertedAmounts?: {
-    ngn?: number;
-    usd?: number;
-    gbp?: number;
-    eur?: number;
-    usdt?: number;
-  };
+    ngn?: number | undefined;
+    usd?: number | undefined;
+    gbp?: number | undefined;
+    eur?: number | undefined;
+    usdt?: number | undefined;
+  } | undefined;
   logoUrl?: string | null;
 };
 export type FlightSearchResult = { searchId: string | null; complete: boolean; offers: FlightOffer[] };
@@ -314,7 +314,8 @@ export function parseOffer(raw: unknown): FlightOffer | null {
     for (const s of rawSegs) {
       const paxList = Array.isArray(obj(s)["passengers"]) ? obj(s)["passengers"] : [];
       for (const p of paxList) {
-        const bList = Array.isArray(obj(p)["baggages"]) ? obj(p)["baggages"] : [];
+        const rawBaggages = obj(p)["baggages"];
+        const bList = Array.isArray(rawBaggages) ? rawBaggages : [];
         for (const b of bList) {
           foundBaggageObjects = true;
           const bType = str(obj(b)["type"]).toLowerCase();
@@ -331,7 +332,8 @@ export function parseOffer(raw: unknown): FlightOffer | null {
 
   const pList = Array.isArray(f["passengers"]) ? f["passengers"] : [];
   for (const p of pList) {
-    const bList = Array.isArray(obj(p)["baggages"]) ? obj(p)["baggages"] : [];
+    const rawPaxBaggages = obj(p)["baggages"];
+    const bList = Array.isArray(rawPaxBaggages) ? rawPaxBaggages : [];
     for (const b of bList) {
       foundBaggageObjects = true;
       const bType = str(obj(p)["type"]).toLowerCase();

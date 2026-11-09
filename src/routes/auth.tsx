@@ -26,7 +26,7 @@ function AuthPage() {
   const finish = (p: Pending) => {
     toast.success(`Welcome, ${p.user.name.split(" ")[0]}`);
     if (p.role === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } });
-    else navigate({ to: "/personal", search: { module: "home" } });
+    else navigate({ to: "/wallet", search: { module: "home" } });
   };
 
   return (
