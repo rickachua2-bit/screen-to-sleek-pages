@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, CardSim, Coins, Plane, ReceiptText, Send, Wallet } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { BillsVisual, Converter, CtaBand, FeatureCard, FlightVisual, SectionHead, ShowcaseRow, StepsRow, VirtualCard } from "@/components/marketing/widgets";
-import personalImg from "@/assets/marketing/mkt-personal.jpg";
-import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
-import billsImg from "@/assets/marketing/mkt-bills.jpg";
-import flightsImg from "@/assets/marketing/mkt-flights.jpg";
+import personalImg from "@/assets/marketing/mkt-personal.png";
+import remittanceImg from "@/assets/marketing/mkt-remittance.png";
+import billsImg from "@/assets/marketing/mkt-bills.png";
+import flightsImg from "@/assets/marketing/mkt-flights.png";
 
 export const Route = createFileRoute("/personal")({
   head: () => ({

@@ -10,16 +10,16 @@ import {
   CtaBand, Faq, FeatureCard, FlightVisual, MediaBanner, ProductSuite, RateTicker, SectionHead,
   ShowcaseRow, StepsRow, VirtualCard,
 } from "@/components/marketing/widgets";
-import heroImg from "@/assets/marketing/mkt-hero.jpg";
-import gatewayImg from "@/assets/marketing/mkt-gateway.jpg";
-import accountsImg from "@/assets/marketing/mkt-accounts.jpg";
-import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
-import cardsImg from "@/assets/marketing/mkt-cards.jpg";
-import billsImg from "@/assets/marketing/mkt-bills.jpg";
-import flightsImg from "@/assets/marketing/mkt-flights.jpg";
-import apiImg from "@/assets/marketing/mkt-api.jpg";
-import softposImg from "@/assets/marketing/mkt-softpos.jpg";
-import securityImg from "@/assets/marketing/mkt-security.jpg";
+import heroImg from "@/assets/marketing/mkt-hero.png";
+import gatewayImg from "@/assets/marketing/mkt-gateway.png";
+import accountsImg from "@/assets/marketing/mkt-accounts.png";
+import remittanceImg from "@/assets/marketing/mkt-remittance.png";
+import cardsImg from "@/assets/marketing/mkt-cards.png";
+import billsImg from "@/assets/marketing/mkt-bills.png";
+import flightsImg from "@/assets/marketing/mkt-flights.png";
+import apiImg from "@/assets/marketing/mkt-api.png";
+import softposImg from "@/assets/marketing/mkt-softpos.png";
+import securityImg from "@/assets/marketing/mkt-security.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({

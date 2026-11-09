@@ -3,7 +3,7 @@ import { ArrowRight, Braces, KeyRound, Webhook } from "lucide-react";
 import type { CSSProperties } from "react";
 import { API_BASE, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
-import apiImg from "@/assets/marketing/mkt-api.jpg";
+import apiImg from "@/assets/marketing/mkt-api.png";
 
 export const Route = createFileRoute("/developers")({
   head: () => ({
