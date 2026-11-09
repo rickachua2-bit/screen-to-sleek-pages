@@ -25,7 +25,7 @@ export const sendEnquiry = createServerFn({ method: "POST" })
     if (!name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error("Please provide your name, a valid email and a message.");
     }
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env["RESEND_API_KEY"];
     if (!apiKey) throw new Error("Email is not configured yet.");
 
     const res = await fetch(RESEND_URL, {
