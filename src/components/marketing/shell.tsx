@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram, Linkedin, Mail, MapPin, Menu, Twitter, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
+import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
 import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
 
 export const DOCS_URL = "https://docs.slikpay.online";
@@ -42,9 +43,18 @@ const FOOTER_COLS: { title: string; links: { label: string; to?: string; href?: 
     title: "Company",
     links: [
       { label: "About Slikcash", to: "/about" },
-      { label: "Regulatory & Licensing", to: "/about" },
-      { label: "Security", to: "/about" },
+      { label: "Security", to: "/security" },
+      { label: "Regulatory & Licensing", to: "/licensing" },
       { label: "Contact & Support", to: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", to: "/terms" },
+      { label: "Privacy Policy", to: "/privacy" },
+      { label: "Security", to: "/security" },
+      { label: "Regulatory & Licensing", to: "/licensing" },
     ],
   },
 ];
@@ -92,11 +102,27 @@ export function MarketingFooter() {
             bank partners. Deposits are held with NDIC-insured partner banks and payments move over CBN-licensed
             clearing rails. Card services are PCI-DSS Level 1 certified.
           </p>
+          <nav className="mkt-footer-legal-links" aria-label="Legal">
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/security">Security</Link>
+            <Link to="/licensing">Regulatory & Licensing</Link>
+          </nav>
           <p>© {new Date().getFullYear()} Slikcash Technologies Ltd. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
+}
+
+/** Live USD/NGN badge — never shows a hardcoded rate. */
+function FxBadge({ suffix = "" }: { suffix?: string }) {
+  const { rates, loading, unavailable } = useLiveFxRates();
+  const usdNgn = rates?.["USD_NGN"];
+  const text = usdNgn != null
+    ? `USD/NGN ₦${usdNgn.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix}`
+    : loading ? "Live FX loading…" : unavailable ? "Live FX unavailable" : "Live FX";
+  return <span className="mkt-header-fx"><span className="mkt-live-dot" /> {text}</span>;
 }
 
 export function MarketingShell({ active, children }: { active: string; children: ReactNode }) {
@@ -155,7 +181,7 @@ export function MarketingShell({ active, children }: { active: string; children:
                 </Link>
               ))}
             </nav>
-            <span className="mkt-header-fx"><span className="mkt-live-dot" /> USD/NGN ₦1,612.40</span>
+            <FxBadge />
             <div className="mkt-header-actions">
               <Link to="/auth" className="mkt-btn-ghost mkt-btn-sm">Sign In</Link>
               <Link to="/auth" className="mkt-btn-primary mkt-btn-sm">Get Started <ArrowRight className="h-4 w-4" /></Link>
@@ -187,7 +213,7 @@ export function MarketingShell({ active, children }: { active: string; children:
                 <Link to="/auth" className="mkt-btn-ghost" onClick={() => setOpen(false)}>Sign In</Link>
                 <Link to="/auth" className="mkt-btn-primary" onClick={() => setOpen(false)}>Get Started <ArrowRight className="h-4 w-4" /></Link>
               </div>
-              <p className="mkt-drawer-fx"><span className="mkt-live-dot" /> USD/NGN ₦1,612.40 · indicative</p>
+              <p className="mkt-drawer-fx"><FxBadge suffix=" · indicative" /></p>
             </div>
           </div>
         ) : null}
