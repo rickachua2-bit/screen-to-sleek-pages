@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram, Linkedin, Mail, MapPin, Menu, Twitter, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
+import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
 
 export const DOCS_URL = "https://docs.slikpay.online";
 export const API_BASE = "https://api.slikpay.online/v1";
@@ -60,8 +61,7 @@ export function MarketingFooter() {
         <div className="mkt-footer-grid">
           <div className="mkt-footer-brand">
             <Link to="/" className="mkt-brand" aria-label="Slikcash home">
-              <FlameMark className="h-8 w-8" />
-              <span>Slikcash</span>
+              <img src={fullLogoAsset.url} alt="Slikcash" className="h-16 w-auto" draggable={false} />
             </Link>
             <p>
               Next-generation global banking and payments for Africa and beyond — multi-currency wallets,
