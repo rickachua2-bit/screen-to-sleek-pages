@@ -73,11 +73,11 @@ export type FlightOffer = {
   expiresAt: string | null; 
   passengerIds: string[];
   convertedAmounts?: {
-    ngn?: number;
-    usd?: number;
-    gbp?: number;
-    eur?: number;
-    usdt?: number;
+    ngn?: number | undefined;
+    usd?: number | undefined;
+    gbp?: number | undefined;
+    eur?: number | undefined;
+    usdt?: number | undefined;
   };
   logoUrl?: string | null;
 };
