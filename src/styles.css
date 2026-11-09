@@ -1612,3 +1612,9 @@ html, body {
   .mkt-suite { grid-template-columns: 1fr; }
   .mkt-api-grid { grid-template-columns: 1fr; }
 }
+
+/* converter inside showcase columns stacks vertically */
+.mkt-showcase-visual .mkt-converter { width: min(26rem, 100%); }
+.mkt-showcase-visual .mkt-converter-row { grid-template-columns: 1fr; }
+.mkt-showcase-visual .mkt-swap { justify-self: center; transform: rotate(90deg); }
+.mkt-showcase-visual .mkt-converter-meta { flex-wrap: wrap; }
