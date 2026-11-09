@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PersonalRouteImport } from './routes/personal'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ApiPublicPaddleWebhookRouteImport } from './routes/api/public/paddle-webhook'
 import { Route as ApiPublicBusinessV1BalancesRouteImport } from './routes/api/public/business/v1/balances'
 import { Route as ApiPublicBusinessV1BanksRouteImport } from './routes/api/public/business/v1/banks'
@@ -36,6 +37,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPaddleWebhookRoute = ApiPublicPaddleWebhookRouteImport.update({
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
+  '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
   '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
+  '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
   '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/personal': typeof PersonalRoute
+  '/wallet': typeof WalletRoute
   '/api/public/paddle-webhook': typeof ApiPublicPaddleWebhookRoute
   '/api/public/business/v1/balances': typeof ApiPublicBusinessV1BalancesRoute
   '/api/public/business/v1/banks': typeof ApiPublicBusinessV1BanksRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/personal'
+    | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
     | '/api/public/business/v1/banks'
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/personal'
+    | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
     | '/api/public/business/v1/banks'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/personal'
+    | '/wallet'
     | '/api/public/paddle-webhook'
     | '/api/public/business/v1/balances'
     | '/api/public/business/v1/banks'
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   PersonalRoute: typeof PersonalRoute
+  WalletRoute: typeof WalletRoute
   ApiPublicPaddleWebhookRoute: typeof ApiPublicPaddleWebhookRoute
   ApiPublicBusinessV1BalancesRoute: typeof ApiPublicBusinessV1BalancesRoute
   ApiPublicBusinessV1BanksRoute: typeof ApiPublicBusinessV1BanksRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       path: '/personal'
       fullPath: '/personal'
       preLoaderRoute: typeof PersonalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/paddle-webhook': {
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   PersonalRoute: PersonalRoute,
+  WalletRoute: WalletRoute,
   ApiPublicPaddleWebhookRoute: ApiPublicPaddleWebhookRoute,
   ApiPublicBusinessV1BalancesRoute: ApiPublicBusinessV1BalancesRoute,
   ApiPublicBusinessV1BanksRoute: ApiPublicBusinessV1BanksRoute,
