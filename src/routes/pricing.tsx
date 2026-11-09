@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { Converter, CtaBand, PageHero, SectionHead } from "@/components/marketing/widgets";
+import { useLiveFxPricing } from "@/hooks/use-live-fx-rates";
 import remittanceImg from "@/assets/marketing/mkt-remittance.png";
 
 export const Route = createFileRoute("/pricing")({
@@ -17,27 +18,73 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const ROWS: { product: string; fee: string; note: string }[][] = [
+type PricingRow = { product: string; fee: string; note: string; liveKeys?: string[] };
+
+const ROWS: PricingRow[][] = [
   [
-    { product: "NIP bank transfers", fee: "1% · capped at ₦80", note: "Flat percentage with a hard cap — a ₦1,000,000 transfer still costs ₦80." },
-    { product: "NUBAN account issuance", fee: "Free", note: "Dedicated account numbers for every verified user and business." },
-    { product: "@SlikTag P2P", fee: "0%", note: "Free between Slikcash users, always." },
+    { product: "NIP bank transfers", fee: "1% · capped at ₦80", note: "Flat percentage with a hard cap — a ₦1,000,000 transfer still costs ₦80.", liveKeys: ["niptransfer", "outwardnip", "nip"] },
+    { product: "NUBAN account issuance", fee: "Free", note: "Dedicated account numbers for every verified user and business.", liveKeys: ["nuban", "accountissuance"] },
+    { product: "@SlikTag P2P", fee: "0%", note: "Free between Slikcash users, always.", liveKeys: ["sliktag", "p2p"] },
   ],
   [
-    { product: "Local card acquiring", fee: "1.4%", note: "NGN cards, Apple Pay, Google Pay and USSD collections." },
-    { product: "Cross-border card checkout", fee: "3.5%", note: "International cards settled T+1 with a rolling-reserve chargeback shield." },
-    { product: "Virtual card creation", fee: "0%", note: "Unlimited USD and NGN virtual Mastercards at no creation cost." },
+    { product: "Local card acquiring", fee: "1.4%", note: "NGN cards, Apple Pay, Google Pay and USSD collections.", liveKeys: ["localcard", "cardacquiring", "acquiring"] },
+    { product: "Cross-border card checkout", fee: "3.5%", note: "International cards settled T+1 with a rolling-reserve chargeback shield.", liveKeys: ["internationalcard", "crossbordercard"] },
+    { product: "Virtual card creation", fee: "0%", note: "Unlimited USD and NGN virtual Mastercards at no creation cost.", liveKeys: ["virtualcard", "cardcreation", "cardissuance"] },
   ],
   [
-    { product: "Cross-border payouts (NGN-funded)", fee: "0.5% · min ₦5,000", note: "US, UK, Eurozone, Ghana, Kenya and South Africa corridors." },
-    { product: "Cross-border payouts (foreign wallet)", fee: "0.5% · min 5, max 25 units", note: "Fund from a matching USD, GBP, EUR, GHS, KES or ZAR wallet." },
-    { product: "Crypto swaps (USDT/USDC → NGN)", fee: "Live rate + provider spread", note: "Quoted upfront before you confirm — no hidden conversion fees." },
+    { product: "Cross-border payouts (NGN-funded)", fee: "0.5% · min ₦5,000", note: "US, UK, Eurozone, Ghana, Kenya and South Africa corridors.", liveKeys: ["crossborderpayout", "remittance", "payout"] },
+    { product: "Cross-border payouts (foreign wallet)", fee: "0.5% · min 5, max 25 units", note: "Fund from a matching USD, GBP, EUR, GHS, KES or ZAR wallet.", liveKeys: ["foreignwallet", "walletpayout"] },
+    { product: "Crypto swaps (USDT/USDC → NGN)", fee: "Live rate + provider spread", note: "Quoted upfront before you confirm — no hidden conversion fees.", liveKeys: ["cryptoswap", "swap", "fxspread"] },
   ],
 ];
 
 const TABLE_TITLES = ["Transfers & accounts", "Accepting payments", "Global & crypto"];
 
+/* ------------------------- live pricing integration ------------------------ */
+
+function asNum(value: unknown): number | null {
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Best-effort read of a live fee from the pricing service. Returns a display
+ * string built only from values the service actually returned, or null so the
+ * published figure stays in place.
+ */
+function liveFee(pricing: Record<string, unknown> | null, keys?: string[]): string | null {
+  if (!pricing || !keys?.length) return null;
+  const entries = Object.entries(pricing);
+  for (const key of keys) {
+    const hit = entries.find(([k]) => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes(key));
+    if (!hit) continue;
+    const v = hit[1];
+    if (typeof v === "string" && v.trim()) return v.trim();
+    if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      if (typeof o.display === "string" && o.display.trim()) return o.display.trim();
+      if (typeof o.label === "string" && o.label.trim()) return o.label.trim();
+      if (typeof o.fee === "string" && o.fee.trim()) return o.fee.trim();
+      const pct = asNum(o.percent ?? o.percentage ?? o.rate);
+      const flat = asNum(o.flat ?? o.flatFee ?? o.fixed ?? o.amount);
+      const cap = asNum(o.cap ?? o.max ?? o.maximum);
+      const min = asNum(o.min ?? o.minimum);
+      const parts: string[] = [];
+      if (pct !== null) parts.push(`${pct}%`);
+      if (flat !== null) parts.push(`₦${new Intl.NumberFormat("en").format(flat)}`);
+      let text = parts.join(" · ");
+      if (cap !== null) text += `${text ? " · " : ""}capped at ₦${new Intl.NumberFormat("en").format(cap)}`;
+      if (min !== null) text += `${text ? " · " : ""}min ₦${new Intl.NumberFormat("en").format(min)}`;
+      if (text) return text;
+    }
+  }
+  return null;
+}
+
 function PricingPage() {
+  const { pricing, fetchedAt, unavailable } = useLiveFxPricing();
+  const anyLive = ROWS.flat().some((r) => liveFee(pricing, r.liveKeys) !== null);
+
   return (
     <MarketingShell active="/pricing">
       <PageHero
@@ -59,18 +106,32 @@ function PricingPage() {
                     <tr><th>Product</th><th>Fee</th><th>Details</th></tr>
                   </thead>
                   <tbody>
-                    {rows.map((r) => (
-                      <tr key={r.product}>
-                        <td>{r.product}</td>
-                        <td className="mkt-price">{r.fee}</td>
-                        <td className="mkt-note">{r.note}</td>
-                      </tr>
-                    ))}
+                    {rows.map((r) => {
+                      const live = liveFee(pricing, r.liveKeys);
+                      return (
+                        <tr key={r.product}>
+                          <td>{r.product}</td>
+                          <td className="mkt-price">
+                            {live ?? r.fee}
+                            {live ? <span className="mkt-live-chip">Live</span> : null}
+                          </td>
+                          <td className="mkt-note">{r.note}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           ))}
+          {anyLive && fetchedAt ? (
+            <p className="mkt-live-note">
+              <span className="mkt-live-dot" /> Fees marked Live stream directly from the Slikcash pricing service — updated{" "}
+              {new Date(fetchedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}.
+            </p>
+          ) : unavailable ? (
+            <p className="mkt-live-note">Live pricing service is unreachable right now — showing the standard published fees.</p>
+          ) : null}
         </div>
       </section>
 
@@ -79,7 +140,7 @@ function PricingPage() {
           <SectionHead
             kicker="FX corridors"
             title="Live conversion across ten currencies"
-            sub="Indicative interbank rates — your exact quote is locked on screen before you confirm any conversion or payout."
+            sub="Real quotes from the Slikcash Treasury Vault — your exact rate, fee and guaranteed window appear before you confirm anything."
           />
           <Converter />
         </div>

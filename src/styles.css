@@ -1558,6 +1558,8 @@ html, body {
 .mkt-ticker-item em { font-style: normal; font-weight: 700; color: var(--mkt-green); }
 .mkt-ticker-item em[data-down] { color: #DC2626; }
 .mkt-ticker-tps { color: var(--mkt-cobalt); font-weight: 700; }
+.mkt-ticker-loading { display: inline-block; min-width: 2.2rem; color: var(--mkt-muted); animation: mkt-pulse 1.2s ease-in-out infinite; }
+.mkt-live-dot[data-paused] { background: #DC2626; box-shadow: 0 0 8px #DC2626; animation: none; }
 
 /* ---------- converter ---------- */
 .mkt-converter { padding: 1.6rem; }
@@ -1576,6 +1578,12 @@ html, body {
 .mkt-converter-meta { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; margin-top: 1.1rem; font-size: .72rem; font-weight: 600; color: var(--mkt-muted); }
 .mkt-converter-meta span { display: inline-flex; align-items: center; gap: .4rem; }
 .mkt-converter-meta svg { color: var(--mkt-green); }
+.mkt-quote-badge { color: var(--mkt-cobalt); font-variant-numeric: tabular-nums; }
+.mkt-converter-error { color: #DC2626; }
+.mkt-converter-retry { border: 1px solid currentColor; border-radius: 999px; padding: .1rem .6rem; font: inherit; font-weight: 700; background: transparent; color: inherit; cursor: pointer; margin-left: .25rem; transition: background .2s ease, color .2s ease; }
+.mkt-converter-retry:hover { background: #DC2626; color: #fff; }
+.mkt-live-chip { display: inline-flex; align-items: center; gap: .3rem; margin-left: .45rem; padding: .05rem .5rem; border-radius: 999px; background: linear-gradient(135deg, var(--mkt-cobalt), var(--mkt-cyan)); color: #fff; font-size: .62rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+.mkt-live-note { display: flex; align-items: center; gap: .45rem; font-size: .74rem; font-weight: 600; color: var(--mkt-muted); }
 .mkt-delivery { color: var(--mkt-cyan); }
 .mkt-delivery-bar { display: inline-block; height: .3rem; width: 3rem; border-radius: 999px; background: linear-gradient(90deg, var(--mkt-cobalt), var(--mkt-magenta)); transform-origin: left; animation: mkt-delivery 2.4s ease-in-out infinite; }
 @keyframes mkt-delivery { 0% { transform: scaleX(0); } 33% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: .4; } }
