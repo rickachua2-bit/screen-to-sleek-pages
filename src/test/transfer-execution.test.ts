@@ -3,6 +3,7 @@ const mocks = vi.hoisted(() => ({ user: vi.fn(), call: vi.fn(), guard: vi.fn(), 
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => ({ inputValidator: () => ({ handler: (fn: unknown) => fn }), handler: (fn: unknown) => fn }) }));
 vi.mock("@/lib/paddle.server", () => ({ bankingUser: mocks.user, callPaddle: mocks.call }));
 vi.mock("@/lib/wallets.server", () => ({ guardMoney: mocks.guard, settleMoney: mocks.settle }));
+vi.mock("@/lib/fx-pricing.server", () => ({ fetchLiveNipTransferFee: vi.fn().mockResolvedValue(10.75) }));
 import { runPaddleOperation } from "@/lib/paddle.functions";
 const invoke = runPaddleOperation as unknown as (input: { data: Record<string, unknown> }) => Promise<{ receipt: { status: string; amount: number } }>;
 describe("bank payout transactional execution", () => {
@@ -18,13 +19,13 @@ describe("bank payout transactional execution", () => {
     mocks.call.mockResolvedValueOnce({ data: { accountName: "Verified recipient" } });
   });
   const input = () => ({ data: { id: "post-payouts-transfer", body: { amount: 100, destinationBankCode: "058", destinationAccountNumber: "0123456789" }, params: {}, currency: "NGN", pin: "1234", idempotencyKey: "0f3d2a1e-9c4b-4a5b-8c6d-7e8f9a0b1c2d" } });
-  it("reserves principal plus 1% and settles the original principal exactly once", async () => {
+  it("reserves principal plus the flat live fee and settles the original principal exactly once", async () => {
     mocks.call.mockResolvedValueOnce({ data: { status: "completed", reference: "provider", sessionId: "bank-session" } });
     const r = await invoke(input());
     expect(mocks.guard).toHaveBeenCalledOnce();
-    expect(mocks.guard.mock.calls[0]?.[2]).toBe(101);
+    expect(mocks.guard.mock.calls[0]?.[2]).toBe(110.75);
     expect(mocks.settle).toHaveBeenCalledOnce();
-    expect(mocks.settle.mock.calls[0]?.slice(2)).toEqual(["succeeded", "provider", { principal: 100, fee: 1, nipSessionId: "bank-session", recipient: "Verified recipient" }]);
+    expect(mocks.settle.mock.calls[0]?.slice(2)).toEqual(["succeeded", "provider", { principal: 100, fee: 10.75, nipSessionId: "bank-session", recipient: "Verified recipient" }]);
     expect(r.receipt.amount).toBe(100);
   });
   it("does not dispatch a payout if atomic reservation fails", async () => {
