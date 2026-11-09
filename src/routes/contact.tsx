@@ -3,7 +3,8 @@ import { Clock3, Mail, MapPin, MessageCircle, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { MarketingShell } from "@/components/marketing/shell";
-import { SectionHead } from "@/components/marketing/widgets";
+import { PageHero, SectionHead } from "@/components/marketing/widgets";
+import supportImg from "@/assets/marketing/mkt-support.jpg";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -29,13 +30,13 @@ function ContactPage() {
 
   return (
     <MarketingShell active="/contact">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">Contact</span>
-          <h1>Talk to a <span className="mkt-grad-text">human</span>, any time</h1>
-          <p>24/7 priority support for every account — and a dedicated success team for business customers.</p>
-        </div>
-      </section>
+      <PageHero
+        kicker="Contact"
+        title={<>Talk to a <span className="mkt-grad-text">human</span>, any time</>}
+        sub="24/7 priority support for every account — and a dedicated success team for business customers."
+        image={supportImg}
+        imageAlt="A support headset with chat bubbles and an envelope"
+      />
 
       <section className="mkt-section" style={{ paddingTop: 0 }}>
         <div className="mkt-container mkt-grid-2" style={{ alignItems: "start" }}>

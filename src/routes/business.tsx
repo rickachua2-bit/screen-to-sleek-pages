@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeftRight, ArrowRight, Braces, Briefcase, CalendarClock, FileText, Globe2, Link2, ReceiptText, ShieldCheck, Store, Users } from "lucide-react";
 import { useState } from "react";
 import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
-import { CtaBand, FeatureCard, SectionHead, StepsRow } from "@/components/marketing/widgets";
+import { CtaBand, FeatureCard, MediaBanner, PageHero, SectionHead, StepsRow } from "@/components/marketing/widgets";
+import businessImg from "@/assets/marketing/mkt-business.jpg";
+import gatewayImg from "@/assets/marketing/mkt-gateway.jpg";
+import remittanceImg from "@/assets/marketing/mkt-remittance.jpg";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
@@ -46,20 +49,18 @@ function BusinessPage() {
   const [segment, setSegment] = useState<keyof typeof SEGMENTS>("corporates");
   return (
     <MarketingShell active="/business">
-      <section className="mkt-pagehero">
-        <div className="mkt-container">
-          <span className="mkt-kicker">For businesses</span>
-          <h1>The console your <span className="mkt-grad-text">finance team</span> has been waiting for</h1>
-          <p>
-            Merchant settlements, bulk payroll payouts, automated tax statements, cashier shifts and direct
-            debit mandates — with maker-checker approvals and a full audit trail on every transaction.
-          </p>
-          <div className="mkt-hero-actions">
-            <a href="/auth" className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
-            <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
-          </div>
+      <PageHero
+        kicker="For businesses"
+        title={<>The console your <span className="mkt-grad-text">finance team</span> has been waiting for</>}
+        sub="Merchant settlements, bulk payroll payouts, automated tax statements, cashier shifts and direct debit mandates — with maker-checker approvals and a full audit trail on every transaction."
+        image={businessImg}
+        imageAlt="A business dashboard with charts, a briefcase, calculator and coins"
+      >
+        <div className="mkt-hero-actions">
+          <a href="/auth" className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
+          <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
         </div>
-      </section>
+      </PageHero>
 
       <section className="mkt-section">
         <div className="mkt-container">
@@ -68,6 +69,7 @@ function BusinessPage() {
             title="Get paid anywhere, settle instantly"
             sub="Every collection lands in your dedicated NUBAN and is captured automatically — even transfers sent straight to your account number."
           />
+          <MediaBanner src={gatewayImg} alt="Online checkout on a laptop and phone with a payment card and shield" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Globe2 className="h-5 w-5" />} title="Universal gateway">
               Cards, bank transfer, Apple Pay, Google Pay and USSD in one checkout, with instant T+0 NGN settlement and T+1 foreign settlement.
@@ -89,6 +91,7 @@ function BusinessPage() {
             title="Move money out with total control"
             sub="From one-off supplier payments to thousand-row payroll files, every payout is reserved, approved and tracked."
           />
+          <MediaBanner src={remittanceImg} alt="A globe with glowing money-transfer routes and currency coins" />
           <div className="mkt-grid-3">
             <FeatureCard icon={<Users className="h-5 w-5" />} title="Bulk payroll payouts">
               Upload a payment file, validate every row, review the total and fees, then release the whole batch with one approval.
