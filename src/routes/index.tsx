@@ -80,8 +80,8 @@ function Landing() {
               contactless tap-to-pay, cross-border remittance and a universal payment gateway — all in one platform.
             </p>
             <div className="mkt-hero-actions">
-              <Link to="/auth" className="mkt-btn-primary">Start with Slikcash Personal <ArrowRight className="h-4 w-4" /></Link>
-              <Link to="/auth" className="mkt-btn-ghost">Explore Business Console</Link>
+              <a href={APP_SIGNIN} className="mkt-btn-primary">Start with Slikcash Personal <ArrowRight className="h-4 w-4" /></a>
+              <a href={APP_SIGNIN} className="mkt-btn-ghost">Explore Business Console</a>
             </div>
             <ul className="mkt-trust">
               {TRUST.map((t) => <li key={t}><ShieldCheck className="h-3.5 w-3.5" /> {t}</li>)}

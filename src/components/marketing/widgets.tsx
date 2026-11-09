@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { toast } from "sonner";
 import { getLiveFxQuote, type LiveFxQuote } from "@/lib/fx.functions";
 import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
-import { API_BASE, DOCS_URL } from "./shell";
+import { API_BASE, APP_SIGNIN, DOCS_URL } from "./shell";
 
 /* ------------------------------ copy button ------------------------------ */
 

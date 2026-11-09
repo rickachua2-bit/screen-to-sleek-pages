@@ -55,7 +55,7 @@ function DevelopersPage() {
       >
         <div className="mkt-hero-actions">
           <a href={DOCS_URL} target="_blank" rel="noreferrer" className="mkt-btn-primary">Read the documentation <ArrowRight className="h-4 w-4" /></a>
-          <a href="/auth" className="mkt-btn-ghost">Get sandbox keys</a>
+          <a href={APP_SIGNIN} className="mkt-btn-ghost">Get sandbox keys</a>
         </div>
       </PageHero>
 

@@ -57,7 +57,7 @@ function BusinessPage() {
         imageAlt="A business dashboard with charts, a briefcase, calculator and coins"
       >
         <div className="mkt-hero-actions">
-          <a href="/auth" className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
+          <a href={APP_SIGNIN} className="mkt-btn-primary">Open a Business Account <ArrowRight className="h-4 w-4" /></a>
           <a href="/pricing" className="mkt-btn-ghost">See pricing</a>
         </div>
       </PageHero>
