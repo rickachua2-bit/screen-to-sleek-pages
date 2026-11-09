@@ -228,7 +228,7 @@ function Landing() {
       </section>
 
       {/* API band */}
-      <section className="mkt-apiband" id="developers-preview">
+      <section className="mkt-section mkt-apiband" id="developers-preview">
         <div className="mkt-container">
           <div className="mkt-apiband-grid">
             <div className="mkt-apiband-copy mkt-reveal">
