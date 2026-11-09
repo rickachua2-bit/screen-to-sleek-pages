@@ -6,7 +6,7 @@ import {
 import { useState, type CSSProperties } from "react";
 import { DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import {
-  AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter,
+  AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter, CountUp,
   CtaBand, Faq, FeatureCard, FlightVisual, MediaBanner, ProductSuite, RateTicker, SectionHead,
   ShowcaseRow, StepsRow, VirtualCard,
 } from "@/components/marketing/widgets";
@@ -88,6 +88,9 @@ function Landing() {
             </ul>
           </div>
           <div className="mkt-hero-visual">
+            <span className="mkt-hero-chip" data-pos="a"><Zap className="h-3.5 w-3.5" /> 0.8s NIP settlement</span>
+            <span className="mkt-hero-chip" data-pos="b"><Globe2 className="h-3.5 w-3.5" /> 11 payout countries</span>
+            <span className="mkt-hero-chip" data-pos="c"><ShieldCheck className="h-3.5 w-3.5" /> NDIC-insured partners</span>
             <figure className="mkt-media mkt-hero-media">
               <img src={heroImg} alt="Slikcash app with a virtual card, coins and the brand ribbon" width={1024} height={1024} />
             </figure>
@@ -327,9 +330,9 @@ function Landing() {
       <section className="mkt-section">
         <div className="mkt-container">
           <div className="mkt-grid-3">
-            <div className="mkt-card mkt-stat mkt-reveal"><strong className="mkt-grad-text">₦50B+</strong><span>Annualized volume</span></div>
-            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "80ms" } as CSSProperties}><strong className="mkt-grad-text">99.99%</strong><span>Core uptime</span></div>
-            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "160ms" } as CSSProperties}><strong className="mkt-grad-text">0.8s</strong><span>Average NIP velocity</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal"><strong className="mkt-grad-text"><CountUp value={50} prefix="₦" suffix="B+" /></strong><span>Annualized volume</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "80ms" } as CSSProperties}><strong className="mkt-grad-text"><CountUp value={99.99} decimals={2} suffix="%" /></strong><span>Core uptime</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "160ms" } as CSSProperties}><strong className="mkt-grad-text"><CountUp value={0.8} decimals={1} suffix="s" /></strong><span>Average NIP velocity</span></div>
           </div>
           <div className="mkt-grid-3" style={{ marginTop: "1rem" }}>
             <div className="mkt-card mkt-quote mkt-reveal">
