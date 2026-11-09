@@ -60,16 +60,12 @@ export function RateTicker() {
     setDirections(dirs);
   }, [rates]);
 
-  const items = TICKER_PAIRS.map(({ pair, key }) => {
-    const value = rates?.[key];
-    const dir = directions[key] ?? 0;
-    const delta =
-      value !== undefined && previous.current[key] !== undefined && dir !== 0
-        ? null // percentage between polls is tiny; direction arrow is the honest signal
-        : null;
-    void delta;
-    return { pair, key, value, dir };
-  });
+  const items = TICKER_PAIRS.map(({ pair, key }) => ({
+    pair,
+    key,
+    value: rates?.[key],
+    dir: directions[key] ?? 0,
+  }));
   const row = [...items, ...items];
 
   return (
