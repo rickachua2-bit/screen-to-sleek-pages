@@ -118,11 +118,11 @@ function HomeModule({ open }: { open: (k: ActionKind) => void }) {
       </div>
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 xl:grid-cols-6 w-full">
         <QuickAction icon={Send} title="Send Money" sub="To bank or @SlikTag" tone="bg-cobalt" onClick={() => open("send")} />
-        <QuickAction icon={Plane} title="Book Flights" sub="450+ airlines & instant PNR" tone="bg-cyan/90 text-slate-950" onClick={() => { window.location.href = "/personal?module=flights"; }} />
+        <QuickAction icon={Plane} title="Book Flights" sub="450+ airlines & instant PNR" tone="bg-cyan/90 text-slate-950" onClick={() => { window.location.href = "/wallet?module=flights"; }} />
         <QuickAction icon={Smartphone} title="Airtime & Data" sub="MTN, Airtel, Glo, 9mobile" tone="bg-gradient-brand" onClick={() => open("airtime")} />
         <QuickAction icon={Zap} title="Pay Utilities" sub="Electricity & Cable TV" tone="bg-magenta/80" onClick={() => open("bills")} />
         <QuickAction icon={CreditCard} title="USD Virtual Card" sub="Top up in dollars" tone="bg-magenta" onClick={() => open("fund")} />
-        <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => { window.location.href = "/personal?module=swap"; }} />
+        <QuickAction icon={ArrowLeftRight} title="Fiat-to-Coin Swap" sub="Convert NGN to USD / USDT" tone="bg-gradient-tri" onClick={() => { window.location.href = "/wallet?module=swap"; }} />
       </div>
       <Panel title="Recent Activity">
         <ActivityList txns={txns} limit={5} />

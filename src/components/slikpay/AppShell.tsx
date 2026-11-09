@@ -72,7 +72,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
   const notes = [...(banking?.receipts ?? []).slice(0, 6).map((r) => ({ id: r.id, at: r.created_at, text: `${r.status === "succeeded" ? "Completed" : r.status === "failed" ? "Failed" : "Pending"}: ${r.operation.startsWith("SWAP") ? r.operation.replace("->", " → ").replace("SWAP", "Swap") : r.operation.startsWith("WITHDRAW") ? "Withdrawal" : "Transfer"} · ${r.currency ?? ""} ${Number(r.amount ?? 0).toLocaleString()}` })), ...txns.filter((t) => t.direction === "credit").slice(0, 6).map((t) => ({ id: t.id, at: t.date, text: `Received ${t.amount.toLocaleString(undefined, { style: "currency", currency: "NGN" })} from ${t.customer}` }))].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
   const isBiz = mode === "merchant";
   const groups = onModuleChange ? (isBiz ? MERCHANT_GROUPS : PERSONAL_GROUPS) : [{ title: "", items: nav }];
-  const goMode = (r: Role) => { setRole(r); setSwitcher(false); if (r === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } }); else navigate({ to: "/personal", search: { module: "home" } }); };
+  const goMode = (r: Role) => { setRole(r); setSwitcher(false); if (r === "merchant") navigate({ to: "/dashboard", search: { module: "overview" } }); else navigate({ to: "/wallet", search: { module: "home" } }); };
   const sidebar = <aside className="merchant-sidebar flex h-full w-[260px] flex-col border-r border-border bg-background/95 backdrop-blur-2xl">
     <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-4">
       {isBiz ? <div className="flex items-center gap-2"><FlameMark className="h-7 w-7" /><div className="leading-none"><div className="text-base font-extrabold">SLIKPAY<span className="text-cyan">.</span></div><p className="mt-0.5 text-[10px] sidebar-meta">Business</p></div></div> : <Logo sub="Personal" />}
@@ -85,7 +85,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
         return <div key={g.title} className="mb-1">{g.title && <button type="button" onClick={() => toggleFold(g.title)} aria-expanded={!closed} className="group flex w-full items-center justify-between px-2.5 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.08em] sidebar-group-title"><span>{g.title}</span><ChevronDown className={`h-3 w-3 opacity-0 transition group-hover:opacity-100 ${closed ? "-rotate-90 opacity-100" : ""}`} /></button>}{!closed && items.map(({ label: rawLabel, icon: Icon, id }) => { const label = id === "golive" && banking?.mode === "live" ? "KYB" : rawLabel;
         const selected = activeModule ? activeModule === id : active === label;
         const classes = `sidebar-item flex h-8 w-full items-center justify-start gap-2.5 rounded-md px-2.5 text-left text-[13px] ${selected ? "sidebar-item-active" : "font-semibold"}`;
-        return onModuleChange && id ? <Link key={label} to={isBiz ? "/dashboard" : "/personal"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)} className={classes}><Icon className="h-4 w-4 shrink-0" /><span className="truncate">{label}</span></Link> : <button type="button" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon className="h-4 w-4 shrink-0" /><span className="truncate">{label}</span></button>;
+        return onModuleChange && id ? <Link key={label} to={isBiz ? "/dashboard" : "/wallet"} search={{ module: id }} aria-current={selected ? "page" : undefined} onClick={() => setOpen(false)} className={classes}><Icon className="h-4 w-4 shrink-0" /><span className="truncate">{label}</span></Link> : <button type="button" key={label} className={classes} onClick={() => { setActive(label); setOpen(false); }}><Icon className="h-4 w-4 shrink-0" /><span className="truncate">{label}</span></button>;
       })}</div>; })}
     </nav>
     <div className="shrink-0 border-t border-border p-2">
@@ -104,7 +104,7 @@ export function AppShell({ mode, nav, children, greeting, activeModule, onModule
       <header className="topbar-midnight sticky top-0 z-30 flex h-14 sm:h-16 lg:h-[72px] items-center gap-1 sm:gap-2 px-2.5 sm:px-4 backdrop-blur-2xl md:gap-4 md:px-7 max-w-full overflow-hidden">
         <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
         <Link
-          to={isBiz ? "/dashboard" : "/personal"}
+          to={isBiz ? "/dashboard" : "/wallet"}
           className="flex items-center gap-1.5 shrink-0 lg:hidden mr-1 group transition-transform active:scale-95"
           aria-label="Slikpay Home"
         >
