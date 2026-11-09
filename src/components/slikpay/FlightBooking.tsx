@@ -1756,7 +1756,7 @@ export function FlightBooking({ role = "merchant" }: { role?: "merchant" | "pers
 
             <div className="mt-4 flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Passenger Information</span>
-              {profile && (
+              {user && (
                 <button
                   type="button"
                   onClick={autofillPrimaryTraveller}
