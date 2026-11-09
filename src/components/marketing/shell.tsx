@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram, Linkedin, Mail, MapPin, Menu, Twitter, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
 import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
 
@@ -101,6 +101,30 @@ export function MarketingFooter() {
 
 export function MarketingShell({ active, children }: { active: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
+
+  // Scroll-reveal choreography: every .mkt-reveal element fades up as it enters the viewport.
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".mkt-reveal:not([data-revealed])"));
+    if (els.length === 0) return;
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.setAttribute("data-revealed", ""));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.setAttribute("data-revealed", "");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [active]);
+
   return (
     <div className="mkt">
       <div className="mkt-aurora" aria-hidden />

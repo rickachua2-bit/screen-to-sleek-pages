@@ -1,6 +1,6 @@
 import { ArrowLeftRight, ArrowRight, Braces, CardSim, Check, CheckCircle2, Copy, Globe2, Landmark, Minus, Nfc, Plane, Plus, ReceiptText, ShieldCheck, Ticket, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { toast } from "sonner";
 import { API_BASE, DOCS_URL } from "./shell";
 
@@ -218,9 +218,10 @@ export function CodeTabs() {
   const [active, setActive] = useState(0);
   const snippet = SNIPPETS[active] ?? { lang: "", code: "" };
   return (
-    <div className="mkt-codebox">
+    <div className="mkt-codebox mkt-reveal">
       <div className="mkt-codebox-head">
         <div className="mkt-codebox-tabs" role="tablist" aria-label="Code languages">
+          <span className="mkt-codebox-dots" aria-hidden><i /><i /><i /></span>
           {SNIPPETS.map((s, i) => (
             <button
               key={s.lang}
@@ -251,7 +252,7 @@ export function Faq({ items }: { items: { q: string; a: string }[] }) {
   return (
     <div className="mkt-faq">
       {items.map((item, i) => (
-        <div key={item.q} className="mkt-faq-item" data-open={open === i || undefined}>
+        <div key={item.q} className="mkt-faq-item mkt-reveal" data-open={open === i || undefined} style={{ "--mkt-d": `${i * 60}ms` } as CSSProperties}>
           <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
             <span>{item.q}</span>
             {open === i ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -330,7 +331,7 @@ export function CheckoutWidget() {
 
 export function SectionHead({ kicker, title, sub }: { kicker: string; title?: string; sub?: string }) {
   return (
-    <div className="mkt-section-head">
+    <div className="mkt-section-head mkt-reveal">
       <span className="mkt-kicker">{kicker}</span>
       {title ? <h2>{title}</h2> : null}
       {sub ? <p>{sub}</p> : null}
@@ -355,7 +356,7 @@ export function CtaBand({ title, sub }: { title: string; sub?: string }) {
 
 export function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
-    <div className="mkt-card mkt-feature">
+    <div className="mkt-card mkt-feature mkt-reveal">
       <span className="mkt-feature-icon">{icon}</span>
       <h3>{title}</h3>
       <p>{children}</p>
@@ -379,8 +380,8 @@ const SUITE = [
 export function ProductSuite() {
   return (
     <div className="mkt-suite">
-      {SUITE.map((p) => (
-        <Link key={p.title} to={p.to} className="mkt-card mkt-suite-card">
+      {SUITE.map((p, i) => (
+        <Link key={p.title} to={p.to} className="mkt-card mkt-suite-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as CSSProperties}>
           <span className="mkt-feature-icon">{p.icon}</span>
           <h3>{p.title}</h3>
           <p>{p.text}</p>
@@ -400,7 +401,7 @@ export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, im
 }) {
   return (
     <div className="mkt-showcase-grid" data-flip={flip || undefined}>
-      <div className="mkt-showcase-copy">
+      <div className="mkt-showcase-copy mkt-reveal">
         <span className="mkt-kicker">{kicker}</span>
         <h2>{title}</h2>
         <p>{sub}</p>
@@ -409,7 +410,7 @@ export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, im
         </ul>
         <Link to={cta.to} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
       </div>
-      <div className="mkt-showcase-visual">
+      <div className="mkt-showcase-visual mkt-reveal" style={{ "--mkt-d": "120ms" } as CSSProperties}>
         {image ? (
           <figure className="mkt-media">
             <img src={image.src} alt={image.alt} loading="lazy" width={1024} height={1024} />
@@ -445,7 +446,7 @@ export function PageHero({ kicker, title, sub, image, imageAlt, children }: {
 
 export function MediaBanner({ src, alt }: { src: string; alt: string }) {
   return (
-    <figure className="mkt-media mkt-media-banner">
+    <figure className="mkt-media mkt-media-banner mkt-reveal">
       <img src={src} alt={alt} loading="lazy" width={1024} height={1024} />
     </figure>
   );
@@ -467,8 +468,8 @@ const API_PRODUCTS = [
 export function ApiProductGrid() {
   return (
     <div className="mkt-api-grid">
-      {API_PRODUCTS.map((a) => (
-        <div key={a.title} className="mkt-card mkt-api-card">
+      {API_PRODUCTS.map((a, i) => (
+        <div key={a.title} className="mkt-card mkt-api-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as CSSProperties}>
           <span className="mkt-api-method">{a.path}</span>
           <h3>{a.title}</h3>
           <p>{a.text}</p>
@@ -544,7 +545,7 @@ export function StepsRow({ steps }: { steps: { title: string; text: string }[] }
   return (
     <div className="mkt-steps">
       {steps.map((s, i) => (
-        <div key={s.title} className="mkt-card mkt-step">
+        <div key={s.title} className="mkt-card mkt-step mkt-reveal" style={{ "--mkt-d": `${i * 90}ms` } as CSSProperties}>
           <span className="mkt-step-num">{String(i + 1).padStart(2, "0")}</span>
           <h3>{s.title}</h3>
           <p>{s.text}</p>

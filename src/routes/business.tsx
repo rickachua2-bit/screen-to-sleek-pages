@@ -137,7 +137,7 @@ function BusinessPage() {
       {/* API teaser */}
       <section className="mkt-section">
         <div className="mkt-container">
-          <div className="mkt-card" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+          <div className="mkt-card mkt-reveal" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "1.6rem" }}>
             <div style={{ maxWidth: "34rem" }}>
               <span className="mkt-kicker">Build on Slikcash</span>
               <h3 style={{ margin: ".7rem 0 .4rem", fontSize: "1.25rem" }}>Every console feature is also an API</h3>

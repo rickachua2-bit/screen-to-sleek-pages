@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock3, Mail, MapPin, MessageCircle, Send } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
 import { MarketingShell } from "@/components/marketing/shell";
 import { PageHero, SectionHead } from "@/components/marketing/widgets";
@@ -41,27 +41,27 @@ function ContactPage() {
       <section className="mkt-section" style={{ paddingTop: 0 }}>
         <div className="mkt-container mkt-grid-2" style={{ alignItems: "start" }}>
           <div style={{ display: "grid", gap: "1rem" }}>
-            <div className="mkt-card mkt-contact-card">
+            <div className="mkt-card mkt-contact-card mkt-reveal">
               <h3><Mail className="h-4 w-4" /> Verified support email</h3>
               <a href="mailto:support@slikcash.com">support@slikcash.com</a>
               <p>We only ever email you from slikcash.com addresses.</p>
             </div>
-            <div className="mkt-card mkt-contact-card">
+            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "70ms" } as CSSProperties}>
               <h3><MessageCircle className="h-4 w-4" /> WhatsApp live chat</h3>
               <a href="https://wa.me/2347000000000" target="_blank" rel="noreferrer">Chat with support on WhatsApp</a>
               <p>Average first response under five minutes.</p>
             </div>
-            <div className="mkt-card mkt-contact-card">
+            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "140ms" } as CSSProperties}>
               <h3><MapPin className="h-4 w-4" /> Office</h3>
               <p>Victoria Island, Lagos, Nigeria</p>
             </div>
-            <div className="mkt-card mkt-contact-card">
+            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "210ms" } as CSSProperties}>
               <h3><Clock3 className="h-4 w-4" /> Hours</h3>
               <p>24/7 priority support, every day of the year.</p>
             </div>
           </div>
 
-          <div className="mkt-card" style={{ padding: "1.5rem" }}>
+          <div className="mkt-card mkt-reveal" style={{ padding: "1.5rem", "--mkt-d": "120ms" } as CSSProperties}>
             <SectionHead kicker="Send a message" title="How can we help?" />
             {sent ? (
               <p className="mkt-note" style={{ fontSize: ".9rem" }}>
