@@ -32,9 +32,9 @@ export function parseBulkCsv(text: string): BulkRow[] {
       return { bankCode, account, amount, note: note || undefined, error };
     });
 }
-export function bulkTotals(rows: Pick<BulkRow, "amount">[]) {
+export function bulkTotals(rows: Pick<BulkRow, "amount">[], flatFeeNgn: number) {
   const principal = Math.round(rows.reduce((n, r) => n + r.amount, 0) * 100) / 100;
-  const fees = Math.round(rows.reduce((n, r) => n + slikpayTransferFee(r.amount), 0) * 100) / 100;
+  const fees = Math.round(rows.length * slikpayTransferFee(1, flatFeeNgn) * 100) / 100;
   return { principal, fees, total: Math.round((principal + fees) * 100) / 100 };
 }
 export function insufficientBulkBalance(live: boolean, total: number, balance: number | undefined) {

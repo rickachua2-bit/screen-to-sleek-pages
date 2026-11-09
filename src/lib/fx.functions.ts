@@ -85,6 +85,16 @@ export const getLiveFxQuote = createServerFn({ method: "POST" })
     };
   });
 
+/* ----------------------------- NIP transfer fee ---------------------------- */
+
+/** The live flat NIP transfer fee (NGN), for display in transfer screens. */
+export const getLiveNipTransferFee = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ feeNgn: number; fetchedAt: string }> => {
+    const { fetchLiveNipTransferFee } = await import("./fx-pricing.server");
+    return { feeNgn: await fetchLiveNipTransferFee(), fetchedAt: new Date().toISOString() };
+  },
+);
+
 /* -------------------------------- pricing -------------------------------- */
 
 export type LiveFxPricingValue =

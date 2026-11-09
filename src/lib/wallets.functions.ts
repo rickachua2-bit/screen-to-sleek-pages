@@ -112,7 +112,8 @@ export const withdrawFunds = createServerFn({ method: "POST" })
     if (!acct) throw new Error(data.currency === "NGN" ? "Verify your settlement account in KYB first." : "Add your payout account for this currency first.");
     if (!isOwnPayoutAccount(await holderName(ctx.db, ctx.user), acct.accountName)) throw new Error("Payout account is not in your verified name.");
     const op = `WITHDRAW ${data.currency}`;
-    const transferFee = data.currency === "NGN" ? slikpayTransferFee(data.amount) : 0;
+    const { fetchLiveNipTransferFee } = await import("./fx-pricing.server");
+    const transferFee = data.currency === "NGN" ? slikpayTransferFee(data.amount, await fetchLiveNipTransferFee()) : 0;
     if (data.currency === "NGN") {
       const resolved = await callPaddle(ctx.mode, "POST", "/v1/accounts/resolve", { accountNumber: acct.accountNumber, bankCode: acct.bankCode });
       const name = (resolved.data as Record<string, unknown> | null)?.["accountName"];

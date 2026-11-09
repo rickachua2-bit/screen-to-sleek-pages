@@ -29,7 +29,12 @@ export const getLivePricing = createServerFn({ method: "POST" }).handler(async (
 export const quoteFee = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ rail: z.string().regex(/^[a-z_]{3,40}$/), amount: z.number().positive().max(1e12) }).parse(d))
   .handler(async ({ data }) => {
-    if (data.rail === "payouts") { const fee = slikpayTransferFee(data.amount); return { fee, net: data.amount, description: "1% of the amount, capped at ₦80", currency: "NGN", flat: false }; }
+    if (data.rail === "payouts") {
+      const { fetchLiveNipTransferFee } = await import("./fx-pricing.server");
+      const fee = slikpayTransferFee(data.amount, await fetchLiveNipTransferFee());
+      // A flat fee is amount-independent, so the UI may reuse this quote for every amount.
+      return { fee, net: data.amount, description: `Flat ₦${fee} per NIP transfer`, currency: "NGN", flat: true };
+    }
     const { bankingUser, callPaddle } = await import("./paddle.server");
     const { mode } = await bankingUser();
     const r = await callPaddle(mode, "POST", "/v1/pricing/calculate", { rail: data.rail, amount: data.amount });
