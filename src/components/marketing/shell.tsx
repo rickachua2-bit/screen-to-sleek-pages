@@ -7,6 +7,8 @@ import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
 
 export const DOCS_URL = "https://docs.slikpay.online";
 export const API_BASE = "https://api.slikpay.online/v1";
+/** Where the actual app (sign-in / console / wallet) lives. */
+export const APP_SIGNIN = "https://business.slikcash.com/auth";
 
 const NAV = [
   { to: "/personal", label: "Personal" },
@@ -183,8 +185,8 @@ export function MarketingShell({ active, children }: { active: string; children:
             </nav>
             <FxBadge />
             <div className="mkt-header-actions">
-              <Link to="/auth" className="mkt-btn-ghost mkt-btn-sm">Sign In</Link>
-              <Link to="/auth" className="mkt-btn-primary mkt-btn-sm">Get Started <ArrowRight className="h-4 w-4" /></Link>
+              <a href={APP_SIGNIN} className="mkt-btn-ghost mkt-btn-sm">Sign In</a>
+              <a href={APP_SIGNIN} className="mkt-btn-primary mkt-btn-sm">Get Started <ArrowRight className="h-4 w-4" /></a>
             </div>
             <button type="button" className="mkt-burger" onClick={() => setOpen(true)} aria-label="Open menu">
               <Menu className="h-5 w-5" />
@@ -210,8 +212,8 @@ export function MarketingShell({ active, children }: { active: string; children:
                 ))}
               </nav>
               <div className="mkt-drawer-actions">
-                <Link to="/auth" className="mkt-btn-ghost" onClick={() => setOpen(false)}>Sign In</Link>
-                <Link to="/auth" className="mkt-btn-primary" onClick={() => setOpen(false)}>Get Started <ArrowRight className="h-4 w-4" /></Link>
+                <a href={APP_SIGNIN} className="mkt-btn-ghost" onClick={() => setOpen(false)}>Sign In</a>
+                <a href={APP_SIGNIN} className="mkt-btn-primary" onClick={() => setOpen(false)}>Get Started <ArrowRight className="h-4 w-4" /></a>
               </div>
               <p className="mkt-drawer-fx"><FxBadge suffix=" · indicative" /></p>
             </div>
