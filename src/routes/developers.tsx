@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Braces, KeyRound, Webhook } from "lucide-react";
+import type { CSSProperties } from "react";
 import { API_BASE, DOCS_URL, MarketingShell } from "@/components/marketing/shell";
 import { ApiProductGrid, CodeTabs, CopyButton, CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
 import apiImg from "@/assets/marketing/mkt-api.jpg";
@@ -87,9 +88,9 @@ function DevelopersPage() {
             title="Signed events you can trust"
             sub="Every webhook carries an HMAC-SHA256 signature and timestamp. Verify before you act — replayed or forged events are rejected."
           />
-          <div className="mkt-codebox">
+          <div className="mkt-codebox mkt-reveal">
             <div className="mkt-codebox-head">
-              <div className="mkt-codebox-tabs"><button data-active>Node.js</button></div>
+              <div className="mkt-codebox-tabs"><span className="mkt-codebox-dots" aria-hidden><i /><i /><i /></span><button data-active>Node.js</button></div>
               <CopyButton text={WEBHOOK_SNIPPET} />
             </div>
             <pre className="mkt-code"><code>{WEBHOOK_SNIPPET}</code></pre>
@@ -112,8 +113,8 @@ function DevelopersPage() {
             </FeatureCard>
           </div>
           <div className="mkt-grid-3" style={{ marginTop: "1rem" }}>
-            {SDKS.map((s) => (
-              <div key={s.name} className="mkt-card mkt-feature">
+            {SDKS.map((s, i) => (
+              <div key={s.name} className="mkt-card mkt-feature mkt-reveal" style={{ "--mkt-d": `${(i % 3) * 70}ms` } as CSSProperties}>
                 <h3>{s.name}</h3>
                 <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: ".74rem" }}>{s.detail}</p>
               </div>

@@ -3,7 +3,7 @@ import {
   ArrowRight, Building2, CardSim, Check, Fingerprint, Globe2, Landmark,
   Nfc, ReceiptText, ShieldCheck, Smartphone, UserRound, Users, Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import {
   AccountVisual, ApiProductGrid, BillsVisual, CheckoutWidget, CodeTabs, Converter,
@@ -314,20 +314,20 @@ function Landing() {
       <section className="mkt-section">
         <div className="mkt-container">
           <div className="mkt-grid-3">
-            <div className="mkt-card mkt-stat"><strong className="mkt-grad-text">₦50B+</strong><span>Annualized volume</span></div>
-            <div className="mkt-card mkt-stat"><strong className="mkt-grad-text">99.99%</strong><span>Core uptime</span></div>
-            <div className="mkt-card mkt-stat"><strong className="mkt-grad-text">0.8s</strong><span>Average NIP velocity</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal"><strong className="mkt-grad-text">₦50B+</strong><span>Annualized volume</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "80ms" } as CSSProperties}><strong className="mkt-grad-text">99.99%</strong><span>Core uptime</span></div>
+            <div className="mkt-card mkt-stat mkt-reveal" style={{ "--mkt-d": "160ms" } as CSSProperties}><strong className="mkt-grad-text">0.8s</strong><span>Average NIP velocity</span></div>
           </div>
           <div className="mkt-grid-3" style={{ marginTop: "1rem" }}>
-            <div className="mkt-card mkt-quote">
+            <div className="mkt-card mkt-quote mkt-reveal">
               <p>"Slikcash settled our NGN sales instantly and cut our checkout abandonment dramatically. The gateway simply doesn't drop payments."</p>
               <footer><span className="mkt-avatar">TG</span><span><strong>Travsify Global</strong>Travel & bookings platform</span></footer>
             </div>
-            <div className="mkt-card mkt-quote">
+            <div className="mkt-card mkt-quote mkt-reveal" style={{ "--mkt-d": "80ms" } as CSSProperties}>
               <p>"We run payroll and supplier payouts across six countries from one console. The maker-checker flow passed our audit on the first review."</p>
               <footer><span className="mkt-avatar">AT</span><span><strong>Acme Technologies Ltd</strong>Enterprise software</span></footer>
             </div>
-            <div className="mkt-card mkt-quote">
+            <div className="mkt-card mkt-quote mkt-reveal" style={{ "--mkt-d": "160ms" } as CSSProperties}>
               <p>"The virtual USD cards ended our subscription-declines nightmare. AWS, ads, tooling — everything just goes through now."</p>
               <footer><span className="mkt-avatar">KM</span><span><strong>Kudi Markets</strong>E-commerce group</span></footer>
             </div>

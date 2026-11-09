@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landmark, Lock, Scale, ShieldCheck } from "lucide-react";
+import type { CSSProperties } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
 import securityImg from "@/assets/marketing/mkt-security.jpg";
@@ -41,8 +42,8 @@ function AboutPage() {
           <SectionHead kicker="Leadership" title="The team behind the rails" />
           <div className="mkt-grid-3" style={{ gridTemplateColumns: undefined }}>
             <div className="mkt-grid-3" style={{ width: "100%" }}>
-              {TEAM.map((t) => (
-                <div key={t.name} className="mkt-card mkt-team">
+              {TEAM.map((t, i) => (
+                <div key={t.name} className="mkt-card mkt-team mkt-reveal" style={{ "--mkt-d": `${i * 80}ms` } as CSSProperties}>
                   <span className="mkt-avatar">{t.initials}</span>
                   <strong>{t.name}</strong>
                   <span>{t.role}</span>

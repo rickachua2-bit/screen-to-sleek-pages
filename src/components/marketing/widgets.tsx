@@ -252,7 +252,7 @@ export function Faq({ items }: { items: { q: string; a: string }[] }) {
   return (
     <div className="mkt-faq">
       {items.map((item, i) => (
-        <div key={item.q} className="mkt-faq-item mkt-reveal" data-open={open === i || undefined} style={{ "--mkt-d": `${i * 60}ms` } as React.CSSProperties}>
+        <div key={item.q} className="mkt-faq-item mkt-reveal" data-open={open === i || undefined} style={{ "--mkt-d": `${i * 60}ms` } as CSSProperties}>
           <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
             <span>{item.q}</span>
             {open === i ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -381,7 +381,7 @@ export function ProductSuite() {
   return (
     <div className="mkt-suite">
       {SUITE.map((p, i) => (
-        <Link key={p.title} to={p.to} className="mkt-card mkt-suite-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as React.CSSProperties}>
+        <Link key={p.title} to={p.to} className="mkt-card mkt-suite-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as CSSProperties}>
           <span className="mkt-feature-icon">{p.icon}</span>
           <h3>{p.title}</h3>
           <p>{p.text}</p>
@@ -410,7 +410,7 @@ export function ShowcaseRow({ kicker, title, sub, bullets, cta, visual, flip, im
         </ul>
         <Link to={cta.to} className="mkt-suite-cta">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
       </div>
-      <div className="mkt-showcase-visual mkt-reveal" style={{ "--mkt-d": "120ms" } as React.CSSProperties}>
+      <div className="mkt-showcase-visual mkt-reveal" style={{ "--mkt-d": "120ms" } as CSSProperties}>
         {image ? (
           <figure className="mkt-media">
             <img src={image.src} alt={image.alt} loading="lazy" width={1024} height={1024} />
@@ -469,7 +469,7 @@ export function ApiProductGrid() {
   return (
     <div className="mkt-api-grid">
       {API_PRODUCTS.map((a, i) => (
-        <div key={a.title} className="mkt-card mkt-api-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as React.CSSProperties}>
+        <div key={a.title} className="mkt-card mkt-api-card mkt-reveal" style={{ "--mkt-d": `${(i % 4) * 70}ms` } as CSSProperties}>
           <span className="mkt-api-method">{a.path}</span>
           <h3>{a.title}</h3>
           <p>{a.text}</p>
@@ -545,7 +545,7 @@ export function StepsRow({ steps }: { steps: { title: string; text: string }[] }
   return (
     <div className="mkt-steps">
       {steps.map((s, i) => (
-        <div key={s.title} className="mkt-card mkt-step mkt-reveal" style={{ "--mkt-d": `${i * 90}ms` } as React.CSSProperties}>
+        <div key={s.title} className="mkt-card mkt-step mkt-reveal" style={{ "--mkt-d": `${i * 90}ms` } as CSSProperties}>
           <span className="mkt-step-num">{String(i + 1).padStart(2, "0")}</span>
           <h3>{s.title}</h3>
           <p>{s.text}</p>
