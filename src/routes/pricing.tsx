@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { Converter, CtaBand, PageHero, SectionHead } from "@/components/marketing/widgets";
 import { useLiveFxPricing } from "@/hooks/use-live-fx-rates";
+import type { LiveFxPricing } from "@/lib/fx.functions";
 import remittanceImg from "@/assets/marketing/mkt-remittance.png";
 
 export const Route = createFileRoute("/pricing")({
