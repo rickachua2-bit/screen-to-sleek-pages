@@ -1,19 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock3, Mail, MapPin, MessageCircle, Send } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
 import { MarketingShell } from "@/components/marketing/shell";
 import { PageHero, SectionHead } from "@/components/marketing/widgets";
 import { sendEnquiry } from "@/lib/enquiry.functions";
 import supportImg from "@/assets/marketing/mkt-support.png";
+import { CompanyDetails } from "@/components/marketing/company";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact & 24/7 Priority Support — Slikcash" },
-      { name: "description", content: "Reach the Slikcash team: 24/7 priority support, WhatsApp live chat, our Lagos office and verified support email." },
-      { property: "og:title", content: "Contact & 24/7 Priority Support — Slikcash" },
-      { property: "og:description", content: "24/7 support, WhatsApp chat and our Lagos office." },
+      { title: "Contact Slik Remit — Slikcash Support" },
+      { name: "description", content: "Contact Slik Remit, the company behind Slikcash, at our Abuja and United States addresses, by phone or at info@slikcash.com." },
+      { property: "og:title", content: "Contact Slik Remit — Slikcash Support" },
+      { property: "og:description", content: "Slikcash enquiries, Abuja and United States contact details, and NDPC registration." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -51,8 +52,8 @@ function ContactPage() {
     <MarketingShell active="/contact">
       <PageHero
         kicker="Contact"
-        title={<>Talk to a <span className="mkt-grad-text">human</span>, any time</>}
-        sub="24/7 priority support for every account — and a dedicated success team for business customers."
+        title={<>Talk to the <span className="mkt-grad-text">Slikcash team</span></>}
+        sub="Slikcash is a product of Slik Remit. Reach us for account support, business enquiries or questions about your data."
         image={supportImg}
         imageAlt="A support headset with chat bubbles and an envelope"
       />
@@ -62,22 +63,10 @@ function ContactPage() {
           <div style={{ display: "grid", gap: "1rem" }}>
             <div className="mkt-card mkt-contact-card mkt-reveal">
               <h3><Mail className="h-4 w-4" /> Verified support email</h3>
-              <a href="mailto:support@slikcash.com">support@slikcash.com</a>
+              <a href="mailto:info@slikcash.com">info@slikcash.com</a>
               <p>We only ever email you from slikcash.com addresses.</p>
             </div>
-            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "70ms" } as CSSProperties}>
-              <h3><MessageCircle className="h-4 w-4" /> WhatsApp live chat</h3>
-              <a href="https://wa.me/2347000000000" target="_blank" rel="noreferrer">Chat with support on WhatsApp</a>
-              <p>Average first response under five minutes.</p>
-            </div>
-            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "140ms" } as CSSProperties}>
-              <h3><MapPin className="h-4 w-4" /> Office</h3>
-              <p>Victoria Island, Lagos, Nigeria</p>
-            </div>
-            <div className="mkt-card mkt-contact-card mkt-reveal" style={{ "--mkt-d": "210ms" } as CSSProperties}>
-              <h3><Clock3 className="h-4 w-4" /> Hours</h3>
-              <p>24/7 priority support, every day of the year.</p>
-            </div>
+            <CompanyDetails />
           </div>
 
           <div className="mkt-card mkt-reveal" style={{ padding: "1.5rem", "--mkt-d": "120ms" } as CSSProperties}>

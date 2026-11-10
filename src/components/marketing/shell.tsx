@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/slikpay/Logo";
 import { useLiveFxRates } from "@/hooks/use-live-fx-rates";
 import fullLogoAsset from "@/assets/slikcash-logo-full.png.asset.json";
+import { COMPANY } from "@/components/marketing/company";
 
 export const DOCS_URL = "https://docs.slikpay.online";
 export const API_BASE = "https://api.slikpay.online/v1";
@@ -80,8 +81,13 @@ export function MarketingFooter() {
               instant NUBAN accounts, virtual USD cards and a universal payment gateway.
             </p>
             <div className="mkt-footer-contact">
-              <span><MapPin className="h-3.5 w-3.5" /> Lagos, Nigeria</span>
-              <a href="mailto:support@slikcash.com"><Mail className="h-3.5 w-3.5" /> support@slikcash.com</a>
+              <span>Slikcash is a product of {COMPANY.name} · {COMPANY.rc}</span>
+              <span><MapPin className="h-3.5 w-3.5 shrink-0" /> {COMPANY.nigeria.address}</span>
+              <a href={`tel:${COMPANY.nigeria.tel}`}>{COMPANY.nigeria.phone}</a>
+              <span><MapPin className="h-3.5 w-3.5 shrink-0" /> {COMPANY.usa.address}</span>
+              <a href={`tel:${COMPANY.usa.tel}`}>{COMPANY.usa.phone}</a>
+              <a href={`mailto:${COMPANY.email}`}><Mail className="h-3.5 w-3.5" /> {COMPANY.email}</a>
+              <Link to="/licensing">NDPC registration: {COMPANY.ndpc}</Link>
             </div>
             <div className="mkt-socials">
               <a href="https://x.com/slikcash" target="_blank" rel="noreferrer" aria-label="Slikcash on X"><Twitter className="h-4 w-4" /></a>
@@ -110,7 +116,7 @@ export function MarketingFooter() {
             <Link to="/security">Security</Link>
             <Link to="/licensing">Regulatory & Licensing</Link>
           </nav>
-          <p>© {new Date().getFullYear()} Slikcash Technologies Ltd. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {COMPANY.name}. Slikcash is a product of Slik Remit. All rights reserved.</p>
         </div>
       </div>
     </footer>

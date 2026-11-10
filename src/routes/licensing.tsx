@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
 import accountsImg from "@/assets/marketing/mkt-accounts.png";
+import { CompanyDetails } from "@/components/marketing/company";
 
 export const Route = createFileRoute("/licensing")({
   head: () => ({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/licensing")({
 });
 
 const MODEL = [
-  { icon: <Building2 className="h-5 w-5" />, title: "A financial service provider, not a bank", text: "Slikcash Technologies Ltd builds and operates the technology. Every regulated service — accounts, deposits, cards, settlement — is delivered by licensed partner banks and financial institutions." },
+  { icon: <Building2 className="h-5 w-5" />, title: "A financial service provider, not a bank", text: "Slikcash is a product of SLIK REMIT LTD. Every regulated service — accounts, deposits, cards, settlement — is delivered by licensed partner banks and financial institutions." },
   { icon: <Landmark className="h-5 w-5" />, title: "NDIC-insured partner banks", text: "Customer deposits are held with licensed commercial bank partners whose deposits carry Nigeria Deposit Insurance Corporation (NDIC) protection, in segregated accounts." },
   { icon: <ShieldCheck className="h-5 w-5" />, title: "CBN-licensed clearing rails", text: "Naira transfers and collections move over Central Bank of Nigeria licensed switching and clearing infrastructure operated by our partners." },
   { icon: <FileCheck2 className="h-5 w-5" />, title: "Licensed card issuing", text: "Virtual and physical cards are issued by licensed partner banks under Mastercard International licences, processed on PCI-DSS Level 1 certified infrastructure." },
@@ -86,8 +87,9 @@ function LicensingPage() {
 
       <section className="mkt-section">
         <div className="mkt-container">
-          <div className="mkt-card mkt-reveal" style={{ padding: "clamp(1.25rem, 3vw, 2rem)" }}>
-            <SectionHead kicker="Legal entity" title="Slikcash Technologies Ltd" />
+          <div className="mkt-reveal">
+            <SectionHead kicker="Legal entity" title="SLIK REMIT LTD" />
+            <CompanyDetails />
             <p style={{ color: "var(--mkt-muted)", lineHeight: 1.7, maxWidth: "44rem" }}>
               Slikcash is a financial technology company, not a bank. Banking services, dedicated virtual accounts and
               interbank settlement are provided by licensed partner banks and regulated financial institutions in each

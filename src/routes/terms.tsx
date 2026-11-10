@@ -25,7 +25,7 @@ const SECTIONS: LegalSection[] = [
     title: "Who we are",
     body: (
       <>
-        <p>These Terms of Service are between you and <strong>Slikcash Technologies Ltd</strong> ("Slikcash", "we", "us"), a financial technology company headquartered in Lagos, Nigeria.</p>
+        <p>These Terms of Service are between you and <strong>SLIK REMIT LTD</strong> ("we", "us"), company registration <strong>RC8999975</strong>, with a Nigeria address at H Salem plaza, Abuja, Nigeria. <strong>Slikcash is a product of Slik Remit.</strong> Our United States contact address is 15442 VENTURA BLVD., STE 201-935, SHERMAN OAKS CA 91403, US. Contact us at <a href="mailto:info@slikcash.com">info@slikcash.com</a>, <a href="tel:+2348126173408">+234 812 617 3408</a> or <a href="tel:+14158429508">+1 (415) 842-9508</a>.</p>
         <p><strong>Slikcash is not a bank.</strong> Banking services, deposit accounts, card issuing and interbank settlement are provided by licensed partner banks and regulated financial institutions in each market we serve. By creating an account or using any Slikcash service, you accept these terms and any service-specific terms shown in the product.</p>
       </>
     ),
@@ -158,7 +158,7 @@ function TermsPage() {
         kicker="Legal"
         title="Terms of Service"
         sub="The agreement between you and Slikcash — written to be read, not just accepted. It covers your account, your money, our services and where each of our responsibilities begins and ends."
-        updated="9 November 2026"
+        updated="10 November 2026"
       />
       <LegalDoc sections={SECTIONS} />
       <CtaBand title="Ready to move money the modern way?" sub="Open a free Slikcash account in minutes and accept these terms with full clarity." />
