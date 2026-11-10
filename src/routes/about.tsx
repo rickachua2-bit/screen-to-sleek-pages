@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { MarketingShell } from "@/components/marketing/shell";
 import { CtaBand, FeatureCard, PageHero, SectionHead } from "@/components/marketing/widgets";
 import securityImg from "@/assets/marketing/mkt-security.png";
+import { CompanyDetails } from "@/components/marketing/company";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -36,6 +37,13 @@ function AboutPage() {
         image={securityImg}
         imageAlt="A security shield with a padlock and fingerprint symbol"
       />
+
+      <section className="mkt-section">
+        <div className="mkt-container">
+          <SectionHead kicker="The company behind Slikcash" title="SLIK REMIT LTD" />
+          <CompanyDetails />
+        </div>
+      </section>
 
       <section className="mkt-section">
         <div className="mkt-container">

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MarketingShell } from "@/components/marketing/shell";
 import { LegalDoc, LegalHero, type LegalSection } from "@/components/marketing/legal";
 import { CtaBand } from "@/components/marketing/widgets";
+import { CompanyDetails } from "@/components/marketing/company";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -24,7 +25,10 @@ const SECTIONS: LegalSection[] = [
     id: "controller",
     title: "Who we are",
     body: (
-      <p><strong>Slikcash Technologies Ltd</strong> ("Slikcash", "we", "us") is the data controller for personal data processed through the Slikcash website, apps and APIs. We are headquartered in Lagos, Nigeria, and process data in line with the Nigeria Data Protection Act and, where applicable, comparable data-protection laws in the markets we serve.</p>
+      <>
+        <p><strong>SLIK REMIT LTD</strong> ("we", "us") operates Slikcash and is the data controller for personal data processed through the Slikcash website, apps and APIs. Slikcash is a product of Slik Remit. We process data in line with the Nigeria Data Protection Act and, where applicable, comparable data-protection laws in the markets we serve.</p>
+        <CompanyDetails />
+      </>
     ),
   },
   {
@@ -137,7 +141,7 @@ function PrivacyPage() {
         kicker="Legal"
         title="Privacy Policy"
         sub="Your money deserves privacy, and so do you. This policy explains — in plain language — what we collect, why we collect it, who we share it with and the rights you have over it."
-        updated="9 November 2026"
+        updated="10 November 2026"
       />
       <LegalDoc sections={SECTIONS} />
       <CtaBand title="Bank with a platform that respects your data" sub="Open a free Slikcash account — your information stays protected end to end." />

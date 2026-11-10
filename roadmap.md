@@ -8,6 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
+- [x] Added supplied company identity, Nigeria/USA contacts and NDPC registration with certificate access across company, contact and legal pages; desktop/mobile checked, certificate returned PDF successfully, build OK.
 - [x] International & Swap: show all foreign funding wallets and countries, use shared funding-pair guards, and add Coins to bank entry to protected stablecoin cash-out; 53 focused tests pass and build OK.
 - [ ] Arbitrary cross-currency and direct coin sending: awaiting provider-confirmed supported pairs, outbound coin endpoint/networks/fees, exact debit and status-recovery contracts; existing foreign-wallet in-kind payouts and stablecoin-to-NGN bank cash-out retained.
 - [x] International & Swap readiness: wrapped all currencies/destinations/tabs; stale-quote sequencing, expiry and balance gates, PIN clearing, synchronous dispatch guard, pending lock, account refresh/retry and notice-only disconnected vaults. 30 focused tests passed; isolated 1092×557 and mobile layout/navigation checks passed without overflow.
