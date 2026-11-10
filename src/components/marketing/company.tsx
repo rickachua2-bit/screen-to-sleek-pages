@@ -1,5 +1,4 @@
 import { FileCheck2, MapPin, Phone } from "lucide-react";
-import certificate from "@/assets/company/slik-remit-ndpc-registration.pdf.asset.json";
 
 export const COMPANY = {
   name: "SLIK REMIT LTD",
@@ -16,9 +15,6 @@ export function NdpcRegistration() {
       <h3><FileCheck2 className="h-4 w-4 shrink-0" /> NDPC registration</h3>
       <p><strong>{COMPANY.ndpc}</strong></p>
       <p>SLIK REMIT LTD is registered as a data controller/processor of major importance under Section 44 of the Nigeria Data Protection Act, 2023.</p>
-      <p>Certificate validity: 31 October 2026 – 31 October 2027.</p>
-      <a href={certificate.url} target="_blank" rel="noopener noreferrer">View NDPC registration certificate ↗</a>
-      <p>This is data-protection registration, not a banking or remittance licence.</p>
     </div>
   );
 }
