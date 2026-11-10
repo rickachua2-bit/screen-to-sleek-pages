@@ -40,3 +40,4 @@
 - Flight booking uses all five provider flight endpoints via `flights.server.ts`; bookings re-read the fare from the search, reserve the fare-currency wallet atomically, and settle only on explicit confirmation with PNR and matching fare, so no fabricated fares or tickets appear.
 - Slikcash marketing site: /, /business, /personal, /developers, /pricing, /about, /contact (src/components/marketing/*, `.mkt` styles); wallet app moved to /wallet; marketing stays white-labelled.
 - Shared marketing company identity and certificate links live in the company module so contact, footer and legal surfaces stay consistent; uploaded certificates use CDN asset pointers.
+- Mount WhatsApp contact once in the root layout using the shared company phone so every page has consistent contact access.
