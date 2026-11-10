@@ -8,7 +8,7 @@
 - [x] Mobile: floating rounded bottom tab bar with raised center action button; merchant tabs Home/Payments/Ledger/More (More opens drawer); auth page verified responsive at 390px; 2 tests, build OK
 
 ## Open
-- [ ] Remove requested certificate text and add a shared WhatsApp button using the Nigerian contact; verify desktop/mobile pages.
+- [x] Removed requested certificate text and added shared WhatsApp contact using the Nigerian number; checked 12 pages on desktop/mobile, mobile navigation clearance and build OK.
 - [x] Added supplied company identity, Nigeria/USA contacts and NDPC registration with certificate access across company, contact and legal pages; desktop/mobile checked, certificate returned PDF successfully, build OK.
 - [x] International & Swap: show all foreign funding wallets and countries, use shared funding-pair guards, and add Coins to bank entry to protected stablecoin cash-out; 53 focused tests pass and build OK.
 - [ ] Arbitrary cross-currency and direct coin sending: awaiting provider-confirmed supported pairs, outbound coin endpoint/networks/fees, exact debit and status-recovery contracts; existing foreign-wallet in-kind payouts and stablecoin-to-NGN bank cash-out retained.
